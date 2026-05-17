@@ -1,0 +1,54 @@
+id: mdar_strict
+name: MDAR-strict (Materials Design Analysis Reporting)
+description: |
+  生命科学・実験系を念頭にしたMDARフレームワーク準拠の追加項目。
+  既存のreporting_transparencyではカバーしない、より細かな情報源・試薬・統計の記述を確認する。
+
+items:
+  - id: cell_line_authentication
+    label: Cell line authentication
+    keywords: ["cell line authenticat", "str profiling", "mycoplasma test", "細胞株認証", "マイコプラズマ"]
+
+  - id: antibody_validation
+    label: Antibody validation (RRID, supplier, clone)
+    keywords: ["rrid:ab_", "antibody dilution", "antibody clone", "catalog number", "抗体検証"]
+
+  - id: animal_model
+    label: Animal model details (strain, sex, age, housing)
+    keywords: ["c57bl", "balb/c", "sprague-dawley", "wistar", "specific pathogen-free", "spf条件", "飼育条件"]
+
+  - id: sex_as_variable
+    label: Sex as a biological variable
+    keywords: ["both sexes", "male and female", "sex as a biological", "性別を変数", "雌雄"]
+
+  - id: sample_size_justification
+    label: Sample size justification
+    keywords: ["sample size justific", "power analysis", "g*power", "効果量に基づき", "事前検定力"]
+
+  - id: blinding_analysis
+    label: Blinding during outcome assessment
+    keywords: ["blinded to group", "blinded outcome", "blinded analysis", "盲検下で解析", "盲検評価"]
+
+  - id: statistical_test_justification
+    label: Statistical test choice justification
+    keywords: ["normality test", "shapiro-wilk", "levene", "homoscedasticity", "正規性", "等分散性"]
+
+  - id: software_versions
+    label: Software / package versions reported
+    keywords: ["r version", "python 3", "matlab r20", "graphpad prism", "spss version", "scipy", "version was"]
+
+  - id: code_doi
+    label: Code DOI (Zenodo etc.)
+    keywords: ["zenodo.", "10.5281/", "code archived", "コードのdoi"]
+
+  - id: data_repository_doi
+    label: Data DOI / accession number
+    keywords: ["geo accession", "arrayexpress", "ena accession", "sra accession", "dryad", "10.5061/", "10.6084/"]
+
+  - id: reagents_table
+    label: Key resources table or equivalent
+    keywords: ["key resources table", "krt", "reagents and resources", "主要資源表"]
+
+  - id: ethics_committee_id
+    label: Ethics committee approval number
+    keywords: ["approval number", "approval no.", "irb#", "ec/", "ethics approval no", "承認番号"]

@@ -1,0 +1,54 @@
+id: consort
+name: CONSORT 2010 checklist (keyword presence)
+description: |
+  CONSORT 2010 報告ガイドラインの主要項目に紐づく語句が原稿中に存在するかを確認する。
+  存在=記載済みではない点に注意(キーワード一致のみ)。
+
+items:
+  - id: trial_design
+    label: Trial design (parallel/cluster/factorial)
+    keywords: ["parallel group", "factorial design", "cluster randomi", "crossover", "並行群", "因子配置"]
+
+  - id: randomisation_sequence
+    label: Random sequence generation
+    keywords: ["random sequence", "randomi", "computer-generated", "random number", "ランダム化", "乱数表"]
+
+  - id: allocation_concealment
+    label: Allocation concealment mechanism
+    keywords: ["allocation concealment", "sealed envelope", "central randomi", "concealed allocation", "割付の隠蔽"]
+
+  - id: blinding
+    label: Blinding (who was blinded and how)
+    keywords: ["blinded", "double-blind", "single-blind", "masked", "盲検", "マスク化"]
+
+  - id: primary_outcome
+    label: Primary outcome (definition, measurement)
+    keywords: ["primary outcome", "primary endpoint", "主要評価項目", "主要アウトカム"]
+
+  - id: sample_size_calc
+    label: Sample size calculation
+    keywords: ["sample size", "power calculation", "effect size", "サンプルサイズ", "検出力", "効果量"]
+
+  - id: registration
+    label: Trial registration (ClinicalTrials.gov, UMIN, etc.)
+    keywords: ["clinicaltrials.gov", "umin", "ctri", "isrctn", "anzctr", "trial registration", "試験登録"]
+
+  - id: protocol_access
+    label: Protocol availability
+    keywords: ["protocol available", "study protocol", "プロトコル", "プロトコール"]
+
+  - id: harms_reporting
+    label: Harms / adverse events reporting
+    keywords: ["adverse event", "serious adverse", "harms", "有害事象", "副作用"]
+
+  - id: funding_role
+    label: Role of funder
+    keywords: ["role of funder", "funder had no role", "funding source had no role", "資金提供者"]
+
+  - id: itt_analysis
+    label: Intention-to-treat analysis stated
+    keywords: ["intention-to-treat", "intention to treat", "itt analysis", "per-protocol", "意図解析"]
+
+  - id: flow_diagram
+    label: CONSORT flow diagram
+    keywords: ["consort flow", "consort diagram", "flow diagram", "consort 2010"]

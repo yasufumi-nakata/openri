@@ -1,0 +1,54 @@
+id: prisma
+name: PRISMA 2020 checklist (keyword presence)
+description: |
+  PRISMA 2020 を念頭に、systematic review / meta-analysis 原稿で記載されるべき主要項目を
+  キーワードで検出する。存在=記載完備ではない点に注意。
+
+items:
+  - id: registration
+    label: Review registration (PROSPERO etc.)
+    keywords: ["prospero", "inplasy", "osf registration", "registered prospectively", "事前登録"]
+
+  - id: search_strategy
+    label: Reproducible search strategy
+    keywords: ["search strategy", "search string", "boolean query", "supplementary search", "検索式"]
+
+  - id: information_sources
+    label: Information sources (databases consulted)
+    keywords: ["medline", "pubmed", "embase", "scopus", "cochrane", "web of science", "ichushi", "医中誌", "中文文献"]
+
+  - id: eligibility_criteria
+    label: Eligibility criteria (PICO/PICOS)
+    keywords: ["eligibility criteria", "inclusion criteria", "exclusion criteria", "pico", "pecos", "適格基準"]
+
+  - id: study_selection
+    label: Study selection process
+    keywords: ["screened", "title and abstract screening", "full text screening", "selection process", "選定過程"]
+
+  - id: risk_of_bias
+    label: Risk of bias assessment
+    keywords: ["risk of bias", "rob 2", "robins-i", "newcastle-ottawa", "cochrane risk", "バイアスリスク"]
+
+  - id: data_extraction
+    label: Data extraction procedure
+    keywords: ["data extraction", "data abstraction", "extracted independently", "データ抽出"]
+
+  - id: synthesis_methods
+    label: Synthesis methods (qualitative / meta-analysis)
+    keywords: ["meta-analysis", "fixed-effects", "random-effects", "narrative synthesis", "メタ解析"]
+
+  - id: heterogeneity
+    label: Heterogeneity assessment
+    keywords: ["heterogeneity", "i-squared", "i^2", "cochran q", "異質性"]
+
+  - id: publication_bias
+    label: Publication bias / small-study effects
+    keywords: ["publication bias", "funnel plot", "egger's test", "small-study", "出版バイアス"]
+
+  - id: prisma_flow
+    label: PRISMA flow diagram
+    keywords: ["prisma flow", "prisma 2020", "prisma diagram", "flow diagram"]
+
+  - id: certainty_of_evidence
+    label: Certainty / quality of evidence (GRADE)
+    keywords: ["grade", "certainty of evidence", "quality of evidence", "summary of findings", "エビデンスの確実性"]

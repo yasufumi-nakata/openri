@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openri"
+version = "0.3.0"
+description = "Open Research Integrity: a test runner for manuscripts. Evidence-backed findings, not a verdict."
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "OpenRI contributors" }]
+keywords = [
+    "research-integrity",
+    "peer-review",
+    "statcheck",
+    "open-science",
+    "linter",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+    "fastapi>=0.100",
+    "pydantic>=2.0",
+    "scipy>=1.10",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+pdf = ["pdfplumber>=0.10", "pypdf>=4.0"]
+network = ["requests>=2.31"]
+server = ["uvicorn[standard]>=0.27", "python-multipart>=0.0.7"]
+dev = [
+    "build>=1.2",
+    "twine>=5.0",
+    "pytest>=7",
+    "pytest-asyncio>=0.21",
+    "httpx>=0.25",
+    "reportlab>=4.0",
+]
+
+[project.scripts]
+openri = "openri.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/yasufumi-nakata/openri"
+Repository = "https://github.com/yasufumi-nakata/openri"
+Issues = "https://github.com/yasufumi-nakata/openri/issues"
+Documentation = "https://github.com/yasufumi-nakata/openri/tree/main/docs"
+
+[tool.setuptools]
+package-dir = { "" = "backend" }
+
+[tool.setuptools.packages.find]
+where = ["backend"]
+include = ["openri*"]
+
+[tool.setuptools.package-data]
+openri = ["rulesets/*.yaml"]
+
+[tool.pytest.ini_options]
+pythonpath = ["backend"]
+testpaths = ["backend/tests"]

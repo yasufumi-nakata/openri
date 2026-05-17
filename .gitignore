@@ -1,0 +1,16 @@
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.pyc
+*.pyo
+*.egg-info/
+build/
+dist/
+node_modules/
+frontend/dist/
+frontend/node_modules/
+.DS_Store
+.coverage
+.mypy_cache/
+.openri/
+reports.sqlite3
