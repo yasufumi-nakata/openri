@@ -1,5 +1,11 @@
 # OpenRI: Open Research Integrity
 
+[![CI](https://github.com/yasufumi-nakata/openri/actions/workflows/ci.yml/badge.svg)](https://github.com/yasufumi-nakata/openri/actions/workflows/ci.yml)
+[![Repository Health](https://github.com/yasufumi-nakata/openri/actions/workflows/oss-health.yml/badge.svg)](https://github.com/yasufumi-nakata/openri/actions/workflows/oss-health.yml)
+[![CodeQL](https://github.com/yasufumi-nakata/openri/actions/workflows/codeql.yml/badge.svg)](https://github.com/yasufumi-nakata/openri/actions/workflows/codeql.yml)
+[![Release](https://img.shields.io/github/v/release/yasufumi-nakata/openri)](https://github.com/yasufumi-nakata/openri/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 OpenRIは、投稿システムに提出された論文に対する「査読前テストシステム」です。プログラミングでCIがテスト失敗を返すように、原稿に対して統計不整合、研究透明性の不足、引用・参考文献の不整合、LLM査読を操作する隠し指示、画像検査の未実施リスクなどを、証拠付きfindingとして返します。
 
 このプロトタイプの目的は、人間査読で本来確認される論点を、Codex/Claude等のAI reviewerが分野非依存・証拠優先・忖度なしで実行できるテスト設計に落とし込むことです。不正を断定したり採否を自動決定したりするのではなく、通常査読またはAI査読へ回す前に潰すべき論点、coverage blocker、reviewer assignment、再現可能な検査結果をAPIレスポンスとして返します。処理フローの詳細は [`docs/submitted-manuscript-workflow.md`](docs/submitted-manuscript-workflow.md) と [`docs/ai-review-protocol.md`](docs/ai-review-protocol.md) を参照してください。
@@ -32,7 +38,7 @@ OpenRIは、投稿システムに提出された論文に対する「査読前�
 GitHub Releaseのwheelを使う場合:
 
 ```bash
-pip install openri-0.3.0-py3-none-any.whl
+pip install openri-0.3.1-py3-none-any.whl
 ```
 
 PyPI公開後に使う場合:
@@ -101,7 +107,17 @@ Web UIでは、本文貼り付けに加えてPDF/TXT/MD/TeXのアップロード
 5. OpenAlex / Semantic Scholar 連携(引用文脈の検証)。
 6. 参考文献本体(reference list)のメタデータ抽出と引用整合のクロスチェック。
 
-詳細は [`docs/`](docs/) を参照(GitHub Actionsへの組み込み、Buffyボット連携、checkの書き方)。
+詳細は [`ROADMAP.md`](ROADMAP.md) と [`docs/`](docs/) を参照(GitHub Actionsへの組み込み、Buffyボット連携、checkの書き方)。
+
+## OSS運用
+
+- 参加方法: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- セキュリティ報告: [`SECURITY.md`](SECURITY.md)
+- サポート窓口: [`SUPPORT.md`](SUPPORT.md)
+- ガバナンス: [`GOVERNANCE.md`](GOVERNANCE.md)
+- メンテナ手順: [`docs/maintainer-guide.md`](docs/maintainer-guide.md)
+
+GitHub上では、CI、Repository Health、CodeQL、Dependency Review、OpenSSF Scorecard、Dependabotを有効化しています。`main` はbranch protectionでCI成功を必須にする運用を想定しています。
 
 ## 既知の限界
 

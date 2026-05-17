@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/yasufumi-nakata/openri/security/policy
+    about: Please do not disclose vulnerabilities or unpublished manuscripts in public issues.
+  - name: Discussions
+    url: https://github.com/yasufumi-nakata/openri/discussions
+    about: Use discussions for open-ended ideas, usage questions, and roadmap conversation.

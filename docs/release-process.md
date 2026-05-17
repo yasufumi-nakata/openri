@@ -5,7 +5,9 @@ OpenRI releases are built from the GitHub repository and attached to a GitHub Re
 ## Local preflight
 
 ```bash
-PYTHONPATH=backend python3 -m pytest backend/tests -q
+python3 scripts/oss_health_check.py
+python3 -m ruff check backend/openri backend/tests scripts
+PYTHONPATH=backend python3 -m pytest backend/tests -q --cov=openri --cov-report=term-missing
 cd frontend && npm run build
 python3 -m build
 python3 -m twine check dist/*
@@ -16,17 +18,20 @@ The final command should exit with status `1` for the high-risk fixture because 
 
 ## Version bump
 
-Update both files:
+Update all version-bearing files:
 
 - `pyproject.toml`
 - `backend/openri/__init__.py`
+- `frontend/package.json`
+- `frontend/package-lock.json`
+- `CITATION.cff`
 
 Then update `CHANGELOG.md`.
 
 ## GitHub release
 
 ```bash
-git tag v0.3.0
+git tag -a v0.3.1 -m "OpenRI v0.3.1"
 git push origin main --tags
 ```
 

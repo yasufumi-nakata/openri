@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "openri"
-version = "0.3.0"
+version = "0.3.1"
 description = "Open Research Integrity: a test runner for manuscripts. Evidence-backed findings, not a verdict."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -45,6 +45,8 @@ dev = [
     "twine>=5.0",
     "pytest>=7",
     "pytest-asyncio>=0.21",
+    "pytest-cov>=5.0",
+    "ruff>=0.8",
     "httpx>=0.25",
     "reportlab>=4.0",
 ]
@@ -71,3 +73,10 @@ openri = ["rulesets/*.yaml"]
 [tool.pytest.ini_options]
 pythonpath = ["backend"]
 testpaths = ["backend/tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E9", "F63", "F7", "F82"]

@@ -8,6 +8,23 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  repository-health:
+    name: Repository health
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install quality tools
+        run: python -m pip install -U pip && python -m pip install -e ".[dev]"
+      - name: OSS metadata check
+        run: python scripts/oss_health_check.py
+      - name: Python fatal lint
+        run: python -m ruff check backend/openri backend/tests scripts
+      - name: Compile Python package
+        run: python -m compileall -q backend/openri scripts
+
   backend:
     name: Backend tests and package
     runs-on: ubuntu-latest
@@ -15,14 +32,14 @@ jobs:
       matrix:
         python-version: ["3.9", "3.11", "3.12"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install package
         run: python -m pip install -U pip && python -m pip install -e ".[pdf,network,server,dev]"
       - name: Run tests
-        run: PYTHONPATH=backend python -m pytest backend/tests -q
+        run: PYTHONPATH=backend python -m pytest backend/tests -q --cov=openri --cov-report=term-missing
       - name: CLI smoke
         run: PYTHONPATH=backend python -m openri.cli check samples/high_risk_manuscript.txt --fail-on high || test $? -eq 1
       - name: Build distribution
@@ -37,13 +54,19 @@ jobs:
           python -m pip install dist/openri-*.whl
           openri --version
           openri check samples/high_risk_manuscript.txt --fail-on high || test $? -eq 1
+      - name: Upload package artifacts
+        if: matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v7
+        with:
+          name: openri-dist
+          path: dist/*
 
   frontend:
     name: Frontend build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm

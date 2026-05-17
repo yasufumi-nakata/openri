@@ -1,0 +1,30 @@
+name: Review case request
+description: Ask for a synthetic or redacted review scenario to be supported.
+title: "[Review case]: "
+labels: ["review-case", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not upload unpublished manuscripts, identifiable participant data, reviewer identities, or confidential editorial material.
+        Use synthetic or heavily redacted examples.
+  - type: textarea
+    id: scenario
+    attributes:
+      label: Scenario
+      description: What kind of manuscript/review situation should OpenRI handle?
+    validations:
+      required: true
+  - type: textarea
+    id: expected_packet
+    attributes:
+      label: Expected review packet behavior
+      description: What claim inventory, reviewer task, coverage blocker, or finding should be produced?
+    validations:
+      required: true
+  - type: textarea
+    id: synthetic_example
+    attributes:
+      label: Synthetic example
+      description: Provide a safe, non-confidential example if available.
+      render: text

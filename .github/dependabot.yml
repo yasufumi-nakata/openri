@@ -1,0 +1,56 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    labels:
+      - "dependencies"
+      - "github-actions"
+
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:30"
+      timezone: "Asia/Tokyo"
+    labels:
+      - "dependencies"
+      - "python"
+    groups:
+      python-quality:
+        patterns:
+          - "pytest*"
+          - "ruff"
+          - "build"
+          - "twine"
+      python-runtime:
+        patterns:
+          - "fastapi"
+          - "pydantic"
+          - "scipy"
+          - "pyyaml"
+
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "Asia/Tokyo"
+    labels:
+      - "dependencies"
+      - "frontend"
+    groups:
+      frontend-runtime:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "vite"
+          - "@vitejs/*"
+          - "typescript"
+          - "lucide-react"

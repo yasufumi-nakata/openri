@@ -1,0 +1,63 @@
+name: Bug report
+description: Report a reproducible problem in OpenRI.
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste confidential, unpublished, or personally identifiable manuscript content.
+        Minimize examples to synthetic text when possible.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: Include the exact CLI/API/UI steps with synthetic input if possible.
+      placeholder: |
+        1. Run `openri check ...`
+        2. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Affected surface
+      options:
+        - CLI
+        - API
+        - Web UI
+        - Ruleset
+        - PDF processing
+        - GitHub Action
+        - Documentation
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: OpenRI version or commit
+      placeholder: "0.3.1 or commit SHA"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs or output
+      render: text

@@ -2,6 +2,13 @@
 
 All notable changes to OpenRI are documented here.
 
+## 0.3.1 - 2026-05-18
+
+- Added GitHub issue forms, pull request template, CODEOWNERS, support, governance, and public roadmap.
+- Added Dependabot, CodeQL, Dependency Review, OpenSSF Scorecard, repository health checks, ruff fatal-error lint, and coverage reporting.
+- Upgraded GitHub Actions workflow actions to current major versions and added release artifact upload in CI.
+- Added branch-protection-ready status checks and OSS health validation for release and repository metadata.
+
 ## 0.3.0 - 2026-05-17
 
 - Added claim-centered `ai_review_protocol.review_packet` for AI reviewer handoff.

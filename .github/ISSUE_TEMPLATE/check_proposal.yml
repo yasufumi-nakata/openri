@@ -1,0 +1,45 @@
+name: New check proposal
+description: Propose a deterministic review or research-integrity check.
+title: "[Check]: "
+labels: ["check-proposal", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A good OpenRI check returns evidence-backed findings. It should not make misconduct determinations by itself.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Review problem
+      description: What human review task should this automate or structure?
+    validations:
+      required: true
+  - type: textarea
+    id: signal
+    attributes:
+      label: Deterministic signal
+      description: What text, PDF, metadata, statistic, citation, or ruleset signal can be tested?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence to return
+      description: What quote/location/data should appear in the finding?
+    validations:
+      required: true
+  - type: dropdown
+    id: maturity
+    attributes:
+      label: Expected maturity
+      options:
+        - stable
+        - beta
+        - experimental
+    validations:
+      required: true
+  - type: textarea
+    id: fixtures
+    attributes:
+      label: Suggested fixtures
+      description: Positive, negative, borderline, adversarial, or metamorphic examples.
