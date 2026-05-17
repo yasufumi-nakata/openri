@@ -8,15 +8,17 @@ on:
     - cron: "41 2 * * 1"
 
 permissions:
-  actions: read
   contents: read
-  id-token: write
-  security-events: write
 
 jobs:
   scorecard:
     name: OpenSSF Scorecard
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+      security-events: write
     steps:
       - uses: actions/checkout@v6
         with:

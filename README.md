@@ -38,7 +38,7 @@ OpenRIは、投稿システムに提出された論文に対する「査読前�
 GitHub Releaseのwheelを使う場合:
 
 ```bash
-pip install openri-0.3.1-py3-none-any.whl
+pip install openri-0.3.2-py3-none-any.whl
 ```
 
 PyPI公開後に使う場合:

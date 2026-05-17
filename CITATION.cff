@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use OpenRI, please cite the software repository."
 title: "OpenRI: Open Research Integrity"
-version: "0.3.1"
+version: "0.3.2"
 date-released: "2026-05-18"
 authors:
   - name: "OpenRI contributors"

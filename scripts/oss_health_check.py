@@ -96,11 +96,25 @@ def main() -> int:
         assert_contains(
             ".github/workflows/ci.yml",
             [
+                "permissions:",
+                "contents: read",
                 "Repository health",
                 "ruff check",
                 "--cov=openri",
                 "actions/upload-artifact",
                 "Install wheel smoke",
+            ],
+        )
+    )
+    errors.extend(
+        assert_contains(
+            "MANIFEST.in",
+            [
+                "include GOVERNANCE.md",
+                "include SUPPORT.md",
+                "include ROADMAP.md",
+                "include SECURITY.md",
+                "include CONTRIBUTING.md",
             ],
         )
     )

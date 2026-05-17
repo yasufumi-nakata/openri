@@ -2,6 +2,12 @@
 
 All notable changes to OpenRI are documented here.
 
+## 0.3.2 - 2026-05-18
+
+- Included OSS governance, support, roadmap, security, contributing, and agent guidance files in source distributions.
+- Fixed the OpenSSF Scorecard workflow permission layout for publishable scorecard results.
+- Added branch-protection-ready CI permission hardening and repository health checks.
+
 ## 0.3.1 - 2026-05-18
 
 - Added GitHub issue forms, pull request template, CODEOWNERS, support, governance, and public roadmap.

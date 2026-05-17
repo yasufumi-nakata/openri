@@ -33,8 +33,8 @@ Update these files together:
 Then tag and push:
 
 ```bash
-git tag -a v0.3.1 -m "OpenRI v0.3.1"
-git push origin main v0.3.1
+git tag -a v0.3.2 -m "OpenRI v0.3.2"
+git push origin main v0.3.2
 ```
 
 The release workflow builds artifacts, checks metadata, attaches `dist/*` to the GitHub Release, and optionally publishes to PyPI when `PUBLISH_TO_PYPI=true` and PyPI Trusted Publishing is configured.
