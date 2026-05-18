@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OpenRI Tutorial | Run review tests</title>
+    <meta name="description" content="OpenRI を CLI、Web UI、API、GitHub Actions で動かすためのチュートリアルです。">
+    <link rel="stylesheet" href="../assets/openri-pages.css">
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <nav class="nav" aria-label="Primary navigation">
+          <a class="brand" href="../" aria-label="OpenRI tutorial home">
+            <span class="brand-mark">RI</span>
+            <span>
+              <strong>OpenRI</strong>
+              <span>Run review tests</span>
+            </span>
+          </a>
+          <div class="nav-links">
+            <a href="../">Home</a>
+            <a href="../checking-your-paper.md">Reading results</a>
+            <a href="../github-action.md">GitHub Action</a>
+            <a class="button" href="https://github.com/yasufumi-nakata/openri">GitHub</a>
+          </div>
+        </nav>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div>
+            <p class="eyebrow">Tutorial</p>
+            <h1>1本のサンプル原稿で、OpenRI の report を最後まで読む。</h1>
+            <p class="hero-copy">
+              このページでは、ローカルインストール、CLI、Web UI、API、GitHub Actions 連携を順に確認します。結果は「不正の断定」ではなく、人間が確認すべき証拠付き finding として扱います。
+            </p>
+            <div class="hero-actions">
+              <a class="button primary" href="#local">ローカル実行へ</a>
+              <a class="button" href="#ci">CI 組み込みへ</a>
+            </div>
+          </div>
+          <figure class="preview-frame">
+            <img src="../assets/openri-report-preview.png" alt="OpenRI report preview with evidence and AI review panels">
+            <figcaption class="preview-caption">Web UI では finding、evidence、AI reviewer protocol を同じ画面で確認します。</figcaption>
+          </figure>
+        </section>
+
+        <section class="section" aria-labelledby="local">
+          <div class="steps">
+            <article class="step" id="local">
+              <div class="step-number">1</div>
+              <div>
+                <h2>ローカル環境を用意します</h2>
+                <p>開発 checkout から使う場合は、PDF 抽出、Crossref 照合、API server、テスト用依存をまとめて入れます。</p>
+                <pre class="terminal"><code>git clone https://github.com/yasufumi-nakata/openri.git
+cd openri
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -U pip
+pip install -e ".[pdf,network,server,dev]"</code></pre>
+              </div>
+            </article>
+
+            <article class="step">
+              <div class="step-number">2</div>
+              <div>
+                <h2>サンプル原稿を CLI でチェックします</h2>
+                <p>高リスクサンプルには、p 値不整合、透明性項目不足、placeholder DOI、LLM 査読操作指示が入っています。</p>
+                <pre class="terminal"><code>openri check samples/high_risk_manuscript.txt --strictness strict
+openri list --limit 5
+openri show &lt;report_id&gt; --json</code></pre>
+              </div>
+            </article>
+
+            <article class="step">
+              <div class="step-number">3</div>
+              <div>
+                <h2>finding の status を読み分けます</h2>
+                <p>OpenRI では、`skipped` や coverage blocker を合格扱いにしません。どの evidence を人間が確認すべきかを見ます。</p>
+                <div class="status-list">
+                  <div class="status"><strong>passed</strong><span>既知の検査で問題が見つからない状態です。</span></div>
+                  <div class="status"><strong>warning</strong><span>不足、矛盾、未確認領域がある状態です。</span></div>
+                  <div class="status"><strong>failed</strong><span>重大な再確認対象が見つかった状態です。</span></div>
+                  <div class="status"><strong>skipped</strong><span>条件不足で走らなかった検査です。安全とは扱いません。</span></div>
+                </div>
+              </div>
+            </article>
+
+            <article class="step">
+              <div class="step-number">4</div>
+              <div>
+                <h2>Web UI で同じ report を確認します</h2>
+                <p>Web UI はローカル API を呼び出します。未公開原稿を外部 API へ送る構成ではありません。</p>
+                <pre class="terminal"><code>PYTHONPATH=backend python3 -m uvicorn openri.api:app --host 127.0.0.1 --port 8008
+
+cd frontend
+npm install
+npm run dev -- --host 127.0.0.1 --port 5173</code></pre>
+                <p>ブラウザで <code>http://127.0.0.1:5173/</code> を開き、<code>Run Text</code> または <code>Run PDF/File</code> を実行します。</p>
+              </div>
+            </article>
+
+            <article class="step">
+              <div class="step-number">5</div>
+              <div>
+                <h2>API で report を取得します</h2>
+                <p>テキスト原稿は JSON、PDF/TXT/MD/TeX/画像ファイルは multipart upload で送ります。</p>
+                <pre class="terminal"><code>curl -X POST http://127.0.0.1:8008/api/runs \
+  -H 'Content-Type: application/json' \
+  --data '{"title":"paper","manuscript_text":"Results\n t(58) = 2.15, p = 0.003.","strictness":"standard"}'
+
+curl -X POST http://127.0.0.1:8008/api/runs/upload \
+  -F file=@manuscript.pdf \
+  -F strictness=strict</code></pre>
+              </div>
+            </article>
+
+            <article class="step" id="ci">
+              <div class="step-number">6</div>
+              <div>
+                <h2>GitHub Actions へ組み込みます</h2>
+                <p>原稿リポジトリの pull request で OpenRI を走らせ、必要なら SARIF を Code Scanning に送ります。</p>
+                <pre class="terminal"><code>- uses: ./.github/actions/openri-check
+  with:
+    manuscript: manuscripts/submission.pdf
+    strictness: strict
+    rulesets: "consort mdar_strict"
+    fail-on: high
+    sarif-path: openri-results.sarif.json
+    network: "false"</code></pre>
+                <p>詳しい workflow は <a href="../github-action.md">GitHub Action wrapper</a> を参照してください。</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="callout warning">
+            <p>
+              Hosted deployment で未公開原稿を扱う場合は、CORS、API key/OIDC、upload size、retention、audit policy を先に設定してください。詳細は <a href="../deployment.md">deployment reference</a> にまとめています。
+            </p>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="section">
+          OpenRI は evidence-backed findings を返す査読前テストランナーです。不正認定や採否自動決定は行いません。
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

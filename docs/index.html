@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OpenRI Tutorial</title>
+    <meta name="description" content="OpenRI の導入、CLI、Web UI、API、GitHub Actions 連携をまとめた公開チュートリアルです。">
+    <link rel="stylesheet" href="assets/openri-pages.css">
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <nav class="nav" aria-label="Primary navigation">
+          <a class="brand" href="./" aria-label="OpenRI tutorial home">
+            <span class="brand-mark">RI</span>
+            <span>
+              <strong>OpenRI</strong>
+              <span>Open Research Integrity</span>
+            </span>
+          </a>
+          <div class="nav-links">
+            <a href="tutorial/">Tutorial</a>
+            <a href="checking-your-paper.md">Reading results</a>
+            <a href="github-action.md">GitHub Action</a>
+            <a class="button" href="https://github.com/yasufumi-nakata/openri">GitHub</a>
+          </div>
+        </nav>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div>
+            <p class="eyebrow">GitHub Pages tutorial</p>
+            <h1>OpenRI を投稿前・査読前チェックとして動かす。</h1>
+            <p class="hero-copy">
+              OpenRI は研究不正や採否を自動断定する仕組みではありません。原稿の統計、透明性、引用、PDF不可視テキスト、隠し指示、AI reviewer protocol を、証拠付きの確認タスクとして返します。
+            </p>
+            <div class="hero-actions">
+              <a class="button primary" href="tutorial/">チュートリアルを始める</a>
+              <a class="button" href="checking-your-paper.md">結果の読み方</a>
+            </div>
+            <p class="hero-note">ローカル実行、API 実行、GitHub Actions への組み込みまでを同じ流れで確認できます。</p>
+          </div>
+          <figure class="preview-frame">
+            <img src="assets/openri-report-preview.png" alt="OpenRI Web UI showing review findings, AI reviewer protocol, and evidence panels">
+            <figcaption class="preview-caption">OpenRI Web UI のサンプル実行画面。finding は人間が確認すべき証拠付き論点として表示されます。</figcaption>
+          </figure>
+        </section>
+
+        <section class="section" aria-labelledby="quick-start">
+          <div class="section-heading">
+            <h2 id="quick-start">最短の始め方</h2>
+            <p>まずはサンプル原稿を CLI で走らせ、次に Web UI と API で同じ report を確認します。</p>
+          </div>
+          <div class="grid">
+            <article class="card">
+              <h3>1. Install</h3>
+              <p>開発版では PDF、network、server、dev extras をまとめて入れます。</p>
+              <pre class="terminal"><code>pip install -e ".[pdf,network,server,dev]"</code></pre>
+            </article>
+            <article class="card">
+              <h3>2. Run CLI</h3>
+              <p>高リスクサンプルで統計・透明性・引用・隠し指示を確認します。</p>
+              <pre class="terminal"><code>openri check samples/high_risk_manuscript.txt</code></pre>
+            </article>
+            <article class="card">
+              <h3>3. Review</h3>
+              <p>score ではなく、finding の evidence と reviewer task を見ます。</p>
+              <pre class="terminal"><code>openri show &lt;report_id&gt; --json</code></pre>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="coverage">
+          <div class="section-heading">
+            <h2 id="coverage">何を確認するか</h2>
+            <p>OpenRI は合格印を出すより、査読前に止めるべき論点と未確認領域を明示することを優先します。</p>
+          </div>
+          <div class="grid">
+            <article class="card">
+              <h3>統計と透明性</h3>
+              <p>p 値再計算、GRIM 風の平均値/n 確認、ethics・data・code・COI・funding 記載を確認します。</p>
+            </article>
+            <article class="card">
+              <h3>引用とPDF</h3>
+              <p>DOI、本文中引用、参考文献、PDF の不可視文字・注釈・埋め込みファイルを確認します。</p>
+            </article>
+            <article class="card">
+              <h3>AI reviewer protocol</h3>
+              <p>AI reviewer assignment、claim inventory、coverage blocker、adversarial challenge を report に含めます。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="docs">
+          <div class="section-heading">
+            <h2 id="docs">関連ドキュメント</h2>
+            <p>運用や実装に進む場合は、次のページを参照してください。</p>
+          </div>
+          <div class="doc-list">
+            <a href="tutorial/">Tutorial<span>ローカル、Web UI、API、GitHub Actions を順番に試します。</span></a>
+            <a href="submitted-manuscript-workflow.md">Submitted manuscript workflow<span>投稿システムでの処理ルートと編集部トリアージです。</span></a>
+            <a href="ai-review-protocol.md">AI review protocol<span>Codex/Claude 等の AI reviewer が見る査読軸です。</span></a>
+            <a href="deployment.md">Deployment reference<span>未公開原稿を扱う hosted deployment の最低限の安全設定です。</span></a>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="section">
+          OpenRI は evidence-backed findings を返す査読前テストランナーです。不正認定や採否自動決定は行いません。
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

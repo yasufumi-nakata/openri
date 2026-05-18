@@ -29,12 +29,15 @@ REQUIRED_FILES = [
     ".github/ISSUE_TEMPLATE/feature_request.yml",
     ".github/ISSUE_TEMPLATE/review_case.yml",
     ".github/workflows/ci.yml",
+    ".github/workflows/pages.yml",
     ".github/workflows/release.yml",
     ".github/workflows/codeql.yml",
     ".github/workflows/dependency-review.yml",
     ".github/workflows/scorecard.yml",
     ".github/workflows/oss-health.yml",
     "docs/maintainer-guide.md",
+    "docs/index.html",
+    "docs/tutorial/index.html",
 ]
 
 
@@ -42,6 +45,7 @@ README_MARKERS = [
     "actions/workflows/ci.yml/badge.svg",
     "actions/workflows/oss-health.yml/badge.svg",
     "actions/workflows/codeql.yml/badge.svg",
+    "yasufumi-nakata.github.io/openri",
     "CONTRIBUTING.md",
     "SECURITY.md",
     "SUPPORT.md",
