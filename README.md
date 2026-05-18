@@ -3,7 +3,7 @@
 [![CI](https://github.com/yasufumi-nakata/openri/actions/workflows/ci.yml/badge.svg)](https://github.com/yasufumi-nakata/openri/actions/workflows/ci.yml)
 [![Repository Health](https://github.com/yasufumi-nakata/openri/actions/workflows/oss-health.yml/badge.svg)](https://github.com/yasufumi-nakata/openri/actions/workflows/oss-health.yml)
 [![CodeQL](https://github.com/yasufumi-nakata/openri/actions/workflows/codeql.yml/badge.svg)](https://github.com/yasufumi-nakata/openri/actions/workflows/codeql.yml)
-[![Tutorial](https://img.shields.io/badge/tutorial-GitHub%20Pages-087f78)](https://yasufumi-nakata.github.io/openri/)
+[![Tutorial](https://img.shields.io/badge/tutorial-GitHub%20Pages-087f78)](https://www.yasufumi.net/openri/)
 [![Benchmark](https://img.shields.io/badge/benchmark-golden%20corpus-blue)](benchmark/openri-benchmark.md)
 [![Release](https://img.shields.io/github/v/release/yasufumi-nakata/openri)](https://github.com/yasufumi-nakata/openri/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -95,7 +95,7 @@ npm run dev -- --host 127.0.0.1 --port 5173
 
 Web UIでは、本文貼り付けに加えてPDF/TXT/MD/TeXのアップロード検査にも対応しています。PDFの場合は本文抽出に加え、白色文字・極小フォント・ページ外配置などの不可視テキスト候補も検査します。自分の論文を通したときの読み方は [`docs/checking-your-paper.md`](docs/checking-your-paper.md) を参照してください。
 
-公開チュートリアルは GitHub Pages の [`OpenRI Tutorial`](https://yasufumi-nakata.github.io/openri/) に置いています。ローカル実行、CLI、Web UI、API、GitHub Actions 連携を順番に確認できます。
+公開チュートリアルは GitHub Pages の [`OpenRI Tutorial`](https://www.yasufumi.net/openri/) に置いています。ローカル実行、CLI、Web UI、API、GitHub Actions 連携を順番に確認できます。
 
 実行後のreportには `ai_review_protocol` が入り、次を確認できます。
 

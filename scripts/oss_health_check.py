@@ -45,7 +45,7 @@ README_MARKERS = [
     "actions/workflows/ci.yml/badge.svg",
     "actions/workflows/oss-health.yml/badge.svg",
     "actions/workflows/codeql.yml/badge.svg",
-    "yasufumi-nakata.github.io/openri",
+    "www.yasufumi.net/openri",
     "CONTRIBUTING.md",
     "SECURITY.md",
     "SUPPORT.md",
