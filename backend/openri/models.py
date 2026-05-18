@@ -8,6 +8,9 @@ from uuid import uuid4
 from pydantic import BaseModel, Field
 
 
+SCHEMA_VERSION = "openri-report-v1"
+
+
 class Severity(str, Enum):
     CRITICAL = "critical"
     HIGH = "high"
@@ -62,9 +65,12 @@ class RunRequest(BaseModel):
     activated_rulesets: List[str] = Field(default_factory=list)
     enable_network: bool = False
     pdf_inspection: Optional[Dict[str, Any]] = None
+    image_inspection: Optional[Dict[str, Any]] = None
+    source_metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
 class RunReport(BaseModel):
+    schema_version: str = SCHEMA_VERSION
     report_id: str = Field(default_factory=lambda: f"openri_{uuid4().hex[:12]}")
     title: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

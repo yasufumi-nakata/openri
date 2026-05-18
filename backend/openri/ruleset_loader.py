@@ -31,6 +31,10 @@ class KeywordItem:
     label: str
     keywords: tuple[str, ...]
     severity: str = "medium"
+    required_evidence: tuple[str, ...] = ()
+    not_applicable_policy: str = "requires_explicit_reason"
+    section_preference: tuple[str, ...] = ()
+    reference_url: str = ""
 
 
 @dataclass(frozen=True)
@@ -116,6 +120,10 @@ def _coerce_keyword_item(raw: dict[str, Any]) -> KeywordItem:
         label=str(raw.get("label", raw["id"])),
         keywords=keywords,
         severity=str(raw.get("severity", "medium")).lower(),
+        required_evidence=tuple(str(item) for item in raw.get("required_evidence", [])),
+        not_applicable_policy=str(raw.get("not_applicable_policy", "requires_explicit_reason")),
+        section_preference=tuple(str(item).lower() for item in raw.get("section_preference", [])),
+        reference_url=str(raw.get("reference_url", "")),
     )
 
 

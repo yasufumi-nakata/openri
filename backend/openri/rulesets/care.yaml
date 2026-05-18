@@ -1,0 +1,41 @@
+id: care
+name: CARE case report checklist
+description: |
+  Case reports should include patient information, timeline, diagnostic assessment,
+  intervention, follow-up, patient perspective where appropriate, and informed consent.
+items:
+  - id: patient_information
+    label: Patient information
+    severity: high
+    keywords: ["patient information", "medical history", "chief complaint", "症例", "既往歴"]
+    required_evidence: ["de-identified patient information"]
+    section_preference: ["case presentation"]
+    reference_url: "https://www.care-statement.org/"
+  - id: clinical_timeline
+    label: Clinical timeline
+    severity: medium
+    keywords: ["timeline", "clinical course", "経過"]
+    required_evidence: ["timeline of events"]
+    section_preference: ["case presentation"]
+    reference_url: "https://www.care-statement.org/"
+  - id: diagnostic_assessment
+    label: Diagnostic assessment
+    severity: high
+    keywords: ["diagnostic assessment", "differential diagnosis", "検査所見", "鑑別"]
+    required_evidence: ["diagnostic tests", "differential diagnosis"]
+    section_preference: ["case presentation"]
+    reference_url: "https://www.care-statement.org/"
+  - id: intervention_followup
+    label: Intervention and follow-up
+    severity: high
+    keywords: ["intervention", "treatment", "follow-up", "予後", "治療"]
+    required_evidence: ["intervention", "outcome", "follow-up"]
+    section_preference: ["case presentation"]
+    reference_url: "https://www.care-statement.org/"
+  - id: consent
+    label: Patient consent
+    severity: high
+    keywords: ["informed consent", "patient consent", "consent was obtained", "同意"]
+    required_evidence: ["consent statement"]
+    section_preference: ["ethics"]
+    reference_url: "https://www.care-statement.org/"

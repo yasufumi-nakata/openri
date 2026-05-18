@@ -68,3 +68,15 @@ APIやUIを触った場合は、追加で次を確認します。
 ## Cross-model reviewer tests
 
 Codex、Claude、その他のAI reviewerに同じ `ai_review_protocol` を渡して査読させる場合は、多数決で正解にしません。重大findingの不一致は、モデル差ではなく、rubric不足、evidence不足、fixture不足として扱い、テストケースを追加してください。
+# Golden corpus and benchmark gate
+
+The checked-in golden corpus lives under `samples/golden/`, with generated expected reports under `backend/tests/golden_reports/`.
+
+Regenerate after intentional schema/finding changes:
+
+```bash
+PYTHONPATH=backend python scripts/update_golden_reports.py
+PYTHONPATH=backend python scripts/benchmark_openri.py
+```
+
+The benchmark report records recall proxy, precision proxy, routing accuracy proxy, and coverage blocker count. A drop in those metrics should be treated as rubric debt unless the corresponding fixture and acceptance criteria are intentionally changed.

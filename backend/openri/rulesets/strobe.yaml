@@ -1,0 +1,48 @@
+id: strobe
+name: STROBE observational studies checklist
+description: |
+  Observational cohort/case-control/cross-sectional studies should report design, setting,
+  participants, variables, bias, study size, statistical methods, and limitations.
+items:
+  - id: study_design
+    label: Study design stated
+    severity: high
+    keywords: ["cohort study", "case-control", "cross-sectional", "observational study", "観察研究"]
+    required_evidence: ["design label", "rationale"]
+    section_preference: ["title", "abstract", "methods"]
+    reference_url: "https://www.strobe-statement.org/"
+  - id: setting_participants
+    label: Setting and participants
+    severity: high
+    keywords: ["study setting", "participants were recruited", "eligibility criteria", "対象者", "適格基準"]
+    required_evidence: ["setting", "eligibility", "recruitment period"]
+    section_preference: ["methods"]
+    reference_url: "https://www.strobe-statement.org/"
+  - id: variables_data_sources
+    label: Variables and data sources
+    severity: medium
+    keywords: ["exposure", "outcome", "covariates", "data source", "測定項目"]
+    required_evidence: ["outcome definition", "exposure definition", "measurement source"]
+    section_preference: ["methods"]
+    reference_url: "https://www.strobe-statement.org/"
+  - id: bias_confounding
+    label: Bias and confounding
+    severity: high
+    keywords: ["confounding", "selection bias", "information bias", "adjusted for", "交絡", "バイアス"]
+    required_evidence: ["bias discussion", "confounder handling"]
+    section_preference: ["methods", "discussion"]
+    reference_url: "https://www.strobe-statement.org/"
+  - id: study_size
+    label: Study size
+    severity: medium
+    keywords: ["study size", "sample size", "power", "precision", "サンプルサイズ"]
+    required_evidence: ["sample size rationale"]
+    section_preference: ["methods"]
+    reference_url: "https://www.strobe-statement.org/"
+  - id: limitations
+    label: Limitations
+    severity: medium
+    keywords: ["limitations", "residual confounding", "generalizability", "限界"]
+    required_evidence: ["limitations tied to design and bias"]
+    section_preference: ["discussion"]
+    reference_url: "https://www.strobe-statement.org/"

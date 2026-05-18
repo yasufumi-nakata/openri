@@ -48,3 +48,22 @@ Before enabling it, a maintainer must create or claim the PyPI project and confi
 - environment: not required by the current workflow
 
 Keep `PUBLISH_TO_PYPI` unset or `false` until that configuration is complete.
+## PyPI, provenance, and SBOM
+
+Release tags build wheel/sdist, run `twine check`, generate `SHA256SUMS`, and attach a minimal SPDX JSON SBOM through `scripts/build_release_metadata.py`.
+
+For PyPI publishing, configure PyPI Trusted Publisher for:
+
+- repository: `yasufumi-nakata/openri`
+- workflow: `.github/workflows/release.yml`
+- environment: leave unset unless the workflow is later moved behind a protected environment
+
+Set repository variable `PUBLISH_TO_PYPI=true` only after Trusted Publisher is configured. Until then, releases still attach dist files, checksums, and SBOM artifacts without uploading to PyPI.
+
+Dry-run checklist:
+
+```bash
+python -m build
+python -m twine check dist/*
+python scripts/build_release_metadata.py --dist dist --out dist
+```

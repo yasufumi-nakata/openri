@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import "./styles.css";
 
-const API_BASE = "http://127.0.0.1:8008";
+const API_BASE = import.meta.env.VITE_OPENRI_API_BASE || "http://127.0.0.1:8008";
 
 const sampleText = `Title: Example manuscript for OpenRI smoke testing
 
@@ -71,7 +71,7 @@ function App() {
           include_experimental_checks: true,
         }),
       });
-      if (!response.ok) throw new Error(`API returned ${response.status}`);
+      if (!response.ok) throw new Error(await formatApiError(response, "API"));
       const payload = await response.json();
       setReport(payload);
       setSelectedFindingId(payload.findings[0]?.id ?? null);
@@ -103,7 +103,7 @@ function App() {
         let detail = `Upload API returned ${response.status}`;
         try {
           const payload = await response.json();
-          detail = payload.detail || detail;
+          detail = formatDetail(payload.detail) || detail;
         } catch {
           // Keep generic detail when the response is not JSON.
         }
@@ -150,7 +150,7 @@ function App() {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
+      <aside className="sidebar" aria-label="Primary navigation">
         <div className="brand">
           <div className="brand-mark">
             <ShieldAlert size={24} />
@@ -183,7 +183,7 @@ function App() {
             <p>提出論文をCodex/Claude等のAI reviewerが厳格に査読できるよう、統計・透明性・引用・隠し指示・主張の証拠対応をテスト化します。</p>
           </div>
           <div className="topbar-actions">
-            <select value={strictness} onChange={(event) => setStrictness(event.target.value)}>
+            <select aria-label="Strictness" value={strictness} onChange={(event) => setStrictness(event.target.value)}>
               <option value="lenient">Lenient</option>
               <option value="standard">Standard</option>
               <option value="strict">Strict</option>
@@ -405,14 +405,14 @@ function App() {
             <div className="upload-drop">
               <div>
                 <strong>Submitted PDF / text upload</strong>
-                <span>{uploadFile ? `${uploadFile.name} (${formatBytes(uploadFile.size)})` : "PDF, TXT, MD, TeXを選択できます"}</span>
+                <span>{uploadFile ? `${uploadFile.name} (${formatBytes(uploadFile.size)})` : "PDF, TXT, MD, TeX, PNG, JPEG, TIFFを選択できます"}</span>
               </div>
               <label className="file-button">
                 <Upload size={15} />
                 Choose file
                 <input
                   type="file"
-                  accept=".pdf,.txt,.md,.markdown,.tex,text/plain,application/pdf"
+                  accept=".pdf,.txt,.md,.markdown,.tex,.png,.jpg,.jpeg,.tif,.tiff,.webp,text/plain,application/pdf,image/png,image/jpeg,image/tiff,image/webp"
                   onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)}
                 />
               </label>
@@ -502,7 +502,7 @@ function App() {
             </div>
           </section>
 
-          <aside className="side-stack">
+          <aside className="side-stack" aria-label="Selected finding evidence">
             <section className="panel evidence-panel">
               <div className="panel-heading">
                 <div>
@@ -540,6 +540,31 @@ function App() {
       </main>
     </div>
   );
+}
+
+async function formatApiError(response, label) {
+  let detail = `${label} returned ${response.status}`;
+  try {
+    const payload = await response.json();
+    detail = formatDetail(payload.detail) || detail;
+  } catch {
+    // Keep generic detail when the response is not JSON.
+  }
+  return detail;
+}
+
+function formatDetail(detail) {
+  if (!detail) return "";
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    return detail
+      .map((item) => `${item.loc?.join(".") ?? "field"}: ${item.msg ?? JSON.stringify(item)}`)
+      .join("; ");
+  }
+  if (typeof detail === "object") {
+    return detail.error ? `${detail.error}${detail.filename ? ` (${detail.filename})` : ""}` : JSON.stringify(detail);
+  }
+  return String(detail);
 }
 
 function NavItem({ icon, label, active = false }) {

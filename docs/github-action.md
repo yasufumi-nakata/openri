@@ -71,3 +71,21 @@ jobs:
 pip install -e ".[pdf,network]"
 openri check manuscript/main.pdf --strictness strict --ruleset consort --sarif out.sarif.json
 ```
+# GitHub Action wrapper
+
+OpenRI ships a composite action at `.github/actions/openri-check/action.yml`.
+
+Example workflow:
+
+```yaml
+- uses: ./.github/actions/openri-check
+  with:
+    manuscript: manuscripts/submission.pdf
+    strictness: strict
+    rulesets: "consort mdar_strict"
+    fail-on: high
+    sarif-path: openri-results.sarif.json
+    network: "false"
+```
+
+The action outputs a JSON report path, SARIF path, and a short summary. Network-backed DOI checks stay disabled unless `network: "true"` is set.

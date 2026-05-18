@@ -1,0 +1,242 @@
+{
+  "$defs": {
+    "Evidence": {
+      "properties": {
+        "quote": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quote"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Location"
+        },
+        "data": {
+          "additionalProperties": true,
+          "title": "Data",
+          "type": "object"
+        }
+      },
+      "title": "Evidence",
+      "type": "object"
+    },
+    "Finding": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "check_id": {
+          "title": "Check Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "category": {
+          "title": "Category",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        },
+        "status": {
+          "$ref": "#/$defs/Status"
+        },
+        "score": {
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Score",
+          "type": "integer"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "recommendation": {
+          "title": "Recommendation",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "check_id",
+        "title",
+        "category",
+        "severity",
+        "status",
+        "score",
+        "message",
+        "recommendation"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "RunSummary": {
+      "properties": {
+        "total_checks": {
+          "title": "Total Checks",
+          "type": "integer"
+        },
+        "score": {
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Score",
+          "type": "integer"
+        },
+        "passed": {
+          "title": "Passed",
+          "type": "integer"
+        },
+        "warnings": {
+          "title": "Warnings",
+          "type": "integer"
+        },
+        "failed": {
+          "title": "Failed",
+          "type": "integer"
+        },
+        "skipped": {
+          "title": "Skipped",
+          "type": "integer"
+        },
+        "severity_counts": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/Severity"
+          },
+          "title": "Severity Counts",
+          "type": "object"
+        }
+      },
+      "required": [
+        "total_checks",
+        "score",
+        "passed",
+        "warnings",
+        "failed",
+        "skipped",
+        "severity_counts"
+      ],
+      "title": "RunSummary",
+      "type": "object"
+    },
+    "Severity": {
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "Status": {
+      "enum": [
+        "passed",
+        "warning",
+        "failed",
+        "skipped"
+      ],
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "default": "openri-report-v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "report_id": {
+      "title": "Report Id",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "objective": {
+      "title": "Objective",
+      "type": "string"
+    },
+    "strictness": {
+      "title": "Strictness",
+      "type": "string"
+    },
+    "summary": {
+      "$ref": "#/$defs/RunSummary"
+    },
+    "findings": {
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "manuscript_profile": {
+      "additionalProperties": true,
+      "title": "Manuscript Profile",
+      "type": "object"
+    },
+    "submission_processing": {
+      "additionalProperties": true,
+      "title": "Submission Processing",
+      "type": "object"
+    },
+    "ai_review_protocol": {
+      "additionalProperties": true,
+      "title": "Ai Review Protocol",
+      "type": "object"
+    }
+  },
+  "required": [
+    "title",
+    "objective",
+    "strictness",
+    "summary",
+    "findings",
+    "manuscript_profile"
+  ],
+  "title": "OpenRI RunReport",
+  "type": "object",
+  "$id": "https://github.com/yasufumi-nakata/openri/schemas/openri-report-v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

@@ -1,0 +1,41 @@
+id: arrive
+name: ARRIVE animal research checklist
+description: |
+  Animal research reporting checks for species/strain, housing, sample-size calculation,
+  randomisation, blinding, outcome measures, and welfare/ethical approvals.
+items:
+  - id: animal_details
+    label: Species, strain, sex, age, weight
+    severity: high
+    keywords: ["species", "strain", "sex", "age", "weight", "c57bl", "wistar", "動物種", "系統"]
+    required_evidence: ["species", "strain", "sex", "age or weight"]
+    section_preference: ["methods"]
+    reference_url: "https://arriveguidelines.org/"
+  - id: housing_husbandry
+    label: Housing and husbandry
+    severity: medium
+    keywords: ["housing", "husbandry", "light-dark cycle", "cage", "飼育"]
+    required_evidence: ["housing conditions", "environment"]
+    section_preference: ["methods"]
+    reference_url: "https://arriveguidelines.org/"
+  - id: sample_size
+    label: Sample size calculation
+    severity: high
+    keywords: ["sample size calculation", "power analysis", "effect size", "検出力"]
+    required_evidence: ["sample-size rationale"]
+    section_preference: ["methods"]
+    reference_url: "https://arriveguidelines.org/"
+  - id: randomisation_blinding
+    label: Randomisation and blinding
+    severity: high
+    keywords: ["randomisation", "randomization", "randomly assigned", "blinded", "盲検", "ランダム"]
+    required_evidence: ["allocation", "blinding of assessment"]
+    section_preference: ["methods"]
+    reference_url: "https://arriveguidelines.org/"
+  - id: ethics_welfare
+    label: Ethical approval and welfare
+    severity: high
+    keywords: ["animal ethics", "iacuc", "welfare", "humane endpoint", "動物実験委員会"]
+    required_evidence: ["approval", "welfare endpoint"]
+    section_preference: ["methods"]
+    reference_url: "https://arriveguidelines.org/"

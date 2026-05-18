@@ -1,0 +1,30 @@
+name: OpenRI manuscript CI
+
+on:
+  pull_request:
+    paths:
+      - "manuscripts/**"
+
+jobs:
+  openri:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: ./.github/actions/openri-check
+        with:
+          manuscript: manuscripts/submission.pdf
+          strictness: strict
+          rulesets: "consort mdar_strict"
+          fail-on: high
+          sarif-path: openri-results.sarif.json
+          network: "false"
+      - uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: openri-results.sarif.json

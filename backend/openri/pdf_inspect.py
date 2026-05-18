@@ -90,7 +90,10 @@ def inspect_pdf(path: Path) -> dict:
         return {"available": False, "reason": "pdfplumber-not-installed", "hidden_text": [], "page_count": 0}
 
     hidden_chars: list[dict] = []
+    document_risks: list[dict] = []
     page_count = 0
+    image_count = 0
+    total_chars = 0
     with pdfplumber.open(path) as pdf:
         page_count = len(pdf.pages)
         for page_index, page in enumerate(pdf.pages, start=1):
@@ -100,6 +103,11 @@ def inspect_pdf(path: Path) -> dict:
                 chars = page.chars
             except Exception:
                 continue
+            total_chars += len(chars)
+            try:
+                image_count += len(page.images or [])
+            except Exception:
+                pass
             for char in chars:
                 kind = _classify_char(char, width, height)
                 if kind is None:
@@ -108,6 +116,20 @@ def inspect_pdf(path: Path) -> dict:
                 marked["_kind"] = kind
                 marked["_page"] = page_index
                 hidden_chars.append(marked)
+
+    document_risks.extend(_pdf_structure_risks(path))
+    if page_count and total_chars == 0:
+        severity = "medium" if image_count else "low"
+        document_risks.append(
+            {
+                "kind": "ocr-required-or-empty-text-layer",
+                "severity": severity,
+                "page": None,
+                "text": None,
+                "image_count": image_count,
+                "message": "PDF has no extractable text layer; image-only or scanned submissions need OCR before AI review.",
+            }
+        )
 
     runs = _group_runs(hidden_chars)
     hits = []
@@ -131,4 +153,42 @@ def inspect_pdf(path: Path) -> dict:
                 "top": round(run.get("top", 0), 2),
             }
         )
-    return {"available": True, "page_count": page_count, "hidden_text": hits}
+    return {
+        "available": True,
+        "page_count": page_count,
+        "hidden_text": hits,
+        "document_risks": document_risks,
+        "image_count": image_count,
+        "text_char_count": total_chars,
+    }
+
+
+def _pdf_structure_risks(path: Path) -> list[dict]:
+    try:
+        from pypdf import PdfReader  # type: ignore
+    except ImportError:
+        return []
+    try:
+        reader = PdfReader(str(path))
+    except Exception as exc:  # noqa: BLE001 - malformed PDFs are reported as a coverage blocker
+        return [{"kind": "pdf-structure-read-failed", "severity": "medium", "message": str(exc)[:160]}]
+
+    risks: list[dict] = []
+    root = getattr(reader, "trailer", {}).get("/Root", {})
+    names = root.get("/Names", {}) if hasattr(root, "get") else {}
+    if names and names.get("/EmbeddedFiles"):
+        risks.append({"kind": "embedded-files", "severity": "high", "message": "PDF contains embedded files."})
+    if names and names.get("/JavaScript"):
+        risks.append({"kind": "javascript", "severity": "high", "message": "PDF contains JavaScript name tree."})
+    if root.get("/OCProperties") if hasattr(root, "get") else False:
+        risks.append({"kind": "optional-content-groups", "severity": "medium", "message": "PDF contains optional content/layer properties."})
+
+    for index, page in enumerate(reader.pages, start=1):
+        try:
+            annotations = page.get("/Annots")
+        except Exception:
+            annotations = None
+        if annotations:
+            risks.append({"kind": "annotations", "severity": "medium", "page": index, "message": "PDF page contains annotations."})
+            break
+    return risks

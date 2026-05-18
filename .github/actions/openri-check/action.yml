@@ -1,0 +1,76 @@
+name: OpenRI manuscript check
+description: Run OpenRI checks for manuscript files and emit JSON/SARIF outputs.
+inputs:
+  manuscript:
+    description: Path to the manuscript file.
+    required: true
+  strictness:
+    description: lenient, standard, or strict.
+    required: false
+    default: standard
+  rulesets:
+    description: Space-separated OpenRI ruleset ids.
+    required: false
+    default: ""
+  fail-on:
+    description: Severity threshold that should fail the action.
+    required: false
+    default: high
+  report-path:
+    description: JSON report output path.
+    required: false
+    default: openri-report.json
+  sarif-path:
+    description: SARIF output path.
+    required: false
+    default: openri-results.sarif.json
+  network:
+    description: Set to true to enable network-backed checks.
+    required: false
+    default: "false"
+outputs:
+  report-path:
+    description: Path to the OpenRI JSON report.
+    value: ${{ inputs.report-path }}
+  sarif-path:
+    description: Path to the OpenRI SARIF report.
+    value: ${{ inputs.sarif-path }}
+  summary:
+    description: Human-readable OpenRI summary.
+    value: ${{ steps.summary.outputs.summary }}
+runs:
+  using: composite
+  steps:
+    - name: Install OpenRI from checkout
+      shell: bash
+      run: python -m pip install -U pip && python -m pip install -e ".[pdf,network]"
+    - name: Run OpenRI
+      shell: bash
+      run: |
+        set -euo pipefail
+        args=()
+        for ruleset in ${{ inputs.rulesets }}; do
+          args+=(--ruleset "$ruleset")
+        done
+        if [[ "${{ inputs.network }}" == "true" ]]; then
+          args+=(--network)
+        fi
+        openri check "${{ inputs.manuscript }}" \
+          --strictness "${{ inputs.strictness }}" \
+          --json > "${{ inputs.report-path }}" \
+          --sarif "${{ inputs.sarif-path }}" \
+          --fail-on "${{ inputs.fail-on }}" \
+          "${args[@]}"
+    - name: Summarize
+      id: summary
+      shell: bash
+      run: |
+        summary=$(python - <<'PY'
+        import json
+        payload=json.load(open("${{ inputs.report-path }}"))
+        s=payload["summary"]
+        print(f"score={s['score']} failed={s['failed']} warnings={s['warnings']} skipped={s['skipped']}")
+        PY
+        )
+        echo "summary=$summary" >> "$GITHUB_OUTPUT"
+        echo "$summary" >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,41 @@
+id: cheers
+name: CHEERS health economic evaluation checklist
+description: |
+  Health economic evaluations should report perspective, time horizon, discount rate,
+  resource use, valuation, uncertainty, and generalisability.
+items:
+  - id: perspective
+    label: Study perspective
+    severity: high
+    keywords: ["perspective", "payer perspective", "societal perspective", "分析視点"]
+    required_evidence: ["economic perspective"]
+    section_preference: ["methods"]
+    reference_url: "https://www.equator-network.org/reporting-guidelines/cheers/"
+  - id: time_horizon_discount
+    label: Time horizon and discount rate
+    severity: high
+    keywords: ["time horizon", "discount rate", "discounted", "時間軸", "割引率"]
+    required_evidence: ["time horizon", "discounting policy"]
+    section_preference: ["methods"]
+    reference_url: "https://www.equator-network.org/reporting-guidelines/cheers/"
+  - id: cost_resource_use
+    label: Resource use and costs
+    severity: high
+    keywords: ["resource use", "unit cost", "costs", "費用"]
+    required_evidence: ["resource measurement", "unit costs"]
+    section_preference: ["methods", "results"]
+    reference_url: "https://www.equator-network.org/reporting-guidelines/cheers/"
+  - id: uncertainty
+    label: Uncertainty analysis
+    severity: high
+    keywords: ["sensitivity analysis", "probabilistic", "uncertainty", "感度分析"]
+    required_evidence: ["uncertainty method"]
+    section_preference: ["methods", "results"]
+    reference_url: "https://www.equator-network.org/reporting-guidelines/cheers/"
+  - id: generalisability
+    label: Generalisability
+    severity: medium
+    keywords: ["generalisability", "generalizability", "transferability", "外的妥当性"]
+    required_evidence: ["setting transferability"]
+    section_preference: ["discussion"]
+    reference_url: "https://www.equator-network.org/reporting-guidelines/cheers/"

@@ -34,6 +34,7 @@ dependencies = [
     "pydantic>=2.0",
     "scipy>=1.10",
     "pyyaml>=6.0",
+    "Pillow>=10.0",
 ]
 
 [project.optional-dependencies]
@@ -49,6 +50,7 @@ dev = [
     "ruff>=0.8",
     "httpx>=0.25",
     "reportlab>=4.0",
+    "jsonschema>=4.20",
 ]
 
 [project.scripts]

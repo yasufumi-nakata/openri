@@ -7,9 +7,11 @@ from pathlib import Path
 
 from . import __version__
 from .analyzer import analyze_manuscript
+from .image_inspect import inspect_image, is_supported_image
 from .models import RunRequest, Severity, Status
 from .pdf import extract_text_from_pdf
 from .pdf_inspect import inspect_pdf
+from .reviewer_eval import write_eval_report
 from .sarif import report_to_sarif
 from .store import ReportStore
 
@@ -23,15 +25,21 @@ _SEVERITY_RANK = {
 }
 
 
-def _read_manuscript(path: str) -> tuple[str, str, Path | None]:
+def _read_manuscript(path: str) -> tuple[str, str, Path | None, Path | None]:
     if path == "-":
-        return sys.stdin.read(), "stdin", None
+        return sys.stdin.read(), "stdin", None, None
     p = Path(path).expanduser()
     if not p.exists():
         raise FileNotFoundError(f"manuscript not found: {p}")
     if p.suffix.lower() == ".pdf":
-        return extract_text_from_pdf(p), p.name, p
-    return p.read_text(encoding="utf-8", errors="replace"), p.name, None
+        return extract_text_from_pdf(p), p.name, p, None
+    if is_supported_image(p):
+        text = (
+            f"Image-only submission: {p.name}\n\n"
+            "The uploaded figure file was inspected for image-integrity metadata, compression, and repeated pixel-region candidates."
+        )
+        return text, p.name, None, p
+    return p.read_text(encoding="utf-8", errors="replace"), p.name, None, None
 
 
 def _max_finding_rank(findings, only_statuses) -> int:
@@ -83,7 +91,7 @@ def _print_human(report) -> None:
 
 def cmd_check(args: argparse.Namespace) -> int:
     try:
-        text, source_name, pdf_path = _read_manuscript(args.manuscript)
+        text, source_name, pdf_path, image_path = _read_manuscript(args.manuscript)
     except FileNotFoundError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -93,12 +101,15 @@ def cmd_check(args: argparse.Namespace) -> int:
         return 2
 
     pdf_inspection = None
+    image_inspection = None
     if pdf_path is not None:
         try:
             pdf_inspection = inspect_pdf(pdf_path)
         except Exception as exc:  # noqa: BLE001 - report and continue
             print(f"warning: PDF inspection failed: {exc}", file=sys.stderr)
-            pdf_inspection = {"available": False, "reason": str(exc), "hidden_text": [], "page_count": 0}
+            pdf_inspection = {"available": False, "reason": str(exc), "hidden_text": [], "document_risks": [], "page_count": 0}
+    if image_path is not None:
+        image_inspection = inspect_image(image_path)
 
     request = RunRequest(
         manuscript_text=text,
@@ -109,6 +120,8 @@ def cmd_check(args: argparse.Namespace) -> int:
         activated_rulesets=args.ruleset or [],
         enable_network=args.network,
         pdf_inspection=pdf_inspection,
+        image_inspection=image_inspection,
+        source_metadata={"source_name": source_name, "source_path": None if args.manuscript == "-" else str(Path(args.manuscript).expanduser())},
     )
     report = analyze_manuscript(request)
 
@@ -165,6 +178,18 @@ def cmd_show(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_eval_reviewers(args: argparse.Namespace) -> int:
+    paths = [Path(item).expanduser() for item in args.review_result]
+    report = write_eval_report(paths, Path(args.out).expanduser())
+    if args.json:
+        sys.stdout.write(json.dumps(report, indent=2, ensure_ascii=False))
+        sys.stdout.write("\n")
+    else:
+        print(f"wrote {args.out}")
+        print(f"models={len(report['models'])} disagreements={len(report['disagreements'])}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="openri", description="Open Research Integrity test runner")
     parser.add_argument("--version", action="version", version=f"openri {__version__}")
@@ -214,6 +239,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_show.add_argument("--json", action="store_true")
     p_show.add_argument("--sarif", metavar="PATH", help="Write SARIF for this report to PATH")
     p_show.set_defaults(func=cmd_show)
+
+    p_eval = sub.add_parser("eval-reviewers", help="Compare multiple AI reviewer JSON results for major finding recall")
+    p_eval.add_argument("review_result", nargs="+", help="Path to reviewer result JSON")
+    p_eval.add_argument("--out", default="openri-reviewer-eval.json")
+    p_eval.add_argument("--json", action="store_true")
+    p_eval.set_defaults(func=cmd_eval_reviewers)
 
     return parser
 

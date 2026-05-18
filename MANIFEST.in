@@ -11,5 +11,8 @@ include ROADMAP.md
 include AGENTS.md
 include CLAUDE.md
 recursive-include docs *.md
+recursive-include docs/examples *.yml
 recursive-include samples *.txt
+recursive-include schemas *.json
+recursive-include benchmark *.json *.md
 recursive-include backend/openri/rulesets *.yaml

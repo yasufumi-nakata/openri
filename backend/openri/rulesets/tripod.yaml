@@ -1,0 +1,48 @@
+id: tripod
+name: TRIPOD prediction model checklist
+description: |
+  Prediction model studies should report source data, participants, outcome definition,
+  predictors, missing data, model specification, performance, calibration, and validation.
+items:
+  - id: source_data_participants
+    label: Source data and participants
+    severity: high
+    keywords: ["source data", "participants", "development cohort", "validation cohort", "対象者"]
+    required_evidence: ["source", "eligibility", "development/validation split"]
+    section_preference: ["methods"]
+    reference_url: "https://www.tripod-statement.org/"
+  - id: outcome_predictors
+    label: Outcome and predictors
+    severity: high
+    keywords: ["outcome", "predictors", "candidate predictors", "予測因子"]
+    required_evidence: ["outcome definition", "predictor handling"]
+    section_preference: ["methods"]
+    reference_url: "https://www.tripod-statement.org/"
+  - id: missing_data
+    label: Missing data handling
+    severity: high
+    keywords: ["missing data", "multiple imputation", "complete case", "欠測"]
+    required_evidence: ["missing data method"]
+    section_preference: ["methods"]
+    reference_url: "https://www.tripod-statement.org/"
+  - id: model_specification
+    label: Model specification
+    severity: high
+    keywords: ["model specification", "regression coefficients", "risk score", "モデル式"]
+    required_evidence: ["model equation or coefficients"]
+    section_preference: ["methods", "results"]
+    reference_url: "https://www.tripod-statement.org/"
+  - id: performance_calibration
+    label: Performance and calibration
+    severity: high
+    keywords: ["c-statistic", "auc", "calibration", "decision curve", "性能", "較正"]
+    required_evidence: ["discrimination", "calibration"]
+    section_preference: ["results"]
+    reference_url: "https://www.tripod-statement.org/"
+  - id: validation
+    label: Internal or external validation
+    severity: high
+    keywords: ["external validation", "internal validation", "bootstrap validation", "検証"]
+    required_evidence: ["validation approach"]
+    section_preference: ["methods", "results"]
+    reference_url: "https://www.tripod-statement.org/"

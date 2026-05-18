@@ -10,6 +10,7 @@ from scipy import stats
 
 from .crossref import lookup_doi
 from .models import Evidence, Finding, Severity, Status
+from .references import citation_context_audit
 from .ruleset_loader import (
     KeywordRuleset,
     Pattern,
@@ -37,10 +38,13 @@ class CheckSpec:
 STAT_RE = re.compile(
     r"(?P<test>t|z|F|χ2|χ\^2|chi-?square|chi2)\s*"
     r"\(\s*(?P<df1>\d+(?:\.\d+)?)\s*(?:,\s*(?P<df2>\d+(?:\.\d+)?))?\s*\)\s*"
-    r"=\s*(?P<value>-?\d+(?:\.\d+)?)"
-    r"(?P<trailer>[\s\S]{0,160}?)(?:p\s*(?P<op><=|>=|<|>|=)\s*(?P<p>0?\.\d+|1(?:\.0+)?|0(?:\.0+)?))",
+    r"=?\s*(?P<value>-?\d+(?:\.\d+)?)"
+    r"(?P<trailer>[\s\S]{0,220}?)(?:p\s*(?P<op><=|>=|<|>|=)\s*(?P<p>0?\.\d+|1(?:\.0+)?|0(?:\.0+)?))",
     re.IGNORECASE,
 )
+
+EFFECT_RE = re.compile(r"\b(?P<kind>Cohen'?s?\s*d|ηp?2|eta\s*squared|OR|RR|HR|r|β)\s*=\s*(?P<value>-?\d+(?:\.\d+)?)", re.IGNORECASE)
+CI_RE = re.compile(r"\b(?P<level>9[059]%|95\s*percent)\s*CI\s*[\[:(]\s*(?P<low>-?\d+(?:\.\d+)?)\s*,\s*(?P<high>-?\d+(?:\.\d+)?)\s*[\]):]", re.IGNORECASE)
 
 MEAN_N_RE = re.compile(
     r"(?:M|mean)\s*=\s*(?P<mean>-?\d+(?:\.\d+)?)"
@@ -103,6 +107,26 @@ def _p_value(test: str, value: float, df1: float, df2: float | None) -> float | 
     return None
 
 
+def _reported_p_consistent(calculated: float, reported: float, op: str, tolerance: float) -> tuple[bool, bool, bool]:
+    if op in {"<", "<="}:
+        threshold_flip = not calculated <= reported + tolerance
+        materially_different = threshold_flip and reported >= 0.01
+        return (not threshold_flip and not materially_different), threshold_flip, materially_different
+    if op in {">", ">="}:
+        threshold_flip = not calculated >= reported - tolerance
+        materially_different = threshold_flip and reported >= 0.01
+        return (not threshold_flip and not materially_different), threshold_flip, materially_different
+    materially_different = abs(calculated - reported) > tolerance
+    reported_passes = reported < 0.05
+    calculated_passes = calculated < 0.05
+    threshold_flip = reported_passes != calculated_passes
+    return (not materially_different and not threshold_flip), threshold_flip, materially_different
+
+
+def _one_tailed_context(snippet: str) -> bool:
+    return bool(re.search(r"one[-\s]?tailed|one[-\s]?sided|片側", snippet, re.IGNORECASE))
+
+
 def check_statistical_consistency(text: str, profile: dict) -> Finding:
     mismatches: list[Evidence] = []
     checked = 0
@@ -119,12 +143,11 @@ def check_statistical_consistency(text: str, profile: dict) -> Finding:
         calculated = _p_value(test, value, df1, df2)
         if calculated is None or math.isnan(calculated):
             continue
+        if _one_tailed_context(match.group(0)):
+            calculated = calculated / 2
 
-        reported_passes = reported < 0.05 if op in {"<", "<=", "="} else reported > 0.05
-        calculated_passes = calculated < 0.05
-        materially_different = abs(calculated - reported) > p_tolerance
-        threshold_flip = reported_passes != calculated_passes
-        if threshold_flip or materially_different:
+        consistent, threshold_flip, materially_different = _reported_p_consistent(calculated, reported, op, p_tolerance)
+        if not consistent:
             mismatches.append(
                 Evidence(
                     quote=match.group(0).strip(),
@@ -138,6 +161,7 @@ def check_statistical_consistency(text: str, profile: dict) -> Finding:
                         "reported_operator": op,
                         "calculated_p": round(calculated, 6),
                         "threshold_flip": threshold_flip,
+                        "one_tailed_context": _one_tailed_context(match.group(0)),
                     },
                 )
             )
@@ -177,8 +201,51 @@ def check_statistical_consistency(text: str, profile: dict) -> Finding:
         Status.PASSED,
         100,
         f"{checked}件の検定表記を再計算し、重大な不整合は見つかりませんでした。",
-        "検出対象外の統計量や補足表については、追加の表形式チェックを推奨します。",
+        "表内・複数行・片側検定の代表的なAPA表記も確認しました。効果量/CIは別findingでcoverage blockerとして扱います。",
         tags=["statcheck", "p-value"],
+    )
+
+
+def check_effect_size_ci_coverage(text: str, profile: dict) -> Finding:
+    effects = [
+        Evidence(
+            quote=match.group(0),
+            location=_line_number(text, match.start()),
+            data={"kind": match.group("kind"), "value": float(match.group("value"))},
+        )
+        for match in EFFECT_RE.finditer(text)
+    ]
+    cis = [
+        Evidence(
+            quote=match.group(0),
+            location=_line_number(text, match.start()),
+            data={"level": match.group("level"), "low": float(match.group("low")), "high": float(match.group("high"))},
+        )
+        for match in CI_RE.finditer(text)
+    ]
+    if effects or cis:
+        return _finding(
+            "effect_size_ci_coverage",
+            "Effect-size and CI coverage",
+            "statistics",
+            Severity.INFO,
+            Status.WARNING,
+            76,
+            f"{len(effects)}件の効果量と{len(cis)}件の信頼区間を抽出しましたが、整合性再計算は未対応です。",
+            "効果量、信頼区間、p値、サンプルサイズの相互整合は統計担当または次段checkで確認してください。",
+            (effects + cis)[:10],
+            ["statistics", "effect-size", "confidence-interval", "coverage-blocker"],
+        )
+    return _finding(
+        "effect_size_ci_coverage",
+        "Effect-size and CI coverage",
+        "statistics",
+        Severity.INFO,
+        Status.SKIPPED,
+        72,
+        "効果量または信頼区間を検出できませんでした。",
+        "査読前には、主要claimに対応する効果量と信頼区間の有無を確認してください。",
+        tags=["statistics", "effect-size", "confidence-interval", "coverage-blocker"],
     )
 
 
@@ -386,6 +453,65 @@ def check_citation_integrity(text: str, profile: dict) -> Finding:
         "次段ではCrossref/OpenAlex/Semantic Scholar APIで全参考文献の実在性と引用文脈を検証してください。",
         [Evidence(data={"doi_count": len(dois), "numeric_citation_groups": len(numeric_cites), "has_references": has_references})],
         ["citation", "doi"],
+    )
+
+
+def check_citation_context(text: str, profile: dict) -> Finding:
+    audit = citation_context_audit(text)
+    evidence = [Evidence(data=audit)]
+    unresolved = audit["unresolved_numeric_citations"]
+    placeholders = audit["placeholder_references"]
+    unsupported = audit["unsupported_claims"]
+    if unresolved or placeholders:
+        return _finding(
+            "citation_context",
+            "Structured reference and citation-context audit",
+            "references",
+            Severity.HIGH,
+            Status.WARNING,
+            45,
+            "参考文献リスト、本文中引用、placeholder DOIの対応に確認が必要な箇所があります。",
+            "本文中引用番号と参考文献番号を照合し、placeholder DOIや支えの弱いclaimは著者照会または外部DB照合へ回してください。",
+            evidence,
+            ["citation", "reference-list", "claim-support"],
+        )
+    if unsupported:
+        return _finding(
+            "citation_context",
+            "Structured reference and citation-context audit",
+            "references",
+            Severity.MEDIUM,
+            Status.WARNING,
+            65,
+            f"{len(unsupported)}件のclaimで、同一文内の引用・DOI・統計量マーカーが見つかりませんでした。",
+            "重要claimごとに、本文中引用・結果・図表・限界記述との対応をreview_packetで確認してください。",
+            evidence,
+            ["citation", "reference-list", "claim-support"],
+        )
+    if audit["reference_count"] or audit["inline_citations"]:
+        return _finding(
+            "citation_context",
+            "Structured reference and citation-context audit",
+            "references",
+            Severity.LOW,
+            Status.PASSED,
+            92,
+            "参考文献リストと本文中引用の基本構造を抽出し、明確な番号不整合は見つかりませんでした。",
+            "引用がclaimを本当に支えているかは、review_packetのclaim inventoryを用いて人間またはAI reviewerが確認してください。",
+            evidence,
+            ["citation", "reference-list", "claim-support"],
+        )
+    return _finding(
+        "citation_context",
+        "Structured reference and citation-context audit",
+        "references",
+        Severity.INFO,
+        Status.SKIPPED,
+        70,
+        "参考文献リストまたは本文中引用を抽出できませんでした。",
+        "参考文献セクション、本文中引用、DOIを構造化して記載すると、claim-support確認に接続できます。",
+        evidence,
+        ["citation", "reference-list", "coverage-blocker"],
     )
 
 
@@ -611,11 +737,69 @@ _SEVERITY_BY_NAME = {
 }
 
 
-def check_image_integrity_placeholder(text: str, profile: dict) -> Finding:
+def check_image_integrity(text: str, profile: dict) -> Finding:
+    inspection = profile.get("image_inspection") or {}
+    if inspection:
+        if not inspection.get("available"):
+            return _finding(
+                "image_integrity",
+                "Image integrity",
+                "image-integrity",
+                Severity.INFO,
+                Status.SKIPPED,
+                65,
+                f"画像検査を実行できませんでした: {inspection.get('reason', 'unknown')}",
+                "Pillowを含む環境で再実行し、画像ファイルを直接アップロードしてください。",
+                [Evidence(data=inspection)],
+                ["image-integrity", "coverage-blocker"],
+            )
+        hits = inspection.get("findings", []) or []
+        if hits:
+            severity = Severity.MEDIUM if any(hit.get("severity") == "medium" for hit in hits) else Severity.LOW
+            return _finding(
+                "image_integrity",
+                "Image integrity",
+                "image-integrity",
+                severity,
+                Status.WARNING,
+                max(40, 85 - 10 * len(hits)),
+                f"画像メタデータと画素ブロックを確認し、{len(hits)}件のreviewer task候補を検出しました。",
+                "EXIF、圧縮履歴、重複領域候補は不正断定ではなく、元画像・処理履歴・図説明との照合タスクとして扱ってください。",
+                [Evidence(data=item) for item in hits[:10]],
+                ["image-integrity", "metadata", "duplicate-region"],
+            )
+        return _finding(
+            "image_integrity",
+            "Image integrity",
+            "image-integrity",
+            Severity.LOW,
+            Status.PASSED,
+            95,
+            "画像メタデータと画素ブロックの簡易検査で、明確な重複領域候補は見つかりませんでした。",
+            "高リスク原稿では、専門ツールによるELA、レイヤー、raw画像履歴の追加確認を推奨します。",
+            [Evidence(data=inspection)],
+            ["image-integrity", "metadata"],
+        )
+
+    pdf_inspection = profile.get("pdf_inspection") or {}
+    if pdf_inspection.get("image_count"):
+        return _finding(
+            "image_integrity",
+            "Image integrity",
+            "image-integrity",
+            Severity.INFO,
+            Status.WARNING,
+            68,
+            f"PDF内に{pdf_inspection.get('image_count')}件の画像候補がありますが、個別画像抽出検査は未完了です。",
+            "PDFから図画像を抽出し、EXIF、重複領域、圧縮履歴、図本文参照との整合を確認してください。",
+            [Evidence(data={"pdf_image_count": pdf_inspection.get("image_count"), "implemented_for_pdf_images": False})],
+            ["image-integrity", "pdf-image", "coverage-blocker"],
+        )
+
     figure_mentions = len(re.findall(r"\b(fig\.?|figure|図)\s*\d+", text, re.IGNORECASE))
     if figure_mentions == 0:
         return _finding(
-            "image_integrity_placeholder",
+            "image_integrity",
             "Image integrity",
             "image-integrity",
             Severity.INFO,
@@ -630,15 +814,15 @@ def check_image_integrity_placeholder(text: str, profile: dict) -> Finding:
     severity = _SEVERITY_BY_NAME.get(severity_name, Severity.MEDIUM)
     score = {"info": 80, "low": 70, "medium": 60, "high": 45, "critical": 30}.get(severity_name, 60)
     return _finding(
-        "image_integrity_placeholder",
+        "image_integrity",
         "Image integrity",
         "image-integrity",
         severity,
         Status.WARNING,
         score,
-        f"本文中に{figure_mentions}件の図参照を検出しましたが、この初期版では画像そのものは未検査です。",
-        "次段で画像アップロード、EXIF/圧縮アーティファクト、類似領域、切り貼り検出を追加してください。",
-        [Evidence(data={"figure_mentions": figure_mentions, "implemented": False, "severity_from_strictness": severity_name})],
+        f"本文中に{figure_mentions}件の図参照を検出しましたが、画像ファイル自体は未提出です。",
+        "画像ファイルまたはPDFをアップロードし、EXIF、圧縮アーティファクト、重複領域候補、図本文参照の整合を確認してください。",
+        [Evidence(data={"figure_mentions": figure_mentions, "implemented_for_direct_image_files": True, "severity_from_strictness": severity_name})],
         ["image-integrity", "roadmap"],
     )
 
@@ -672,7 +856,7 @@ def check_doi_existence(text: str, profile: dict) -> Finding:
     max_dois = 12
     lookups = [lookup_doi(doi) for doi in dois[:max_dois]]
     missing = [r for r in lookups if r["status"] == "missing"]
-    errors = [r for r in lookups if r["status"] in {"error", "http_error"}]
+    errors = [r for r in lookups if r["status"] in {"error", "http_error", "cache_miss"}]
     found = [r for r in lookups if r["status"] == "found"]
     evidence = [Evidence(quote=r["doi"], data=r) for r in (missing + errors + found)[:max_dois]]
 
@@ -718,19 +902,52 @@ def check_doi_existence(text: str, profile: dict) -> Finding:
 
 def _scan_keyword_ruleset(text: str, ruleset: KeywordRuleset) -> dict:
     lowered = text.lower()
-    detected: list[str] = []
+    detected: list[dict] = []
     missing: list[dict] = []
+    not_applicable: list[dict] = []
     for item in ruleset.items:
         matched = next((kw for kw in item.keywords if kw and kw in lowered), None)
         if matched:
-            detected.append(item.id)
+            idx = lowered.find(matched)
+            window = lowered[max(0, idx - 80):idx + len(matched) + 120]
+            if re.search(r"\b(not applicable|n/?a|not relevant|該当なし|対象外)\b", window, re.IGNORECASE):
+                not_applicable.append(
+                    {
+                        "id": item.id,
+                        "label": item.label,
+                        "matched_keyword": matched,
+                        "policy": item.not_applicable_policy,
+                        "required_evidence": list(item.required_evidence),
+                    }
+                )
+            else:
+                detected.append(
+                    {
+                        "id": item.id,
+                        "label": item.label,
+                        "matched_keyword": matched,
+                        "required_evidence": list(item.required_evidence),
+                        "section_preference": list(item.section_preference),
+                        "reference_url": item.reference_url,
+                    }
+                )
         else:
-            missing.append({"id": item.id, "label": item.label, "severity": item.severity})
+            missing.append(
+                {
+                    "id": item.id,
+                    "label": item.label,
+                    "severity": item.severity,
+                    "required_evidence": list(item.required_evidence),
+                    "section_preference": list(item.section_preference),
+                    "reference_url": item.reference_url,
+                }
+            )
     return {
         "id": ruleset.id,
         "name": ruleset.name,
         "total": len(ruleset.items),
         "detected": detected,
+        "not_applicable": not_applicable,
         "missing": missing,
     }
 
@@ -832,39 +1049,41 @@ def check_pdf_hidden_text(text: str, profile: dict) -> Finding:
             tags=["pdf", "hidden-text"],
         )
     hits = inspection.get("hidden_text", []) or []
-    if not hits:
+    document_risks = inspection.get("document_risks", []) or []
+    if not hits and not document_risks:
         return _finding(
             "pdf_hidden_text",
-            "PDF hidden text (coords, font size, color)",
+            "PDF hidden text and active content",
             "ai-safety",
             Severity.LOW,
             Status.PASSED,
             96,
-            f"PDF {inspection.get('page_count', '?')} ページを検査し、不可視テキストは検出されませんでした。",
-            "PDFの埋め込みフォントやJavaScriptなど、座標・色以外のチャネルは別途確認してください。",
+            f"PDF {inspection.get('page_count', '?')} ページを検査し、不可視テキストやactive content候補は検出されませんでした。",
+            "スキャンPDFや画像内文字はOCRが必要なcoverage blockerとして別途確認してください。",
             tags=["pdf", "hidden-text"],
         )
     severity_rank = {"low": Severity.LOW, "medium": Severity.MEDIUM, "high": Severity.HIGH}
-    max_severity = max((severity_rank.get(h.get("severity", "high"), Severity.HIGH) for h in hits), default=Severity.HIGH)
+    combined = [*hits, *document_risks]
+    max_severity = max((severity_rank.get(h.get("severity", "high"), Severity.HIGH) for h in combined), default=Severity.HIGH)
     evidence = [
         Evidence(
             quote=(h.get("text") or "")[:200] or None,
             location=f"page {h.get('page', '?')}",
             data=h,
         )
-        for h in hits[:12]
+        for h in combined[:12]
     ]
     return _finding(
         "pdf_hidden_text",
-        "PDF hidden text (coords, font size, color)",
+        "PDF hidden text and active content",
         "ai-safety",
         max_severity,
         Status.FAILED if max_severity in {Severity.HIGH, Severity.CRITICAL} else Status.WARNING,
-        max(15, 70 - 8 * len(hits)),
-        f"PDF {inspection.get('page_count', '?')} ページから {len(hits)} 件の不可視/極小/ページ外テキストを検出しました。",
-        "白色文字・極小フォント・ページ外配置はLLM査読操作や隠し指示に使われ得ます。著者に削除と再生成を依頼してください。",
+        max(15, 70 - 8 * len(combined)),
+        f"PDF {inspection.get('page_count', '?')} ページから {len(hits)} 件の不可視/極小/ページ外テキストと {len(document_risks)} 件のPDF構造リスクを検出しました。",
+        "白色文字・極小フォント・ページ外配置、注釈、添付、JavaScript、OCR要PDFはLLM査読操作や検査漏れに使われ得ます。著者に削除、再生成、OCR付き提出、元ファイル確認を依頼してください。",
         evidence,
-        ["pdf", "hidden-text", "prompt-injection"],
+        ["pdf", "hidden-text", "prompt-injection", "active-content"],
     )
 
 
@@ -886,6 +1105,14 @@ CHECKS: list[CheckSpec] = [
         check_summary_stat_plausibility,
     ),
     CheckSpec(
+        "effect_size_ci_coverage",
+        "Effect-size and CI coverage",
+        "statistics",
+        "効果量と信頼区間を抽出し、未検査の相互整合をcoverage blockerとして残します。",
+        "beta",
+        check_effect_size_ci_coverage,
+    ),
+    CheckSpec(
         "reporting_transparency",
         "Reporting transparency",
         "research-integrity",
@@ -900,6 +1127,14 @@ CHECKS: list[CheckSpec] = [
         "DOI、本文中引用、参考文献セクションの機械的不整合を検出します。",
         "beta",
         check_citation_integrity,
+    ),
+    CheckSpec(
+        "citation_context",
+        "Structured reference and citation-context audit",
+        "references",
+        "参考文献リスト、本文中引用、claimの支えを構造化してreview_packetへ渡します。",
+        "beta",
+        check_citation_context,
     ),
     CheckSpec(
         "prompt_injection",
@@ -918,12 +1153,12 @@ CHECKS: list[CheckSpec] = [
         check_duplicate_or_template_text,
     ),
     CheckSpec(
-        "image_integrity_placeholder",
+        "image_integrity",
         "Image integrity",
         "image-integrity",
-        "図表参照を検出し、画像完全性検査が未実装であることを明示します。",
+        "画像ファイルまたはPDF内画像候補について、EXIF、圧縮形式、重複領域候補、図参照の整合を検査します。",
         "experimental",
-        check_image_integrity_placeholder,
+        check_image_integrity,
     ),
     CheckSpec(
         "doi_existence",
@@ -950,4 +1185,3 @@ CHECKS: list[CheckSpec] = [
         check_pdf_hidden_text,
     ),
 ]
-

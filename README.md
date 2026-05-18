@@ -3,6 +3,7 @@
 [![CI](https://github.com/yasufumi-nakata/openri/actions/workflows/ci.yml/badge.svg)](https://github.com/yasufumi-nakata/openri/actions/workflows/ci.yml)
 [![Repository Health](https://github.com/yasufumi-nakata/openri/actions/workflows/oss-health.yml/badge.svg)](https://github.com/yasufumi-nakata/openri/actions/workflows/oss-health.yml)
 [![CodeQL](https://github.com/yasufumi-nakata/openri/actions/workflows/codeql.yml/badge.svg)](https://github.com/yasufumi-nakata/openri/actions/workflows/codeql.yml)
+[![Benchmark](https://img.shields.io/badge/benchmark-golden%20corpus-blue)](benchmark/openri-benchmark.md)
 [![Release](https://img.shields.io/github/v/release/yasufumi-nakata/openri)](https://github.com/yasufumi-nakata/openri/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -18,10 +19,11 @@ OpenRIは、投稿システムに提出された論文に対する「査読前�
 - `citation_integrity`: DOI、本文中引用、参考文献セクションの機械的不整合を確認します。
 - `prompt_injection`: LLM査読を操作する隠し指示、不可視文字、隠しCSSを YAML ruleset から検出します。`OPENRI_PROMPT_INJECTION_RULES` で追加ruleset可。
 - `template_text`: 重複段落、近接重複(shingle-Jaccard)、テンプレ表現の過剰反復を検出します。
-- `image_integrity_placeholder`: 図表参照を検出し、画像そのものの完全性検査が未実装であることを明示します。
+- `image_integrity`: 画像アップロード時にEXIF、画像形式、重複領域候補を確認し、PDF内画像や本文図参照はcoverage blockerとして残します。
 - `doi_existence` (experimental, network): Crossref で本文中のDOIが実在するか確認します。`--network` で有効化。
 - `ruleset_coverage` (beta): CONSORT/PRISMA/MDAR-strict など分野別 YAML ruleset の項目キーワードを照合します。`--ruleset` で指定。
 - `pdf_hidden_text` (experimental): CLIでPDFを直接渡したとき、白色文字・極小フォント・ページ外配置を検出します。
+- `citation_context`: 参考文献リスト、本文中引用、claim-support markerを構造化し、AI review packetへ渡します。
 
 ## 構成
 
@@ -58,8 +60,10 @@ pip install -e ".[pdf,network,server,dev]"
 ```bash
 openri check samples/high_risk_manuscript.txt
 openri check manuscript.pdf --strictness strict --ruleset consort --ruleset mdar_strict
+openri check figure.png --strictness strict
 openri check paper.tex --sarif out.sarif.json --fail-on high
 openri check paper.md --network          # Crossref DOI lookup
+openri eval-reviewers codex-review.json claude-review.json --out reviewer-eval.json
 openri list --limit 10
 openri show <report_id> --json
 ```
@@ -109,6 +113,16 @@ Web UIでは、本文貼り付けに加えてPDF/TXT/MD/TeXのアップロード
 
 詳細は [`ROADMAP.md`](ROADMAP.md) と [`docs/`](docs/) を参照(GitHub Actionsへの組み込み、Buffyボット連携、checkの書き方)。
 
+## Benchmark / regression
+
+Golden corpus は `samples/golden/`、固定reportは `backend/tests/golden_reports/` に置きます。公開用の簡易benchmarkは次で生成します。
+
+```bash
+PYTHONPATH=backend python scripts/benchmark_openri.py
+```
+
+出力は `benchmark/openri-benchmark.json` と `benchmark/openri-benchmark.md` です。CIではrecall proxy、precision proxy、route distribution、coverage blocker countをartifactとして保存します。
+
 ## OSS運用
 
 - 参加方法: [`CONTRIBUTING.md`](CONTRIBUTING.md)
@@ -121,9 +135,9 @@ GitHub上では、CI、Repository Health、CodeQL、Dependency Review、OpenSSF 
 
 ## 既知の限界
 
-- 現在の画像検査は未実装領域を `image_integrity_placeholder` として明示する段階で、画像そのものの改ざん検査はまだ行いません。
-- ruleset coverageはキーワード照合です。記載済みでも表現差でmissing扱いになることがあり、逆に記載の質までは保証しません。
-- 引用文脈の意味的検証は未実装です。Crossref DOI照合は `--network` またはAPIの `enable_network` 明示時だけ実行します。
+- 画像検査はEXIF、形式、単純な重複ブロック候補の初期検査です。専門的なELA、raw履歴、顕微鏡画像固有の検査はreviewer taskとして残ります。
+- ruleset coverageはevidence-awareなキーワード照合です。否定文やnot applicable方針は記録しますが、記載の品質判定は人間確認が必要です。
+- 引用文脈の意味的検証はclaim-support markerの構造化までです。Crossref DOI照合は `--network` またはAPIの `enable_network` 明示時だけ実行します。
 - OpenRIは不正認定や採否自動決定を行いません。重大findingは、編集部・統計担当・research integrity担当・AI reviewerが確認すべき証拠付き論点として扱います。
 
 ## AI coding agent向け

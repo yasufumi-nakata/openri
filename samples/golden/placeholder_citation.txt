@@ -1,0 +1,14 @@
+Title: Placeholder citation manuscript
+
+Abstract
+We present a novel important claim without local support.
+
+Methods
+IRB approval was obtained. Data availability: OSF. Code availability: GitHub.
+Conflict of interest: none. Funding: internal.
+
+Results
+The finding improves all future methods [3].
+
+References
+[1] Example A. Placeholder work. doi: 10.1234/fake-reference.

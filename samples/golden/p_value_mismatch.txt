@@ -1,0 +1,11 @@
+Title: P value mismatch manuscript
+
+Methods
+IRB approval was obtained. Data availability: OSF. Code availability: GitHub.
+Conflict of interest: none. Funding: internal.
+
+Results
+The main effect was statistically significant, t(58) = 2.15, p = 0.003.
+
+References
+[1] Smith J. Statistics example. doi: 10.1101/2025.01.02.123456.

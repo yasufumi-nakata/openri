@@ -1,0 +1,133 @@
+{
+  "schema": "openri-public-benchmark-v1",
+  "case_count": 8,
+  "recall_proxy": 1.0,
+  "precision_proxy": 0.583,
+  "route_distribution": {
+    "route_to_peer_review": 3,
+    "technical_check_then_peer_review": 3,
+    "statistics_editor_screen": 1,
+    "integrity_hold_before_peer_review": 1
+  },
+  "coverage_blocker_count": 31,
+  "cases": [
+    {
+      "case": "borderline_rounding",
+      "score": 74,
+      "route": "route_to_peer_review",
+      "expected_checks": [],
+      "hit_expected_checks": [],
+      "warning_or_failed_checks": [
+        "effect_size_ci_coverage"
+      ],
+      "coverage_blocker_count": 4
+    },
+    {
+      "case": "clean_transparent",
+      "score": 77,
+      "route": "route_to_peer_review",
+      "expected_checks": [],
+      "hit_expected_checks": [],
+      "warning_or_failed_checks": [
+        "effect_size_ci_coverage"
+      ],
+      "coverage_blocker_count": 4
+    },
+    {
+      "case": "missing_transparency",
+      "score": 69,
+      "route": "technical_check_then_peer_review",
+      "expected_checks": [
+        "reporting_transparency"
+      ],
+      "hit_expected_checks": [
+        "reporting_transparency"
+      ],
+      "warning_or_failed_checks": [
+        "reporting_transparency"
+      ],
+      "coverage_blocker_count": 4
+    },
+    {
+      "case": "p_value_mismatch",
+      "score": 68,
+      "route": "statistics_editor_screen",
+      "expected_checks": [
+        "statistical_consistency"
+      ],
+      "hit_expected_checks": [
+        "statistical_consistency"
+      ],
+      "warning_or_failed_checks": [
+        "statistical_consistency"
+      ],
+      "coverage_blocker_count": 4
+    },
+    {
+      "case": "placeholder_citation",
+      "score": 66,
+      "route": "route_to_peer_review",
+      "expected_checks": [
+        "citation_context",
+        "citation_integrity"
+      ],
+      "hit_expected_checks": [
+        "citation_context",
+        "citation_integrity"
+      ],
+      "warning_or_failed_checks": [
+        "citation_context",
+        "citation_integrity"
+      ],
+      "coverage_blocker_count": 4
+    },
+    {
+      "case": "prompt_injection",
+      "score": 57,
+      "route": "integrity_hold_before_peer_review",
+      "expected_checks": [
+        "prompt_injection"
+      ],
+      "hit_expected_checks": [
+        "prompt_injection"
+      ],
+      "warning_or_failed_checks": [
+        "prompt_injection",
+        "reporting_transparency"
+      ],
+      "coverage_blocker_count": 4
+    },
+    {
+      "case": "ruleset_omission",
+      "score": 60,
+      "route": "technical_check_then_peer_review",
+      "expected_checks": [
+        "ruleset_coverage"
+      ],
+      "hit_expected_checks": [
+        "ruleset_coverage"
+      ],
+      "warning_or_failed_checks": [
+        "reporting_transparency",
+        "ruleset_coverage"
+      ],
+      "coverage_blocker_count": 3
+    },
+    {
+      "case": "unsupported_causal_claim",
+      "score": 64,
+      "route": "technical_check_then_peer_review",
+      "expected_checks": [
+        "citation_context"
+      ],
+      "hit_expected_checks": [
+        "citation_context"
+      ],
+      "warning_or_failed_checks": [
+        "citation_context",
+        "reporting_transparency"
+      ],
+      "coverage_blocker_count": 4
+    }
+  ]
+}

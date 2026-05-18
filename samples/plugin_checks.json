@@ -1,0 +1,14 @@
+{
+  "schema": "openri-declarative-check-plugin-v1",
+  "checks": [
+    {
+      "id": "journal_requires_data_accession",
+      "title": "Journal data accession policy",
+      "category": "journal-policy",
+      "description": "Toy plugin check used in tests; flags missing accession language through a keyword trigger.",
+      "maturity": "experimental",
+      "severity": "medium",
+      "keywords": ["data available on request only"]
+    }
+  ]
+}

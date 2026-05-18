@@ -78,3 +78,43 @@ jobs:
         run: cd frontend && npm ci
       - name: Build frontend
         run: cd frontend && npm run build
+
+  frontend-e2e:
+    name: Frontend E2E and accessibility smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install backend
+        run: python -m pip install -U pip && python -m pip install -e ".[pdf,server,dev]"
+      - name: Install frontend dependencies
+        run: cd frontend && npm ci
+      - name: Install Playwright browser
+        run: cd frontend && npx playwright install --with-deps chromium
+      - name: Run browser smoke
+        run: cd frontend && npm run test:e2e
+
+  benchmark:
+    name: Golden benchmark
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install package
+        run: python -m pip install -U pip && python -m pip install -e ".[pdf,dev]"
+      - name: Generate benchmark report
+        run: PYTHONPATH=backend python scripts/benchmark_openri.py
+      - name: Upload benchmark artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: openri-benchmark
+          path: benchmark/*

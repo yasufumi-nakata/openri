@@ -1,0 +1,20 @@
+Title: Clean transparent manuscript
+
+Abstract
+We report a transparent descriptive analysis with modest claims.
+
+Methods
+The institutional review board approved the study and all participants gave informed consent.
+Data availability: de-identified data are available at Zenodo.
+Code availability: analysis code is available on GitHub.
+Conflict of interest: the authors declare no competing interests.
+Funding: this work was supported by an internal research grant.
+
+Results
+The primary descriptive result was t(30) = 0.00, p = 1.00, Cohen's d = 0.00, 95% CI [-0.20, 0.20].
+
+Discussion
+The results are limited to this sample and require replication.
+
+References
+[1] Doe J. Transparent work. doi: 10.1101/2025.01.01.123456.

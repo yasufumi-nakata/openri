@@ -5,6 +5,8 @@ import re
 
 from .checks import CHECKS
 from .models import CheckDefinition, RunReport, RunRequest, RunSummary, Severity, Status
+from .plugin_loader import load_plugin_checks, plugin_security_boundary
+from .references import citation_context_audit
 
 
 OBJECTIVE = (
@@ -17,6 +19,7 @@ OBJECTIVE = (
 
 
 def get_check_definitions() -> list[CheckDefinition]:
+    checks = [*CHECKS, *load_plugin_checks()]
     return [
         CheckDefinition(
             id=spec.id,
@@ -25,7 +28,7 @@ def get_check_definitions() -> list[CheckDefinition]:
             description=spec.description,
             maturity=spec.maturity,  # type: ignore[arg-type]
         )
-        for spec in CHECKS
+        for spec in checks
     ]
 
 
@@ -368,7 +371,7 @@ def _linked_findings_for_claim(claim: dict, findings: list) -> list[str]:
     if markers.get("local_statistic") or "significance_claim_without_local_statistic" in flags:
         linked.extend([item for item in ["statistical_consistency", "summary_stat_plausibility"] if item in active])
     if markers.get("local_citation") or "novelty_claim_without_local_citation" in flags:
-        linked.extend([item for item in ["citation_integrity", "doi_existence"] if item in active])
+        linked.extend([item for item in ["citation_integrity", "citation_context", "doi_existence"] if item in active])
     if "causal_language_without_explicit_causal_design" in flags:
         linked.extend([item for item in ["ruleset_coverage", "reporting_transparency"] if item in active])
     if "no_local_support_marker" in flags:
@@ -473,7 +476,7 @@ def build_ai_reviewer_tasks(findings: list, claim_inventory: list[dict], coverag
             "reviewer_id": "ethics_integrity_reviewer",
             "priority": "critical" if any(fid in {"prompt_injection", "pdf_hidden_text"} for fid in finding_ids) else "high",
             "related_claim_ids": [],
-            "related_finding_ids": [fid for fid in finding_ids if fid in {"prompt_injection", "pdf_hidden_text", "image_integrity_placeholder", "citation_integrity", "doi_existence"}],
+            "related_finding_ids": [fid for fid in finding_ids if fid in {"prompt_injection", "pdf_hidden_text", "image_integrity", "citation_integrity", "citation_context", "doi_existence"}],
             "instruction": "AI査読操作、PDF不可視テキスト、画像未検査、引用/DOI、倫理/COI/資金の重大リスクを隔離確認してください。",
             "output_schema": ["risk", "evidence", "editorial_hold_needed", "author_query"],
             "acceptance_gate": "prompt injectionまたはhidden PDF textが残る原稿を通常査読へ進めない。",
@@ -566,7 +569,9 @@ def build_submission_processing(summary: RunSummary, findings: list, profile: di
     high_risk_ids = {
         "prompt_injection",
         "pdf_hidden_text",
+        "image_integrity",
         "statistical_consistency",
+        "citation_context",
         "doi_existence",
     }
     high_risk_findings = [
@@ -720,7 +725,7 @@ def build_ai_review_protocol(summary: RunSummary, findings: list, profile: dict,
         if finding.status in {Status.FAILED, Status.WARNING}:
             if finding.check_id in {"statistical_consistency", "summary_stat_plausibility"}:
                 required_reviews.append("statistics_reviewer")
-            if finding.check_id in {"prompt_injection", "pdf_hidden_text", "image_integrity_placeholder"}:
+            if finding.check_id in {"prompt_injection", "pdf_hidden_text", "image_integrity"}:
                 required_reviews.append("ethics_integrity_reviewer")
                 required_reviews.append("adversarial_reviewer")
             finding_actions.append(
@@ -772,6 +777,7 @@ def build_ai_review_protocol(summary: RunSummary, findings: list, profile: dict,
             "review_packet": {
                 "mode": "claim_centered_ai_review_packet",
                 "claim_inventory": claim_inventory,
+                "reference_audit": citation_context_audit(text),
                 "reviewer_tasks": reviewer_tasks,
                 "adversarial_challenges": adversarial_challenges,
                 "editor_handoff": {
@@ -787,6 +793,7 @@ def build_ai_review_protocol(summary: RunSummary, findings: list, profile: dict,
                 "external_llm_calls_required": False,
                 "unpublished_manuscript_default": "外部LLM/APIへ送信しません。送る場合は明示許可、送信範囲、ログ、削除方針を必須にします。",
             },
+            "plugin_security_boundary": plugin_security_boundary(),
         }
     )
     return protocol
@@ -799,7 +806,10 @@ def analyze_manuscript(request: RunRequest) -> RunReport:
     profile["activated_rulesets"] = list(request.activated_rulesets)
     profile["enable_network"] = bool(request.enable_network)
     profile["pdf_inspection"] = request.pdf_inspection
-    active_checks = CHECKS if request.include_experimental_checks else [c for c in CHECKS if c.maturity != "experimental"]
+    profile["image_inspection"] = request.image_inspection
+    profile["source_metadata"] = dict(request.source_metadata or {})
+    all_checks = [*CHECKS, *load_plugin_checks()]
+    active_checks = all_checks if request.include_experimental_checks else [c for c in all_checks if c.maturity != "experimental"]
     findings = [spec.run(text, profile) for spec in active_checks]
 
     passed = sum(1 for f in findings if f.status == Status.PASSED)

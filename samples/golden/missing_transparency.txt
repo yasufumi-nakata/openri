@@ -1,0 +1,13 @@
+Title: Missing transparency manuscript
+
+Abstract
+We present important results.
+
+Methods
+Participants completed a questionnaire.
+
+Results
+The treatment effect was significant, t(30) = 2.10, p = .04.
+
+Discussion
+Further research is needed.

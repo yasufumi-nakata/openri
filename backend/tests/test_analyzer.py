@@ -88,11 +88,11 @@ def test_high_risk_sample_golden_contract():
         RunRequest(manuscript_text=sample.read_text(encoding="utf-8"), title=sample.name)
     )
 
-    assert report.summary.total_checks == 10
+    assert report.summary.total_checks == 12
     assert report.summary.passed == 1
-    assert report.summary.warnings == 4
+    assert report.summary.warnings == 5
     assert report.summary.failed == 2
-    assert report.summary.skipped == 3
+    assert report.summary.skipped == 4
     assert report.submission_processing["recommended_route"] == "integrity_hold_before_peer_review"
     assert report.ai_review_protocol["run_readiness"]["state"] == "blocked_before_ai_peer_review"
 
@@ -100,6 +100,7 @@ def test_high_risk_sample_golden_contract():
     assert findings["statistical_consistency"][:2] == ("failed", "high")
     assert findings["prompt_injection"][:2] == ("failed", "high")
     assert findings["citation_integrity"][:2] == ("warning", "medium")
+    assert findings["citation_context"][:2] == ("warning", "high")
     assert findings["ruleset_coverage"][:2] == ("skipped", "info")
     assert findings["pdf_hidden_text"][:2] == ("skipped", "info")
 

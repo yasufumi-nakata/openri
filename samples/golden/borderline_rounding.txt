@@ -1,0 +1,8 @@
+Title: Borderline rounding manuscript
+
+Methods
+IRB approval was obtained. Data availability: OSF. Code availability: GitHub.
+Conflict of interest: none. Funding: internal.
+
+Results
+The marginal contrast was t(30) = 2.0, p = 0.05, 95% CI [-0.01, 0.65].
