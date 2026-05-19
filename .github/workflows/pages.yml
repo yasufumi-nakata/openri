@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - "docs/**"
+      - "scripts/build_pages.py"
+      - "scripts/validate_pages.py"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -28,6 +30,8 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.12"
+      - name: Build public tutorial pages
+        run: python scripts/build_pages.py
       - name: Check static tutorial links
         run: python scripts/validate_pages.py
 
@@ -44,6 +48,11 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.12"
+      - name: Build public tutorial pages
+        run: python scripts/build_pages.py
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
         with:
           enablement: true

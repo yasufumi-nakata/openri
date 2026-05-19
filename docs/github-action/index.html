@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OpenRI を GitHub Actions で走らせる | OpenRI Tutorial</title>
+    <meta name="description" content="OpenRI の公開チュートリアル関連ドキュメントです。">
+    <link rel="stylesheet" href="../assets/openri-pages.css">
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <nav class="nav" aria-label="Primary navigation">
+          <a class="brand" href="../" aria-label="OpenRI tutorial home">
+            <span class="brand-mark">RI</span>
+            <span>
+              <strong>OpenRI</strong>
+              <span>Open Research Integrity</span>
+            </span>
+          </a>
+          <div class="nav-links">
+            <a href="../">Home</a>
+            <a href="../tutorial/">Tutorial</a>
+            <a href="../checking-your-paper/">Reading results</a>
+            <a href="../github-action/">GitHub Action</a>
+            <a class="button" href="https://github.com/yasufumi-nakata/openri">GitHub</a>
+          </div>
+        </nav>
+      </header>
+
+      <main>
+        <article class="article section">
+          <p class="breadcrumb"><a href="../">OpenRI Tutorial</a> / GitHub Action</p>
+          <h1>OpenRI を GitHub Actions で走らせる</h1>
+<p>論文原稿(Markdown / TeX / PDF)を含むリポジトリで pull request ごとに OpenRI を走らせ、 findings を SARIF として <strong>GitHub Code Scanning</strong> に投げ込むと、PR 上で finding が インラインアノテーションとして表示されます。</p>
+<pre class="terminal"><code># .github/workflows/openri.yml
+name: OpenRI
+
+on:
+  pull_request:
+    paths:
+      - &quot;**/*.md&quot;
+      - &quot;**/*.tex&quot;
+      - &quot;**/*.pdf&quot;
+      - &quot;manuscript/**&quot;
+
+permissions:
+  contents: read
+  security-events: write  # SARIF upload
+
+jobs:
+  openri:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: &quot;3.11&quot;
+
+      - name: Install OpenRI
+        run: |
+          python -m pip install --upgrade pip
+          pip install &quot;openri[pdf] @ git+https://github.com/your-org/openri@main&quot;
+
+      - name: Run OpenRI
+        id: openri
+        run: |
+          openri check manuscript/main.tex \
+            --strictness strict \
+            --ruleset consort --ruleset mdar_strict \
+            --sarif openri.sarif.json \
+            --fail-on high
+        continue-on-error: true  # SARIFは常にuploadしたい
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: openri.sarif.json
+          category: openri
+
+      - name: Fail PR if check failed
+        if: steps.openri.outcome == &#x27;failure&#x27;
+        run: |
+          echo &quot;OpenRI flagged high-severity findings. See the Code Scanning tab.&quot;
+          exit 1</code></pre>
+<h2>使い分け</h2>
+<ul><li><code>--strictness strict</code>: 統計の p 値ズレ tolerance を 0.005、透明性 1 項目欠落で warning。</li><li><code>--ruleset consort prisma mdar_strict</code>: 分野別の項目キーワードを照合。</li><li><code>--network</code>: Crossref で DOI の実在性を確認(レート制限とプライバシーに注意)。</li><li><code>--fail-on high</code>: high 以上の finding があれば exit 1 にする。warning level で止めたい場合は <code>medium</code> に。</li></ul>
+<h2>ローカルでの再現</h2>
+<pre class="terminal"><code>pip install -e &quot;.[pdf,network]&quot;
+openri check manuscript/main.pdf --strictness strict --ruleset consort --sarif out.sarif.json</code></pre>
+<p># GitHub Action wrapper</p>
+<p>OpenRI ships a composite action at <code>.github/actions/openri-check/action.yml</code>.</p>
+<p>Example workflow:</p>
+<pre class="terminal"><code>- uses: ./.github/actions/openri-check
+  with:
+    manuscript: manuscripts/submission.pdf
+    strictness: strict
+    rulesets: &quot;consort mdar_strict&quot;
+    fail-on: high
+    sarif-path: openri-results.sarif.json
+    network: &quot;false&quot;</code></pre>
+<p>The action outputs a JSON report path, SARIF path, and a short summary. Network-backed DOI checks stay disabled unless <code>network: &quot;true&quot;</code> is set.</p>
+        </article>
+      </main>
+
+      <footer class="site-footer">
+        <div class="section">
+          OpenRI は evidence-backed findings を返す査読前テストランナーです。不正認定や採否自動決定は行いません。
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>
