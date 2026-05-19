@@ -72,7 +72,14 @@ jobs:
           version: ${{ env.UV_VERSION }}
           enable-cache: true
       - name: Run tests
+        if: matrix.python-version != '3.9'
         run: uv run --locked --python ${{ matrix.python-version }} --extra pdf --extra image --extra network --extra server --extra dev python -m pytest backend/tests -q --cov=openri --cov-report=term-missing
+      - name: Python 3.9 compatibility smoke
+        if: matrix.python-version == '3.9'
+        run: |
+          uv run --locked --python ${{ matrix.python-version }} --extra pdf --extra image --extra network --extra server python -m compileall -q backend/openri
+          uv run --locked --python ${{ matrix.python-version }} --extra pdf --extra image --extra network --extra server python -m openri.cli list >/tmp/openri-checks.txt
+          test -s /tmp/openri-checks.txt
       - name: CLI smoke
         run: uv run --locked --python ${{ matrix.python-version }} --extra pdf --extra image --extra network --extra server --extra dev python -m openri.cli check samples/high_risk_manuscript.txt --fail-on high || test $? -eq 1
       - name: Build distribution

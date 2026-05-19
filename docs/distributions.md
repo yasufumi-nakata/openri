@@ -1,6 +1,6 @@
 # Packages and distributions
 
-OpenRI の配布物は GitHub Releases と GitHub Pages の両方で確認できます。Pages 側は、CI や MCP client から直接取得できる固定 URL を用意するための公開目録です。
+OpenRI の配布物は GitHub Releases と GitHub Pages の両方で確認できます。Pages 側は、CI や MCP client から直接取得できる固定 URL を用意するための公開目録です。wheel や tarball は Pages workflow の中で生成して公開し、Git 管理対象には含めません。
 
 ## GitHub Pages package registry
 
