@@ -7,6 +7,7 @@ from .checks import CHECKS
 from .models import CheckDefinition, RunReport, RunRequest, RunSummary, Severity, Status
 from .plugin_loader import load_plugin_checks, plugin_security_boundary
 from .references import citation_context_audit
+from .text_windows import iter_sentence_spans
 
 
 OBJECTIVE = (
@@ -306,16 +307,15 @@ def _section_for_offset(text: str, offset: int) -> str:
 
 def _sentence_windows(text: str) -> list[dict]:
     windows = []
-    for match in re.finditer(r"[^.!?\n。！？]+(?:[.!?。！？]+|\n|$)", text):
-        sentence = " ".join(match.group(0).strip().split())
+    for start, sentence in iter_sentence_spans(text):
         if len(sentence) < 35:
             continue
         windows.append(
             {
                 "text": sentence[:420],
-                "start": match.start(),
-                "location": _line_number(text, match.start()),
-                "section": _section_for_offset(text, match.start()),
+                "start": start,
+                "location": _line_number(text, start),
+                "section": _section_for_offset(text, start),
             }
         )
     return windows

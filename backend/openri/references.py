@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 from typing import Dict, List
 
+from .text_windows import iter_sentence_spans
+
 
 REFERENCE_HEADING_RE = re.compile(r"^\s*(references|bibliography|参考文献)\s*$", re.IGNORECASE | re.MULTILINE)
 NUMERIC_CITATION_RE = re.compile(r"\[(?P<items>\d{1,3}(?:\s*(?:,|-)\s*\d{1,3})*)\]")
@@ -108,8 +110,7 @@ def citation_context_audit(text: str) -> Dict[str, object]:
             unresolved.append({"quote": cite["quote"], "missing_reference_numbers": missing})
 
     unsupported_claims = []
-    for match in re.finditer(r"[^.!?\n。！？]+(?:[.!?。！？]+|\n|$)", text):
-        sentence = " ".join(match.group(0).split())
+    for _, sentence in iter_sentence_spans(text):
         if len(sentence) < 35 or not CLAIM_RE.search(sentence):
             continue
         has_citation = bool(NUMERIC_CITATION_RE.search(sentence) or AUTHOR_YEAR_CITATION_RE.search(sentence) or DOI_RE.search(sentence))

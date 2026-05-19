@@ -14,10 +14,12 @@ from openri.analyzer import analyze_manuscript
 from openri.cli import build_parser, cmd_check
 from openri.models import RunRequest, Status
 from openri.pdf_inspect import inspect_pdf
+from openri.references import citation_context_audit
 from openri.reviewer_eval import compare_review_results
 from openri.ruleset_loader import discover_keyword_rulesets, load_default_ruleset
 from openri.sarif import report_to_sarif
 from openri.store import ReportStore
+from openri.text_windows import iter_sentence_spans
 
 
 def _by_id(report, check_id):
@@ -344,6 +346,22 @@ References
     audit = report.ai_review_protocol["review_packet"]["reference_audit"]
     assert audit["reference_count"] == 1
     assert audit["unresolved_numeric_citations"]
+
+
+def test_sentence_scanner_handles_space_heavy_claims_without_backtracking():
+    text = (
+        (" " * 20000)
+        + "This novel approach improves all outcomes without a local citation.\n"
+        + (" " * 20000)
+        + "Results\np = 0.04.\n"
+    )
+    spans = list(iter_sentence_spans(text))
+    assert spans[0] == (
+        20000,
+        "This novel approach improves all outcomes without a local citation.",
+    )
+    audit = citation_context_audit(text)
+    assert audit["unsupported_claims"][0]["quote"].startswith("This novel approach")
 
 
 def test_declarative_plugin_check(monkeypatch):
