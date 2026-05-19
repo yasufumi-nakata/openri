@@ -54,3 +54,25 @@ updates:
           - "@vitejs/*"
           - "typescript"
           - "lucide-react"
+
+  - package-ecosystem: "npm"
+    directory: "/packages/npm/openri-client"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:30"
+      timezone: "Asia/Tokyo"
+    labels:
+      - "dependencies"
+      - "npm-package"
+
+  - package-ecosystem: "npm"
+    directory: "/packages/mcp/openri-mcp"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "11:00"
+      timezone: "Asia/Tokyo"
+    labels:
+      - "dependencies"
+      - "mcp"

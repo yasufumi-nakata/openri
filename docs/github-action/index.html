@@ -23,6 +23,7 @@
             <a href="../tutorial/">Tutorial</a>
             <a href="../checking-your-paper/">Reading results</a>
             <a href="../github-action/">GitHub Action</a>
+            <a href="../distributions/">Packages</a>
             <a class="button" href="https://github.com/yasufumi-nakata/openri">GitHub</a>
           </div>
         </nav>
@@ -60,7 +61,7 @@ jobs:
       - name: Install OpenRI
         run: |
           python -m pip install --upgrade pip
-          pip install &quot;openri[pdf] @ git+https://github.com/your-org/openri@main&quot;
+          pip install &quot;openri[pdf,image] @ git+https://github.com/your-org/openri@main&quot;
 
       - name: Run OpenRI
         id: openri
@@ -87,7 +88,7 @@ jobs:
 <h2>使い分け</h2>
 <ul><li><code>--strictness strict</code>: 統計の p 値ズレ tolerance を 0.005、透明性 1 項目欠落で warning。</li><li><code>--ruleset consort prisma mdar_strict</code>: 分野別の項目キーワードを照合。</li><li><code>--network</code>: Crossref で DOI の実在性を確認(レート制限とプライバシーに注意)。</li><li><code>--fail-on high</code>: high 以上の finding があれば exit 1 にする。warning level で止めたい場合は <code>medium</code> に。</li></ul>
 <h2>ローカルでの再現</h2>
-<pre class="terminal"><code>pip install -e &quot;.[pdf,network]&quot;
+<pre class="terminal"><code>pip install -e &quot;.[pdf,image,network]&quot;
 openri check manuscript/main.pdf --strictness strict --ruleset consort --sarif out.sarif.json</code></pre>
 <p># GitHub Action wrapper</p>
 <p>OpenRI ships a composite action at <code>.github/actions/openri-check/action.yml</code>.</p>

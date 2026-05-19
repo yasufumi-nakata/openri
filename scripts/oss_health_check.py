@@ -28,6 +28,7 @@ REQUIRED_FILES = [
     ".github/ISSUE_TEMPLATE/check_proposal.yml",
     ".github/ISSUE_TEMPLATE/feature_request.yml",
     ".github/ISSUE_TEMPLATE/review_case.yml",
+    ".github/actions/openri-check/action.yml",
     ".github/workflows/ci.yml",
     ".github/workflows/pages.yml",
     ".github/workflows/release.yml",
@@ -38,7 +39,14 @@ REQUIRED_FILES = [
     "docs/maintainer-guide.md",
     "docs/index.html",
     "docs/tutorial/index.html",
+    "docs/distributions.md",
+    "packages/npm/openri-client/package.json",
+    "packages/mcp/openri-mcp/package.json",
+    "packages/codex-skill/openri/SKILL.md",
+    "requirements/action.txt",
+    "requirements/docker.txt",
     "scripts/build_pages.py",
+    "scripts/build_package_artifacts.py",
     "scripts/validate_pages.py",
 ]
 
@@ -97,6 +105,11 @@ def main() -> int:
     if f'"version": "{version}"' not in frontend_package:
         errors.append("frontend/package.json does not match project version")
 
+    for package_path in ["packages/npm/openri-client/package.json", "packages/mcp/openri-mcp/package.json"]:
+        package_text = read(package_path)
+        if f'"version": "{version}"' not in package_text:
+            errors.append(f"{package_path} does not match project version")
+
     errors.extend(assert_contains("README.md", README_MARKERS))
     errors.extend(
         assert_contains(
@@ -109,6 +122,7 @@ def main() -> int:
                 "--cov=openri",
                 "actions/upload-artifact",
                 "Install wheel smoke",
+                "uv run --locked",
             ],
         )
     )

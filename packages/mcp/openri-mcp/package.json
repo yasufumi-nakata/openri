@@ -1,0 +1,22 @@
+{
+  "name": "@openri/mcp",
+  "version": "0.3.2",
+  "description": "MCP server for running OpenRI checks through a local OpenRI API.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "openri-mcp": "bin/openri-mcp.js"
+  },
+  "files": [
+    "bin",
+    "README.md",
+    "openri-mcp.manifest.json"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "zod": "4.4.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

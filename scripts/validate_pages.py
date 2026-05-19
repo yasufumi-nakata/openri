@@ -16,6 +16,8 @@ REQUIRED_PAGES = [
     Path("submitted-manuscript-workflow/index.html"),
     Path("ai-review-protocol/index.html"),
     Path("deployment/index.html"),
+    Path("distributions/index.html"),
+    Path("packages/index.html"),
 ]
 
 

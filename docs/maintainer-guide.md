@@ -5,7 +5,7 @@ This guide keeps OpenRI release and repository operations reproducible.
 ## Local release preflight
 
 ```bash
-python3 -m pip install -e ".[pdf,network,server,dev]"
+python3 -m pip install -e ".[pdf,image,network,server,dev]"
 python3 scripts/oss_health_check.py
 python3 -m ruff check backend/openri backend/tests scripts
 PYTHONPATH=backend python3 -m pytest backend/tests -q --cov=openri --cov-report=term-missing

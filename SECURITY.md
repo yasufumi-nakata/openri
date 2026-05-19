@@ -6,7 +6,11 @@ OpenRI is currently an alpha project. Security fixes are applied to the latest r
 
 ## Reporting vulnerabilities
 
-Please report security issues privately to the repository owner through GitHub security advisories when available. Do not open public issues for vulnerabilities involving unpublished manuscripts, prompt-injection bypasses, PDF hidden text bypasses, or credential exposure.
+Please report security issues privately through GitHub private vulnerability reporting:
+
+https://github.com/yasufumi-nakata/openri/security/advisories/new
+
+Do not open public issues for vulnerabilities involving unpublished manuscripts, prompt-injection bypasses, PDF hidden text bypasses, or credential exposure.
 
 ## Manuscript data handling
 

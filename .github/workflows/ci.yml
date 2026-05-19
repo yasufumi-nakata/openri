@@ -6,6 +6,7 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  UV_VERSION: "0.11.15"
 
 permissions:
   contents: read
@@ -19,18 +20,41 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.12"
-      - name: Install quality tools
-        run: python -m pip install -U pip && python -m pip install -e ".[dev]"
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            packages/npm/openri-client/package-lock.json
+            packages/mcp/openri-mcp/package-lock.json
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
       - name: OSS metadata check
-        run: python scripts/oss_health_check.py
-      - name: Build public tutorial pages
-        run: python scripts/build_pages.py
+        run: uv run --locked --python 3.12 --extra dev python scripts/oss_health_check.py
+      - name: Install package validation dependencies
+        run: npm ci --prefix packages/npm/openri-client
+      - name: Run npm client fuzz tests
+        run: npm run test:fuzz --prefix packages/npm/openri-client
+      - name: Install MCP package dependencies
+        run: npm ci --prefix packages/mcp/openri-mcp
+      - name: Check MCP server syntax
+        run: node --check packages/mcp/openri-mcp/bin/openri-mcp.js
+      - name: Check package tarballs
+        run: |
+          npm pack packages/npm/openri-client --dry-run
+          npm pack packages/mcp/openri-mcp --dry-run
+      - name: Build public package artifacts
+        run: uv run --locked --python 3.12 --extra dev python scripts/build_package_artifacts.py
+      - name: Build public pages
+        run: uv run --locked --python 3.12 --extra dev python scripts/build_pages.py
       - name: Validate public tutorial pages
-        run: python scripts/validate_pages.py
+        run: uv run --locked --python 3.12 --extra dev python scripts/validate_pages.py
       - name: Python fatal lint
-        run: python -m ruff check backend/openri backend/tests scripts
+        run: uv run --locked --python 3.12 --extra dev python -m ruff check backend/openri backend/tests scripts
       - name: Compile Python package
-        run: python -m compileall -q backend/openri scripts
+        run: uv run --locked --python 3.12 --extra dev python -m compileall -q backend/openri scripts
 
   backend:
     name: Backend tests and package
@@ -43,24 +67,24 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install package
-        run: python -m pip install -U pip && python -m pip install -e ".[pdf,network,server,dev]"
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
       - name: Run tests
-        run: PYTHONPATH=backend python -m pytest backend/tests -q --cov=openri --cov-report=term-missing
+        run: uv run --locked --python ${{ matrix.python-version }} --extra pdf --extra image --extra network --extra server --extra dev python -m pytest backend/tests -q --cov=openri --cov-report=term-missing
       - name: CLI smoke
-        run: PYTHONPATH=backend python -m openri.cli check samples/high_risk_manuscript.txt --fail-on high || test $? -eq 1
+        run: uv run --locked --python ${{ matrix.python-version }} --extra pdf --extra image --extra network --extra server --extra dev python -m openri.cli check samples/high_risk_manuscript.txt --fail-on high || test $? -eq 1
       - name: Build distribution
-        run: python -m build
+        run: uv run --locked --python ${{ matrix.python-version }} --extra dev python -m build
       - name: Check distribution metadata
-        run: python -m twine check dist/*
+        if: matrix.python-version == '3.12'
+        run: uv run --locked --python ${{ matrix.python-version }} --extra dev python -m twine check dist/*
       - name: Install wheel smoke
         run: |
-          python -m venv /tmp/openri-wheel-test
-          . /tmp/openri-wheel-test/bin/activate
-          python -m pip install -U pip
-          python -m pip install dist/openri-*.whl
-          openri --version
-          openri check samples/high_risk_manuscript.txt --fail-on high || test $? -eq 1
+          WHEEL="$(ls dist/openri-*.whl)"
+          uv run --python ${{ matrix.python-version }} --with "$WHEEL" openri --version
+          uv run --python ${{ matrix.python-version }} --with "$WHEEL" openri check samples/high_risk_manuscript.txt --fail-on high || test $? -eq 1
       - name: Upload package artifacts
         if: matrix.python-version == '3.12'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -91,19 +115,21 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.12"
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - name: Install backend
-        run: python -m pip install -U pip && python -m pip install -e ".[pdf,server,dev]"
       - name: Install frontend dependencies
         run: cd frontend && npm ci
       - name: Install Playwright browser
         run: cd frontend && npx playwright install --with-deps chromium
       - name: Run browser smoke
-        run: cd frontend && npm run test:e2e
+        run: uv run --locked --python 3.12 --extra pdf --extra image --extra server --extra dev npm --prefix frontend run test:e2e
 
   benchmark:
     name: Golden benchmark
@@ -113,10 +139,12 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.12"
-      - name: Install package
-        run: python -m pip install -U pip && python -m pip install -e ".[pdf,dev]"
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
       - name: Generate benchmark report
-        run: PYTHONPATH=backend python scripts/benchmark_openri.py
+        run: uv run --locked --python 3.12 --extra pdf --extra image --extra dev python scripts/benchmark_openri.py
       - name: Upload benchmark artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:

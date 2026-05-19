@@ -43,11 +43,19 @@ runs:
   steps:
     - name: Install OpenRI from checkout
       shell: bash
-      run: python -m pip install -U pip && python -m pip install -e ".[pdf,network]"
+      run: |
+        python - <<'PY'
+        import sys
+
+        if sys.version_info < (3, 10):
+            raise SystemExit("OpenRI action requires Python 3.10 or newer for pinned PDF/image dependencies.")
+        PY
+        python -m pip install --no-cache-dir --require-hashes -r "$GITHUB_ACTION_PATH/../../../requirements/action.txt"
     - name: Run OpenRI
       shell: bash
       run: |
         set -euo pipefail
+        export PYTHONPATH="$GITHUB_ACTION_PATH/../../../backend${PYTHONPATH:+:$PYTHONPATH}"
         args=()
         for ruleset in ${{ inputs.rulesets }}; do
           args+=(--ruleset "$ruleset")
@@ -55,7 +63,7 @@ runs:
         if [[ "${{ inputs.network }}" == "true" ]]; then
           args+=(--network)
         fi
-        openri check "${{ inputs.manuscript }}" \
+        python -m openri.cli check "${{ inputs.manuscript }}" \
           --strictness "${{ inputs.strictness }}" \
           --json > "${{ inputs.report-path }}" \
           --sarif "${{ inputs.sarif-path }}" \
