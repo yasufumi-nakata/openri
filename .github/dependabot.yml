@@ -13,6 +13,8 @@ updates:
 
   - package-ecosystem: "pip"
     directory: "/"
+    exclude-paths:
+      - "requirements/**"
     schedule:
       interval: "weekly"
       day: "monday"
