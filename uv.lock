@@ -1190,6 +1190,7 @@ dev = [
     { name = "pytest-cov", marker = "python_full_version >= '3.10'" },
     { name = "reportlab", marker = "python_full_version >= '3.10'" },
     { name = "ruff" },
+    { name = "tomli", marker = "python_full_version < '3.11'" },
     { name = "twine", marker = "python_full_version >= '3.10'" },
 ]
 image = [
@@ -1227,6 +1228,7 @@ requires-dist = [
     { name = "requests", marker = "python_full_version >= '3.10' and extra == 'network'", specifier = ">=2.34.2" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8" },
     { name = "scipy", specifier = ">=1.10" },
+    { name = "tomli", marker = "python_full_version < '3.11' and extra == 'dev'", specifier = ">=2.0" },
     { name = "twine", marker = "python_full_version >= '3.10' and extra == 'dev'", specifier = ">=6.2" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'server'", specifier = ">=0.27" },
 ]

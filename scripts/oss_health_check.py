@@ -34,6 +34,7 @@ REQUIRED_FILES = [
     ".github/workflows/release.yml",
     ".github/workflows/codeql.yml",
     ".github/workflows/dependency-review.yml",
+    ".github/workflows/dependency-snapshot.yml",
     ".github/workflows/scorecard.yml",
     ".github/workflows/oss-health.yml",
     "docs/maintainer-guide.md",
@@ -47,6 +48,7 @@ REQUIRED_FILES = [
     "requirements/docker.txt",
     "scripts/build_pages.py",
     "scripts/build_package_artifacts.py",
+    "scripts/build_dependency_snapshot.py",
     "scripts/validate_pages.py",
 ]
 
