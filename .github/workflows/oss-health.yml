@@ -14,14 +14,18 @@ jobs:
     name: OSS health and lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.12"
       - name: Install project and quality tools
         run: python -m pip install -U pip && python -m pip install -e ".[dev]"
       - name: Repository metadata check
         run: python scripts/oss_health_check.py
+      - name: Build public tutorial pages
+        run: python scripts/build_pages.py
+      - name: Validate public tutorial pages
+        run: python scripts/validate_pages.py
       - name: Python fatal lint
         run: python -m ruff check backend/openri backend/tests scripts
       - name: Compile Python package

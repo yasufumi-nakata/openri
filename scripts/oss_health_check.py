@@ -38,6 +38,8 @@ REQUIRED_FILES = [
     "docs/maintainer-guide.md",
     "docs/index.html",
     "docs/tutorial/index.html",
+    "scripts/build_pages.py",
+    "scripts/validate_pages.py",
 ]
 
 

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OpenRI deployment reference | OpenRI Tutorial</title>
+    <meta name="description" content="OpenRI の公開チュートリアル関連ドキュメントです。">
+    <link rel="stylesheet" href="../assets/openri-pages.css">
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <nav class="nav" aria-label="Primary navigation">
+          <a class="brand" href="../" aria-label="OpenRI tutorial home">
+            <span class="brand-mark">RI</span>
+            <span>
+              <strong>OpenRI</strong>
+              <span>Open Research Integrity</span>
+            </span>
+          </a>
+          <div class="nav-links">
+            <a href="../">Home</a>
+            <a href="../tutorial/">Tutorial</a>
+            <a href="../checking-your-paper/">Reading results</a>
+            <a href="../github-action/">GitHub Action</a>
+            <a class="button" href="https://github.com/yasufumi-nakata/openri">GitHub</a>
+          </div>
+        </nav>
+      </header>
+
+      <main>
+        <article class="article section">
+          <p class="breadcrumb"><a href="../">OpenRI Tutorial</a> / Deployment reference</p>
+          <h1>OpenRI deployment reference</h1>
+<p>OpenRI is local-first by default. Hosted deployment must explicitly configure CORS, upload size limits, authentication, data retention, and audit policy before accepting unpublished manuscripts.</p>
+<h2>Local Docker compose</h2>
+<pre class="terminal"><code>docker compose up --build
+curl http://127.0.0.1:8008/api/health</code></pre>
+<p>The frontend reads <code>VITE_OPENRI_API_BASE</code>; local development defaults to <code>http://127.0.0.1:8008</code>.</p>
+<h2>Configuration</h2>
+<ul><li><code>OPENRI_CORS_ORIGINS</code>: comma-separated allowed frontend origins.</li><li><code>OPENRI_UPLOAD_LIMIT_BYTES</code>: upload size limit. Default is 20 MiB.</li><li><code>OPENRI_REQUIRE_API_KEY</code>: set <code>true</code> to require <code>X-OpenRI-API-Key</code> for report-producing endpoints.</li><li><code>OPENRI_API_KEYS</code>: comma-separated accepted API keys for small hosted deployments.</li><li><code>OPENRI_RATE_LIMIT_PER_MINUTE</code>: in-process per-client write limit. Use gateway limits for production.</li><li><code>OPENRI_RETENTION_DAYS</code>: delete stored reports older than this during report-producing requests. <code>0</code> disables pruning.</li><li><code>OPENRI_DB_PATH</code>: SQLite report store path.</li><li><code>OPENRI_CROSSREF_MAILTO</code>: Crossref contact metadata.</li><li><code>OPENRI_CROSSREF_CACHE_DIR</code>: deterministic DOI lookup cache.</li></ul>
+<h2>Hosted security baseline</h2>
+<p>Use local/dev mode only for trusted local manuscripts. Hosted use should place OpenRI behind TLS, enable API keys or OIDC at the gateway, log report access, set a retention period, and isolate each journal or editorial tenant at the database/storage layer. Built-in API key mode is a small single-tenant guardrail; multi-tenant RBAC belongs at the gateway/OIDC layer. Findings are evidence-backed review tasks, not misconduct determinations.</p>
+<p>Runtime policy is visible at:</p>
+<pre class="terminal"><code>curl http://127.0.0.1:8008/api/security-policy</code></pre>
+        </article>
+      </main>
+
+      <footer class="site-footer">
+        <div class="section">
+          OpenRI は evidence-backed findings を返す査読前テストランナーです。不正認定や採否自動決定は行いません。
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>
