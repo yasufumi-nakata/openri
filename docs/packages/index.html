@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OpenRI Packages</title>
+    <meta name="description" content="OpenRI の Python、npm、MCP、Codex skill 配布物です。">
+    <link rel="stylesheet" href="../assets/openri-pages.css">
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <nav class="nav" aria-label="Primary navigation">
+          <a class="brand" href="../" aria-label="OpenRI tutorial home">
+            <span class="brand-mark">RI</span>
+            <span>
+              <strong>OpenRI</strong>
+              <span>Open Research Integrity</span>
+            </span>
+          </a>
+          <div class="nav-links">
+            <a href="../tutorial/">Tutorial</a>
+            <a href="../checking-your-paper/">Reading results</a>
+            <a href="../github-action/">GitHub Action</a>
+            <a href="../distributions/">Packages</a>
+            <a class="button" href="https://github.com/yasufumi-nakata/openri">GitHub</a>
+          </div>
+        </nav>
+      </header>
+
+      <main>
+        <article class="article section">
+          <p class="breadcrumb"><a href="../">OpenRI Tutorial</a> / Packages</p>
+          <h1>OpenRI package registry</h1>
+          <p>GitHub Pages から取得できる OpenRI の配布物です。未公開原稿を外部 API へ送らない既定値は、CLI、API、MCP、Codex skill の各入口で維持します。</p>
+          <div class="package-grid">
+            <section class="package-card">
+              <h2>Python</h2>
+              <p>wheel と source distribution、checksum、SPDX metadata を公開します。</p>
+              <pre class="terminal"><code>pip install https://www.yasufumi.net/openri/packages/python/openri-0.3.2-py3-none-any.whl</code></pre>
+            </section>
+            <section class="package-card">
+              <h2>npm client</h2>
+              <p>OpenRI API を呼ぶ軽量 ESM client です。</p>
+              <pre class="terminal"><code>npm install https://www.yasufumi.net/openri/packages/npm/openri-client-0.3.2.tgz</code></pre>
+            </section>
+            <section class="package-card">
+              <h2>MCP server</h2>
+              <p>ローカル OpenRI API を MCP tool として公開します。</p>
+              <pre class="terminal"><code>npm install https://www.yasufumi.net/openri/packages/mcp/openri-mcp-0.3.2.tgz</code></pre>
+            </section>
+            <section class="package-card">
+              <h2>Codex skill</h2>
+              <p>原稿検査、report 解釈、AI reviewer protocol 確認用の skill です。</p>
+              <pre class="terminal"><code>curl -LO https://www.yasufumi.net/openri/packages/skill/openri-codex-skill-0.3.2.tar.gz</code></pre>
+            </section>
+          </div>
+          <h2>Artifacts</h2>
+          <table class="artifact-table">
+            <thead><tr><th>Kind</th><th>File</th><th>SHA256 prefix</th><th>Bytes</th></tr></thead>
+            <tbody>
+<tr><td>python</td><td><a href="python/openri-0.3.2-py3-none-any.whl">openri-0.3.2-py3-none-any.whl</a></td><td><code>7f2aa0cbbe4eb606</code></td><td>68788</td></tr>
+<tr><td>python</td><td><a href="python/openri-0.3.2.tar.gz">openri-0.3.2.tar.gz</a></td><td><code>61136484999c7ecb</code></td><td>92807</td></tr>
+<tr><td>python</td><td><a href="python/SHA256SUMS">SHA256SUMS</a></td><td><code>05a963f7bb623cdd</code></td><td>182</td></tr>
+<tr><td>python</td><td><a href="python/openri-release.spdx.json">openri-release.spdx.json</a></td><td><code>8859b3f826d328ba</code></td><td>793</td></tr>
+<tr><td>npm</td><td><a href="npm/openri-client-0.3.2.tgz">openri-client-0.3.2.tgz</a></td><td><code>ffe06dc408d12325</code></td><td>1354</td></tr>
+<tr><td>mcp</td><td><a href="mcp/openri-mcp-0.3.2.tgz">openri-mcp-0.3.2.tgz</a></td><td><code>5e64560a23fe4a9a</code></td><td>1380</td></tr>
+<tr><td>skill</td><td><a href="skill/openri-codex-skill-0.3.2.tar.gz">openri-codex-skill-0.3.2.tar.gz</a></td><td><code>5662ee87fef278f1</code></td><td>920</td></tr>
+            </tbody>
+          </table>
+          <p><a href="manifest.json">manifest.json</a> contains the full hashes and sizes for automation.</p>
+        </article>
+      </main>
+
+      <footer class="site-footer">
+        <div class="section">
+          OpenRI は evidence-backed findings を返す査読前テストランナーです。不正認定や採否自動決定は行いません。
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

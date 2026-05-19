@@ -17,6 +17,7 @@ PUBLIC_DOCS = {
     "submitted-manuscript-workflow.md": ("submitted-manuscript-workflow", "Submitted manuscript workflow"),
     "ai-review-protocol.md": ("ai-review-protocol", "AI review protocol"),
     "deployment.md": ("deployment", "Deployment reference"),
+    "distributions.md": ("distributions", "Packages and distributions"),
 }
 
 GITHUB_DOC_BASE = "https://github.com/yasufumi-nakata/openri/blob/main/docs"
@@ -169,6 +170,7 @@ def page_template(title: str, body: str, current_slug: str) -> str:
             <a href="../tutorial/">Tutorial</a>
             <a href="../checking-your-paper/">Reading results</a>
             <a href="../github-action/">GitHub Action</a>
+            <a href="../distributions/">Packages</a>
             <a class="button" href="https://github.com/yasufumi-nakata/openri">GitHub</a>
           </div>
         </nav>

@@ -365,6 +365,49 @@ h1 {
   line-height: 1.5;
 }
 
+.package-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.package-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 16px;
+}
+
+.package-card h2 {
+  border-top: 0;
+  font-size: 21px;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.package-card p {
+  color: var(--muted);
+}
+
+.artifact-table {
+  border-collapse: collapse;
+  margin-top: 14px;
+  width: 100%;
+}
+
+.artifact-table th,
+.artifact-table td {
+  border: 1px solid var(--line);
+  padding: 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.artifact-table th {
+  background: var(--surface-muted);
+}
+
 .site-footer {
   margin-top: 32px;
   border-top: 1px solid var(--line);
@@ -441,7 +484,8 @@ h1 {
 
   .grid,
   .status-list,
-  .doc-list {
+  .doc-list,
+  .package-grid {
     grid-template-columns: 1fr;
   }
 

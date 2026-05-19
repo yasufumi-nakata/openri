@@ -4,6 +4,7 @@
 [![Repository Health](https://github.com/yasufumi-nakata/openri/actions/workflows/oss-health.yml/badge.svg)](https://github.com/yasufumi-nakata/openri/actions/workflows/oss-health.yml)
 [![CodeQL](https://github.com/yasufumi-nakata/openri/actions/workflows/codeql.yml/badge.svg)](https://github.com/yasufumi-nakata/openri/actions/workflows/codeql.yml)
 [![Tutorial](https://img.shields.io/badge/tutorial-GitHub%20Pages-087f78)](https://www.yasufumi.net/openri/)
+[![Packages](https://img.shields.io/badge/packages-Pages%20registry-2f64b8)](https://www.yasufumi.net/openri/packages/)
 [![Benchmark](https://img.shields.io/badge/benchmark-golden%20corpus-blue)](benchmark/openri-benchmark.md)
 [![Release](https://img.shields.io/github/v/release/yasufumi-nakata/openri)](https://github.com/yasufumi-nakata/openri/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -44,17 +45,27 @@ GitHub Releaseのwheelを使う場合:
 pip install openri-0.3.2-py3-none-any.whl
 ```
 
+GitHub Pages の配布目録から直接使う場合:
+
+```bash
+pip install https://www.yasufumi.net/openri/packages/python/openri-0.3.2-py3-none-any.whl
+```
+
+npm client、MCP server、Codex skill archive は [`Packages and distributions`](https://www.yasufumi.net/openri/distributions/) にまとめています。
+
 PyPI公開後に使う場合:
 
 ```bash
-pip install "openri[pdf,server]"
+pip install "openri[pdf,image,server]"
 ```
 
 開発版をこのリポジトリから使う場合:
 
 ```bash
-pip install -e ".[pdf,network,server,dev]"
+pip install -e ".[pdf,image,network,server,dev]"
 ```
+
+`image` extra と PDF不可視テキスト検査は Pillow 12.2 以上を使うため Python 3.10 以上で有効です。Python 3.9 ではコア検査と `pypdf` ベースの PDF テキスト抽出を維持し、画像ファイル単体の画素検査は coverage blocker として返します。
 
 ## CLI
 

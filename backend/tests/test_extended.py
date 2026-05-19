@@ -4,8 +4,6 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 from jsonschema import validate
-from PIL import Image
-from reportlab.pdfgen import canvas
 
 import openri.api as api_module
 import openri.crossref as crossref_module
@@ -24,6 +22,10 @@ from openri.text_windows import iter_sentence_spans
 
 def _by_id(report, check_id):
     return next(f for f in report.findings if f.check_id == check_id)
+
+
+def _require_multipart():
+    pytest.importorskip("multipart")
 
 
 def test_strictness_changes_p_value_tolerance():
@@ -203,6 +205,7 @@ def test_doi_check_skipped_without_network():
 
 
 def test_upload_txt_endpoint_runs_checks():
+    _require_multipart()
     client = TestClient(app)
     response = client.post(
         "/api/runs/upload",
@@ -218,6 +221,7 @@ def test_upload_txt_endpoint_runs_checks():
 
 
 def test_upload_invalid_form_parameters_return_422():
+    _require_multipart()
     client = TestClient(app)
     response = client.post(
         "/api/runs/upload",
@@ -228,6 +232,7 @@ def test_upload_invalid_form_parameters_return_422():
 
 
 def test_upload_rejects_bad_extension_and_magic():
+    _require_multipart()
     client = TestClient(app)
     response = client.post(
         "/api/runs/upload",
@@ -239,6 +244,8 @@ def test_upload_rejects_bad_extension_and_magic():
 
 
 def test_upload_pdf_endpoint_extracts_text_and_runs_pdf_check(tmp_path):
+    _require_multipart()
+    canvas = pytest.importorskip("reportlab.pdfgen.canvas")
     pdf_path = tmp_path / "paper.pdf"
     c = canvas.Canvas(str(pdf_path))
     c.drawString(72, 720, "Results")
@@ -261,6 +268,8 @@ def test_upload_pdf_endpoint_extracts_text_and_runs_pdf_check(tmp_path):
 
 
 def test_pdf_hidden_text_fixture_detects_white_and_tiny_text(tmp_path):
+    pytest.importorskip("pdfplumber")
+    canvas = pytest.importorskip("reportlab.pdfgen.canvas")
     pdf_path = tmp_path / "hidden.pdf"
     c = canvas.Canvas(str(pdf_path))
     c.drawString(72, 720, "Results")
@@ -294,6 +303,9 @@ def test_pdf_hidden_text_fixture_detects_white_and_tiny_text(tmp_path):
 
 
 def test_pdf_scanned_only_is_coverage_blocker(tmp_path):
+    pytest.importorskip("pdfplumber")
+    canvas = pytest.importorskip("reportlab.pdfgen.canvas")
+    Image = pytest.importorskip("PIL.Image")
     image_path = tmp_path / "scan.png"
     Image.new("RGB", (80, 80), "white").save(image_path)
     pdf_path = tmp_path / "scan.pdf"
@@ -307,6 +319,8 @@ def test_pdf_scanned_only_is_coverage_blocker(tmp_path):
 
 
 def test_image_upload_detects_duplicate_region_candidate(tmp_path):
+    _require_multipart()
+    Image = pytest.importorskip("PIL.Image")
     image_path = tmp_path / "figure.png"
     img = Image.new("RGB", (160, 160), "white")
     block = Image.new("RGB", (40, 40), "black")

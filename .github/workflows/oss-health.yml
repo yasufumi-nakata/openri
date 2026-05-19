@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+env:
+  UV_VERSION: "0.11.15"
+
 jobs:
   health:
     name: OSS health and lint
@@ -18,15 +21,22 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.12"
-      - name: Install project and quality tools
-        run: python -m pip install -U pip && python -m pip install -e ".[dev]"
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 22
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
       - name: Repository metadata check
-        run: python scripts/oss_health_check.py
-      - name: Build public tutorial pages
-        run: python scripts/build_pages.py
+        run: uv run --locked --python 3.12 --extra dev python scripts/oss_health_check.py
+      - name: Build public package artifacts
+        run: uv run --locked --python 3.12 --extra dev python scripts/build_package_artifacts.py
+      - name: Build public pages
+        run: uv run --locked --python 3.12 --extra dev python scripts/build_pages.py
       - name: Validate public tutorial pages
-        run: python scripts/validate_pages.py
+        run: uv run --locked --python 3.12 --extra dev python scripts/validate_pages.py
       - name: Python fatal lint
-        run: python -m ruff check backend/openri backend/tests scripts
+        run: uv run --locked --python 3.12 --extra dev python -m ruff check backend/openri backend/tests scripts
       - name: Compile Python package
-        run: python -m compileall -q backend/openri scripts
+        run: uv run --locked --python 3.12 --extra dev python -m compileall -q backend/openri scripts

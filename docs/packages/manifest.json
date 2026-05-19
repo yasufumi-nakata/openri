@@ -1,0 +1,54 @@
+{
+  "version": "0.3.2",
+  "artifacts": [
+    {
+      "kind": "python",
+      "name": "openri-0.3.2-py3-none-any.whl",
+      "path": "python/openri-0.3.2-py3-none-any.whl",
+      "sha256": "7f2aa0cbbe4eb6067e88e4b4a33bfd7b85fd9e6009a0ebc9d9c047a72f925319",
+      "size": 68788
+    },
+    {
+      "kind": "python",
+      "name": "openri-0.3.2.tar.gz",
+      "path": "python/openri-0.3.2.tar.gz",
+      "sha256": "61136484999c7ecb8536aea9ccd187560d081134dccb0c3c42742502d289a5ea",
+      "size": 92807
+    },
+    {
+      "kind": "python",
+      "name": "SHA256SUMS",
+      "path": "python/SHA256SUMS",
+      "sha256": "05a963f7bb623cdd90ce0889b0acfd1ed711a1cf956e60f707c9176700e7f02b",
+      "size": 182
+    },
+    {
+      "kind": "python",
+      "name": "openri-release.spdx.json",
+      "path": "python/openri-release.spdx.json",
+      "sha256": "8859b3f826d328bacd5945bd2b01940d38d8853b97f3f992ed5516c1436b202a",
+      "size": 793
+    },
+    {
+      "kind": "npm",
+      "name": "openri-client-0.3.2.tgz",
+      "path": "npm/openri-client-0.3.2.tgz",
+      "sha256": "ffe06dc408d12325de9a330ac8142b9194bc9a71bd0b8652a01eb0e56e0b0e6b",
+      "size": 1354
+    },
+    {
+      "kind": "mcp",
+      "name": "openri-mcp-0.3.2.tgz",
+      "path": "mcp/openri-mcp-0.3.2.tgz",
+      "sha256": "5e64560a23fe4a9a90dc7903bece2685804d3668913943c472bd6ba3511f2b6d",
+      "size": 1380
+    },
+    {
+      "kind": "skill",
+      "name": "openri-codex-skill-0.3.2.tar.gz",
+      "path": "skill/openri-codex-skill-0.3.2.tar.gz",
+      "sha256": "5662ee87fef278f1473b498ec7ec4f47b5e232c86cd80be0267b833ac5905bb1",
+      "size": 920
+    }
+  ]
+}

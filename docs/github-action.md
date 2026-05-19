@@ -32,7 +32,7 @@ jobs:
       - name: Install OpenRI
         run: |
           python -m pip install --upgrade pip
-          pip install "openri[pdf] @ git+https://github.com/your-org/openri@main"
+          pip install "openri[pdf,image] @ git+https://github.com/your-org/openri@main"
 
       - name: Run OpenRI
         id: openri
@@ -68,7 +68,7 @@ jobs:
 ## ローカルでの再現
 
 ```bash
-pip install -e ".[pdf,network]"
+pip install -e ".[pdf,image,network]"
 openri check manuscript/main.pdf --strictness strict --ruleset consort --sarif out.sarif.json
 ```
 # GitHub Action wrapper

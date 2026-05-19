@@ -1,0 +1,13 @@
+{
+  "name": "openri-mcp",
+  "version": "0.3.2",
+  "description": "Expose a local OpenRI API as MCP tools.",
+  "command": "openri-mcp",
+  "environment": {
+    "OPENRI_API_BASE": "http://127.0.0.1:8008"
+  },
+  "tools": [
+    "openri_health",
+    "openri_check_text"
+  ]
+}

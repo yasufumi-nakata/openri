@@ -3,10 +3,10 @@ from __future__ import annotations
 import tempfile
 import time
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Optional
 from uuid import uuid4
 
-from fastapi import Body, Depends, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
+from fastapi import Body, Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import __version__
@@ -84,6 +84,39 @@ def _validate_upload(filename: str, content_type: Optional[str], payload: bytes)
     }:
         raise HTTPException(status_code=422, detail={"error": "invalid_text_content_type", "content_type": content_type})
     return suffix
+
+
+async def _read_upload_form(request: Request):
+    try:
+        form = await request.form()
+    except (AssertionError, RuntimeError) as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "error": "multipart_support_unavailable",
+                "message": "Install OpenRI with the server extra on Python 3.10 or newer to enable file uploads.",
+            },
+        ) from exc
+    file = form.get("file")
+    if file is None or not hasattr(file, "read"):
+        raise HTTPException(status_code=422, detail={"error": "missing_upload_file", "field": "file"})
+    return form, file
+
+
+def _form_text(form, key: str, default: str) -> str:
+    value = form.get(key)
+    if value is None:
+        return default
+    return str(value)
+
+
+def _form_bool(form, key: str, default: bool = False) -> bool:
+    value = form.get(key)
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    return str(value).lower() in {"1", "true", "yes", "on"}
 
 
 def _require_api_key(x_openri_api_key: Optional[str] = Header(default=None)) -> None:
@@ -219,14 +252,17 @@ def _author_query_draft(report: RunReport) -> str:
 
 
 @app.post("/api/runs/upload", response_model=RunReport, dependencies=[Depends(_require_api_key), Depends(_rate_limit)])
-async def run_uploaded_file(
-    file: UploadFile = File(...),
-    strictness: Literal["lenient", "standard", "strict"] = Form("standard"),
-    review_mode: Literal["integrity_triage", "ai_reviewer_replication"] = Form("ai_reviewer_replication"),
-    activated_rulesets: str = Form(""),
-    enable_network: bool = Form(False),
-) -> RunReport:
+async def run_uploaded_file(request: Request) -> RunReport:
     STORE.prune_reports(retention_days())
+    form, file = await _read_upload_form(request)
+    strictness = _form_text(form, "strictness", "standard")
+    review_mode = _form_text(form, "review_mode", "ai_reviewer_replication")
+    activated_rulesets = _form_text(form, "activated_rulesets", "")
+    enable_network = _form_bool(form, "enable_network", False)
+    if strictness not in {"lenient", "standard", "strict"}:
+        raise HTTPException(status_code=422, detail={"error": "invalid_strictness", "value": strictness})
+    if review_mode not in {"integrity_triage", "ai_reviewer_replication"}:
+        raise HTTPException(status_code=422, detail={"error": "invalid_review_mode", "value": review_mode})
     filename = _sanitize_filename(file.filename)
     payload = await file.read()
     limit = upload_limit_bytes()
