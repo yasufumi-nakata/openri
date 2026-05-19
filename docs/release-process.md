@@ -1,6 +1,6 @@
 # Release Process
 
-OpenRI releases are built from the GitHub repository and attached to a GitHub Release.
+OpenRI releases are built from the GitHub repository and published as workflow artifacts, GitHub Pages package artifacts, and optionally PyPI distributions.
 
 ## Local preflight
 
@@ -28,14 +28,14 @@ Update all version-bearing files:
 
 Then update `CHANGELOG.md`.
 
-## GitHub release
+## Release tag
 
 ```bash
 git tag -a v0.3.2 -m "OpenRI v0.3.2"
 git push origin main --tags
 ```
 
-The release workflow builds the package and attaches `dist/*` to the GitHub Release.
+The release workflow builds the package, checks metadata, generates `SHA256SUMS` and SPDX metadata, and uploads `dist/*` as a workflow artifact. It intentionally does not create a GitHub Release because that would require a `contents: write` token in this workflow. If a GitHub Release is needed, create it manually from the checked workflow artifact after the run passes.
 
 ## PyPI
 
@@ -50,7 +50,7 @@ Before enabling it, a maintainer must create or claim the PyPI project and confi
 Keep `PUBLISH_TO_PYPI` unset or `false` until that configuration is complete.
 ## PyPI, provenance, and SBOM
 
-Release tags build wheel/sdist, run `twine check`, generate `SHA256SUMS`, and attach a minimal SPDX JSON SBOM through `scripts/build_release_metadata.py`.
+Release tags build wheel/sdist, run `twine check`, generate `SHA256SUMS`, and generate a minimal SPDX JSON SBOM through `scripts/build_release_metadata.py`.
 
 For PyPI publishing, configure PyPI Trusted Publisher for:
 
@@ -58,7 +58,7 @@ For PyPI publishing, configure PyPI Trusted Publisher for:
 - workflow: `.github/workflows/release.yml`
 - environment: leave unset unless the workflow is later moved behind a protected environment
 
-Set repository variable `PUBLISH_TO_PYPI=true` only after Trusted Publisher is configured. Until then, releases still attach dist files, checksums, and SBOM artifacts without uploading to PyPI.
+Set repository variable `PUBLISH_TO_PYPI=true` only after Trusted Publisher is configured. Until then, releases still upload dist files, checksums, and SBOM artifacts to the workflow run without uploading to PyPI.
 
 Dry-run checklist:
 

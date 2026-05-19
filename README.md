@@ -39,13 +39,13 @@ OpenRIは、投稿システムに提出された論文に対する「査読前�
 
 ## インストール
 
-GitHub Releaseのwheelを使う場合:
+GitHub Pages の wheel を使う場合:
 
 ```bash
 pip install openri-0.3.2-py3-none-any.whl
 ```
 
-GitHub Pages の配布目録から直接使う場合:
+GitHub Pages の配布目録 URL を直接指定する場合:
 
 ```bash
 pip install https://www.yasufumi.net/openri/packages/python/openri-0.3.2-py3-none-any.whl

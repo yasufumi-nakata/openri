@@ -34,7 +34,6 @@ REQUIRED_FILES = [
     ".github/workflows/release.yml",
     ".github/workflows/codeql.yml",
     ".github/workflows/dependency-review.yml",
-    ".github/workflows/dependency-snapshot.yml",
     ".github/workflows/scorecard.yml",
     ".github/workflows/oss-health.yml",
     "docs/maintainer-guide.md",
@@ -144,9 +143,10 @@ def main() -> int:
         assert_contains(
             ".github/workflows/release.yml",
             [
-                "softprops/action-gh-release",
                 "pypa/gh-action-pypi-publish",
                 "actions/upload-artifact",
+                "id-token: write",
+                "contents: read",
             ],
         )
     )
