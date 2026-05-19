@@ -94,6 +94,18 @@ def report_to_sarif(report: RunReport, artifact_uri: str = "manuscript.txt") -> 
                     "summary": report.summary.model_dump(),
                     "report_id": report.report_id,
                     "manuscript_title": report.title,
+                    "accountability": {
+                        "recommended_route": (report.accountability or {})
+                        .get("routing_explanation", {})
+                        .get("recommended_route"),
+                        "route_drivers": [
+                            item.get("check_id")
+                            for item in (report.accountability or {})
+                            .get("routing_explanation", {})
+                            .get("route_drivers", [])
+                        ],
+                        "score_explanation": (report.accountability or {}).get("score_explanation", {}),
+                    },
                 },
             }
         ],

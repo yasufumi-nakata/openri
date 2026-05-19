@@ -490,6 +490,150 @@ input {
   line-height: 1.45;
 }
 
+.accountability-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.accountability-grid,
+.ledger-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.8fr);
+  gap: 14px;
+}
+
+.explain-route,
+.score-explain {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.explain-route > strong {
+  display: block;
+  color: #274b86;
+  font-size: 14px;
+}
+
+.explain-route > p {
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.driver-list,
+.ledger-list,
+.responsibility-list,
+.gate-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.driver-row {
+  display: grid;
+  grid-template-columns: 180px 110px 1fr;
+  gap: 10px;
+  align-items: start;
+  border: 1px solid #d8e2f0;
+  border-radius: 8px;
+  padding: 9px;
+  background: #f8fbff;
+}
+
+.driver-row span,
+.ledger-row span,
+.gate-row span {
+  color: #274b86;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.driver-row strong,
+.ledger-row strong,
+.gate-row strong {
+  font-size: 12px;
+}
+
+.driver-row p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.score-formula {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  color: #344154;
+  font-size: 12px;
+  line-height: 1.45;
+  min-height: 36px;
+}
+
+.score-factor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.score-factor-grid .metric {
+  padding: 10px;
+}
+
+.score-factor-grid .metric strong {
+  font-size: 20px;
+}
+
+.ledger-row,
+.gate-row,
+.responsibility-row {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+.ledger-row {
+  display: grid;
+  grid-template-columns: 190px 1fr 90px;
+  gap: 10px;
+  align-items: center;
+}
+
+.ledger-row small {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: right;
+}
+
+.gate-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.responsibility-row {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: 10px;
+}
+
+.responsibility-row strong {
+  color: #075f5a;
+  font-size: 12px;
+}
+
+.responsibility-row span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .claim-packet-panel {
   display: grid;
   gap: 14px;
@@ -1011,6 +1155,8 @@ code {
   .policy-grid,
   .reviewer-strip,
   .review-protocol-grid,
+  .accountability-grid,
+  .ledger-grid,
   .packet-grid,
   .purpose-band {
     grid-template-columns: 1fr;
@@ -1049,8 +1195,15 @@ code {
   .dimension-row,
   .test-design-row,
   .blocker-row,
+  .driver-row,
+  .ledger-row,
+  .responsibility-row,
   .challenge-row {
     grid-template-columns: 1fr;
+  }
+
+  .ledger-row small {
+    text-align: left;
   }
 
   .table-row {

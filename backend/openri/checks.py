@@ -62,6 +62,30 @@ INTEGER_ITEM_HINT_RE = re.compile(
 
 DOI_RE = re.compile(r"\b10\.\d{4,9}/[-._;()/:A-Z0-9]+\b", re.IGNORECASE)
 INLINE_NUMERIC_CITE_RE = re.compile(r"\[(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)\]")
+REFERENCE_HEADING_RE = re.compile(r"^\s*(references|bibliography|参考文献)\s*$", re.IGNORECASE | re.MULTILINE)
+NUMBERED_REFERENCE_RE = re.compile(r"^\s*(?:\[(?P<bracket>\d{1,3})\]|(?P<plain>\d{1,3})[.)])\s+", re.MULTILINE)
+PLACEHOLDER_REFERENCE_RE = re.compile(
+    r"\b(TBD|TODO|citation needed|lorem ipsum|fake|placeholder|example reference|unknown journal)\b|\?\?\?",
+    re.IGNORECASE,
+)
+CLAIM_CUE_RE = re.compile(
+    r"\b("
+    r"we\s+(show|demonstrate|find|found|report|present|provide|observe|identify)|"
+    r"significant|significantly|robust|novel|first|important|"
+    r"suggests?|indicates?|supports?|improves?|predicts?|associated|association|"
+    r"effect|caus(?:e|al|es|ed|ation)|"
+    r"示す|示した|有意|効果|新規|重要|関連|因果|支持"
+    r")\b",
+    re.IGNORECASE,
+)
+CLAIM_STATISTIC_CUE_RE = re.compile(r"\b(t|z|F|χ2|χ\^2|chi-?square|p|CI|OR|RR|HR|β|r)\s*(?:\(|=|<|>)", re.IGNORECASE)
+CLAIM_CITATION_CUE_RE = re.compile(r"(\[[0-9,\-\s]+\]|\([A-Z][A-Za-z-]+(?:\s+et\s+al\.)?,\s*20\d{2}\)|\b10\.\d{4,9}/)", re.IGNORECASE)
+CLAIM_FIGURE_CUE_RE = re.compile(r"\b(fig\.?|figure|table|supplement|図|表)\s*\d+", re.IGNORECASE)
+CLAIM_LIMITATION_CUE_RE = re.compile(r"\b(limitation|however|although|future|may|might|could|cannot|pilot|exploratory|限界|ただし|可能性|探索的)\b", re.IGNORECASE)
+CLAIM_CAUSAL_CUE_RE = re.compile(r"\b(caus(?:e|al|es|ed|ation)|mechanism|drives?|leads?\s+to|因果|原因|機序)\b", re.IGNORECASE)
+CLAIM_CAUSAL_DESIGN_RE = re.compile(r"\b(randomi[sz]ed|trial|experiment|controlled|causal inference|instrumental variable|difference-in-differences|RCT)\b", re.IGNORECASE)
+CLAIM_NOVELTY_CUE_RE = re.compile(r"\b(novel|first|new|unprecedented|groundbreaking|新規|初めて)\b", re.IGNORECASE)
+CLAIM_OVERGENERAL_CUE_RE = re.compile(r"\b(always|never|all|none|prove|definitive|conclusive|universal|完全|必ず|全て|証明)\b", re.IGNORECASE)
 
 
 def _finding(
@@ -414,21 +438,127 @@ def check_reporting_transparency(text: str, profile: dict) -> Finding:
     )
 
 
+def _split_reference_section(text: str) -> tuple[str, str]:
+    match = REFERENCE_HEADING_RE.search(text)
+    if not match:
+        return text, ""
+    return text[: match.start()], text[match.end() :]
+
+
+def _expand_numeric_citation_group(group: str) -> list[int]:
+    numbers: list[int] = []
+    for part in re.split(r"\s*,\s*", group):
+        if "-" in part:
+            start_raw, end_raw = [item.strip() for item in part.split("-", 1)]
+            if not start_raw.isdigit() or not end_raw.isdigit():
+                continue
+            start = int(start_raw)
+            end = int(end_raw)
+            if start <= end and end - start <= 50:
+                numbers.extend(range(start, end + 1))
+        elif part.strip().isdigit():
+            numbers.append(int(part.strip()))
+    return numbers
+
+
+def _numbered_reference_ids(reference_text: str) -> list[int]:
+    ids: list[int] = []
+    for match in NUMBERED_REFERENCE_RE.finditer(reference_text):
+        raw = match.group("bracket") or match.group("plain")
+        if raw:
+            ids.append(int(raw))
+    return ids
+
+
+def _reference_entries(reference_text: str) -> list[str]:
+    entries: list[str] = []
+    current: list[str] = []
+    for line in reference_text.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            if current:
+                entries.append(" ".join(current))
+                current = []
+            continue
+        if NUMBERED_REFERENCE_RE.match(stripped) and current:
+            entries.append(" ".join(current))
+            current = [stripped]
+        else:
+            current.append(stripped)
+    if current:
+        entries.append(" ".join(current))
+    return entries
+
+
 def check_citation_integrity(text: str, profile: dict) -> Finding:
+    body_text, reference_text = _split_reference_section(text)
     dois = DOI_RE.findall(text)
     fake_dois = [doi for doi in dois if doi.lower().startswith(("10.0000/", "10.1234/", "10.9999/"))]
-    numeric_cites = INLINE_NUMERIC_CITE_RE.findall(text)
-    has_references = bool(re.search(r"\n\s*(references|bibliography|参考文献)\s*\n", text, re.IGNORECASE))
+    numeric_cite_groups = INLINE_NUMERIC_CITE_RE.findall(body_text)
+    numeric_cite_numbers = sorted(
+        set(number for group in numeric_cite_groups for number in _expand_numeric_citation_group(group))
+    )
+    has_references = bool(reference_text.strip())
+    reference_ids = sorted(set(_numbered_reference_ids(reference_text)))
+    reference_entries = _reference_entries(reference_text)
+    placeholder_entries = [entry for entry in reference_entries if PLACEHOLDER_REFERENCE_RE.search(entry)]
     evidence = []
+
     if fake_dois:
         evidence.extend(Evidence(quote=doi, data={"reason": "placeholder-like DOI"}) for doi in fake_dois[:8])
-    if numeric_cites and not has_references:
+    if placeholder_entries:
         evidence.append(
             Evidence(
-                quote=numeric_cites[0],
+                quote=placeholder_entries[0][:220],
+                data={"reason": "placeholder-like-reference-entry", "count": len(placeholder_entries)},
+            )
+        )
+    if numeric_cite_groups and not has_references:
+        evidence.append(
+            Evidence(
+                quote=numeric_cite_groups[0],
                 data={"reason": "numeric inline citations detected without a references section"},
             )
         )
+    if numeric_cite_numbers and has_references and not reference_ids:
+        evidence.append(
+            Evidence(
+                quote=f"[{numeric_cite_groups[0]}]" if numeric_cite_groups else None,
+                data={
+                    "reason": "numeric inline citations found but numbered reference entries were not detected",
+                    "cited_numbers": numeric_cite_numbers[:30],
+                    "reference_entry_count": len(reference_entries),
+                },
+            )
+        )
+    if numeric_cite_numbers and reference_ids:
+        missing_reference_ids = [number for number in numeric_cite_numbers if number not in reference_ids]
+        uncited_reference_ids = [number for number in reference_ids if number not in numeric_cite_numbers]
+        if missing_reference_ids:
+            evidence.append(
+                Evidence(
+                    quote=f"[{numeric_cite_groups[0]}]" if numeric_cite_groups else None,
+                    data={
+                        "reason": "in-text numeric citation has no matching numbered reference",
+                        "missing_reference_ids": missing_reference_ids[:30],
+                        "cited_numbers": numeric_cite_numbers[:30],
+                        "numbered_reference_ids": reference_ids[:30],
+                    },
+                )
+            )
+        if len(uncited_reference_ids) >= max(3, len(reference_ids) // 2 + 1):
+            evidence.append(
+                Evidence(
+                    quote=None,
+                    data={
+                        "reason": "many numbered references are not cited in the body",
+                        "uncited_reference_ids": uncited_reference_ids[:30],
+                        "cited_numbers": numeric_cite_numbers[:30],
+                        "numbered_reference_ids": reference_ids[:30],
+                    },
+                )
+            )
+
     if evidence:
         return _finding(
             "citation_integrity",
@@ -436,23 +566,149 @@ def check_citation_integrity(text: str, profile: dict) -> Finding:
             "references",
             Severity.MEDIUM,
             Status.WARNING,
-            55,
-            "引用・参考文献に不整合またはplaceholderらしい表記を検出しました。",
-            "DOIの実在性、参考文献リスト、本文中引用との対応をCrossref等で確認してください。",
+            max(35, 75 - 8 * len(evidence)),
+            "引用・参考文献に不整合、placeholder、または本文中引用と参考文献番号の対応漏れ候補を検出しました。",
+            "DOIの実在性、参考文献リスト、本文中引用番号、重要claimを支える引用文脈を確認してください。",
             evidence,
-            ["citation", "doi"],
+            ["citation", "doi", "reference-linkage"],
         )
     return _finding(
         "citation_integrity",
         "Citation integrity",
         "references",
         Severity.LOW,
-        Status.PASSED if dois or has_references else Status.SKIPPED,
-        90 if dois or has_references else 70,
-        "引用の機械的な不整合は検出されませんでした。" if dois or has_references else "引用/参考文献セクションを検出できませんでした。",
+        Status.PASSED if dois or has_references or numeric_cite_groups else Status.SKIPPED,
+        92 if dois or has_references or numeric_cite_groups else 70,
+        "引用の機械的な不整合は検出されませんでした。" if dois or has_references or numeric_cite_groups else "引用/参考文献セクションを検出できませんでした。",
         "次段ではCrossref/OpenAlex/Semantic Scholar APIで全参考文献の実在性と引用文脈を検証してください。",
-        [Evidence(data={"doi_count": len(dois), "numeric_citation_groups": len(numeric_cites), "has_references": has_references})],
-        ["citation", "doi"],
+        [
+            Evidence(
+                data={
+                    "doi_count": len(dois),
+                    "numeric_citation_groups": len(numeric_cite_groups),
+                    "numeric_citation_numbers": numeric_cite_numbers[:30],
+                    "has_references": has_references,
+                    "reference_entry_count": len(reference_entries),
+                    "numbered_reference_ids": reference_ids[:30],
+                }
+            )
+        ],
+        ["citation", "doi", "reference-linkage"],
+    )
+
+
+def _claim_sentences(text: str) -> list[dict]:
+    sentences: list[dict] = []
+    for match in re.finditer(r"[^.!?\n。！？]+(?:[.!?。！？]+|\n|$)", text):
+        sentence = " ".join(match.group(0).strip().split())
+        if len(sentence) < 35:
+            continue
+        sentences.append(
+            {
+                "text": sentence,
+                "start": match.start(),
+                "location": _line_number(text, match.start()),
+            }
+        )
+    return sentences
+
+
+def _claim_alignment_flags(sentence: str, full_text: str) -> list[str]:
+    flags: list[str] = []
+    has_statistic = bool(CLAIM_STATISTIC_CUE_RE.search(sentence))
+    has_citation = bool(CLAIM_CITATION_CUE_RE.search(sentence))
+    has_figure = bool(CLAIM_FIGURE_CUE_RE.search(sentence))
+    has_limitation = bool(CLAIM_LIMITATION_CUE_RE.search(sentence))
+
+    if not has_statistic and not has_citation and not has_figure:
+        flags.append("claim_without_local_support_marker")
+    if re.search(r"\b(significant|significantly|有意)\b", sentence, re.IGNORECASE) and not has_statistic:
+        flags.append("significance_claim_without_local_statistic")
+    if CLAIM_CAUSAL_CUE_RE.search(sentence) and not CLAIM_CAUSAL_DESIGN_RE.search(full_text):
+        flags.append("causal_claim_without_explicit_causal_design")
+    if CLAIM_NOVELTY_CUE_RE.search(sentence) and not has_citation:
+        flags.append("novelty_or_priority_claim_without_local_citation")
+    if CLAIM_OVERGENERAL_CUE_RE.search(sentence):
+        flags.append("overgeneralized_or_conclusive_language")
+    if not has_limitation and re.search(r"\b(robust|important|groundbreaking|definitive|conclusive|prove|重要|頑健|証明)\b", sentence, re.IGNORECASE):
+        flags.append("strong_language_without_local_limitation")
+    return flags
+
+
+def check_claim_evidence_alignment(text: str, profile: dict) -> Finding:
+    checked = 0
+    evidence: list[Evidence] = []
+    high_risk_flags = {
+        "causal_claim_without_explicit_causal_design",
+        "overgeneralized_or_conclusive_language",
+        "significance_claim_without_local_statistic",
+    }
+
+    for item in _claim_sentences(text):
+        sentence = item["text"]
+        if not CLAIM_CUE_RE.search(sentence):
+            continue
+        checked += 1
+        flags = _claim_alignment_flags(sentence, text)
+        if not flags:
+            continue
+        support_markers = {
+            "local_statistic": bool(CLAIM_STATISTIC_CUE_RE.search(sentence)),
+            "local_citation": bool(CLAIM_CITATION_CUE_RE.search(sentence)),
+            "local_figure_or_table": bool(CLAIM_FIGURE_CUE_RE.search(sentence)),
+            "local_limitation": bool(CLAIM_LIMITATION_CUE_RE.search(sentence)),
+        }
+        evidence.append(
+            Evidence(
+                quote=sentence[:320],
+                location=item["location"],
+                data={
+                    "risk_flags": flags,
+                    "support_markers": support_markers,
+                    "review_action": "claimを支える結果・図表・引用・限界を明示し、証拠を超える表現は弱めてください。",
+                },
+            )
+        )
+
+    if checked == 0:
+        return _finding(
+            "claim_evidence_alignment",
+            "Claim-evidence alignment",
+            "manuscript-quality",
+            Severity.INFO,
+            Status.SKIPPED,
+            72,
+            "検査対象になる主要claim候補を検出できませんでした。",
+            "abstract/results/discussionに主要claim、対応する結果・図表・引用・限界を明示するとclaim単位の査読パケットを作れます。",
+            tags=["claim-evidence", "explainability"],
+        )
+
+    if evidence:
+        observed_flags = {flag for ev in evidence for flag in (ev.data or {}).get("risk_flags", [])}
+        severity = Severity.HIGH if observed_flags & high_risk_flags else Severity.MEDIUM
+        return _finding(
+            "claim_evidence_alignment",
+            "Claim-evidence alignment",
+            "manuscript-quality",
+            severity,
+            Status.WARNING,
+            max(20, 88 - 10 * len(evidence) - (10 if severity == Severity.HIGH else 0)),
+            f"{checked}件のclaim候補を確認し、{len(evidence)}件で局所的な証拠・引用・限界との対応確認が必要です。",
+            "人間査読では、各claimについて支持する結果、図表、引用、限界、代替説明を1対1で確認してください。",
+            evidence[:10],
+            ["claim-evidence", "overclaim", "explainability"],
+        )
+
+    return _finding(
+        "claim_evidence_alignment",
+        "Claim-evidence alignment",
+        "manuscript-quality",
+        Severity.LOW,
+        Status.PASSED,
+        96,
+        f"{checked}件のclaim候補で、局所的な統計・引用・図表・限界マーカーの欠落は検出されませんでした。",
+        "マーカーの存在だけでは内容妥当性は保証されないため、AI reviewer packetでclaimごとの文脈確認を続けてください。",
+        tags=["claim-evidence", "explainability"],
     )
 
 
@@ -1135,6 +1391,14 @@ CHECKS: list[CheckSpec] = [
         "参考文献リスト、本文中引用、claimの支えを構造化してreview_packetへ渡します。",
         "beta",
         check_citation_context,
+    ),
+    CheckSpec(
+        "claim_evidence_alignment",
+        "Claim-evidence alignment",
+        "manuscript-quality",
+        "主要claim候補が局所的な統計、引用、図表、限界記述で支えられているかを検査します。",
+        "beta",
+        check_claim_evidence_alignment,
     ),
     CheckSpec(
         "prompt_injection",

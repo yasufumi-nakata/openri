@@ -81,6 +81,7 @@ class RunReport(BaseModel):
     manuscript_profile: Dict[str, Any]
     submission_processing: Dict[str, Any] = Field(default_factory=dict)
     ai_review_protocol: Dict[str, Any] = Field(default_factory=dict)
+    accountability: Dict[str, Any] = Field(default_factory=dict)
 
 
 class CheckDefinition(BaseModel):

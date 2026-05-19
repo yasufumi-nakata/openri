@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from copy import deepcopy
 import re
 
@@ -373,9 +374,15 @@ def _linked_findings_for_claim(claim: dict, findings: list) -> list[str]:
     if markers.get("local_citation") or "novelty_claim_without_local_citation" in flags:
         linked.extend([item for item in ["citation_integrity", "citation_context", "doi_existence"] if item in active])
     if "causal_language_without_explicit_causal_design" in flags:
-        linked.extend([item for item in ["ruleset_coverage", "reporting_transparency"] if item in active])
+        linked.extend([item for item in ["claim_evidence_alignment", "ruleset_coverage", "reporting_transparency"] if item in active])
     if "no_local_support_marker" in flags:
-        linked.extend([item for item in ["reporting_transparency", "ruleset_coverage"] if item in active])
+        linked.extend([item for item in ["claim_evidence_alignment", "reporting_transparency", "ruleset_coverage"] if item in active])
+    if flags & {
+        "overgeneralized_language",
+        "strong_language_without_local_limitation",
+        "novelty_claim_without_local_citation",
+    }:
+        linked.extend([item for item in ["claim_evidence_alignment"] if item in active])
     return list(dict.fromkeys(linked))
 
 
@@ -436,7 +443,7 @@ def build_ai_reviewer_tasks(findings: list, claim_inventory: list[dict], coverag
             "reviewer_id": "field_generalist",
             "priority": "high" if claim_inventory else "medium",
             "related_claim_ids": claim_ids,
-            "related_finding_ids": [],
+            "related_finding_ids": [fid for fid in finding_ids if fid == "claim_evidence_alignment"],
             "instruction": "主要claimごとに、直接支える結果・図表・引用・限界を列挙し、unsupportedまたはoverstatedなclaimを分離してください。",
             "output_schema": ["claim_id", "supporting_evidence", "unsupported_part", "required_revision"],
             "acceptance_gate": "supporting_evidenceが空のclaimをreview-readyにしない。",
@@ -799,6 +806,217 @@ def build_ai_review_protocol(summary: RunSummary, findings: list, profile: dict,
     return protocol
 
 
+def _evidence_quality_label(finding) -> str:
+    if not finding.evidence:
+        return "no_evidence_attached"
+    has_quote = any(ev.quote for ev in finding.evidence)
+    has_location = any(ev.location for ev in finding.evidence)
+    has_data = any(bool(ev.data) for ev in finding.evidence)
+    if has_quote and has_location and has_data:
+        return "quote_location_data"
+    if has_quote and has_data:
+        return "quote_data"
+    if has_location and has_data:
+        return "location_data"
+    if has_data:
+        return "data_only"
+    return "weak_evidence"
+
+
+def _accountability_route_drivers(findings: list, submission_processing: dict) -> list[dict]:
+    high_risk_ids = {
+        "prompt_injection",
+        "pdf_hidden_text",
+        "statistical_consistency",
+        "doi_existence",
+        "claim_evidence_alignment",
+        "citation_integrity",
+    }
+    candidates = [
+        finding
+        for finding in findings
+        if finding.status in {Status.FAILED, Status.WARNING}
+        and (
+            finding.status == Status.FAILED
+            or finding.severity in {Severity.CRITICAL, Severity.HIGH}
+            or finding.check_id in high_risk_ids
+        )
+    ]
+    if not candidates:
+        candidates = [finding for finding in findings if finding.status == Status.WARNING]
+    return [
+        {
+            "check_id": finding.check_id,
+            "title": finding.title,
+            "status": finding.status.value,
+            "severity": finding.severity.value,
+            "score": finding.score,
+            "evidence_count": len(finding.evidence),
+            "why_it_matters": finding.recommendation,
+            "drives_route": finding.check_id
+            in {action.get("check_id") for action in submission_processing.get("human_actions", [])},
+        }
+        for finding in candidates[:8]
+    ]
+
+
+def _build_evidence_ledger(findings: list) -> list[dict]:
+    ledger = []
+    for finding in findings:
+        primary = finding.evidence[0] if finding.evidence else None
+        ledger.append(
+            {
+                "check_id": finding.check_id,
+                "status": finding.status.value,
+                "severity": finding.severity.value,
+                "score": finding.score,
+                "evidence_count": len(finding.evidence),
+                "evidence_quality": _evidence_quality_label(finding),
+                "has_quote": any(ev.quote for ev in finding.evidence),
+                "has_location": any(ev.location for ev in finding.evidence),
+                "has_structured_data": any(bool(ev.data) for ev in finding.evidence),
+                "primary_evidence": {
+                    "quote": primary.quote if primary else None,
+                    "location": primary.location if primary else None,
+                    "data": primary.data if primary else {},
+                },
+                "recommendation": finding.recommendation,
+            }
+        )
+    return ledger
+
+
+def build_accountability_record(
+    summary: RunSummary,
+    findings: list,
+    profile: dict,
+    submission_processing: dict,
+    ai_review_protocol: dict,
+    score_inputs: dict,
+) -> dict:
+    claim_inventory = ai_review_protocol.get("review_packet", {}).get("claim_inventory", [])
+    support_counts = Counter(claim.get("support_status", "unknown") for claim in claim_inventory)
+    risk_flag_counts = Counter(flag for claim in claim_inventory for flag in claim.get("risk_flags", []))
+    skipped = [finding for finding in findings if finding.status == Status.SKIPPED]
+    active = [finding for finding in findings if finding.status in {Status.FAILED, Status.WARNING}]
+    evidence_ledger = _build_evidence_ledger(findings)
+    weak_active_evidence = [
+        item["check_id"]
+        for item in evidence_ledger
+        if item["status"] in {"failed", "warning"} and item["evidence_quality"] == "no_evidence_attached"
+    ]
+
+    return {
+        "mode": "accountable_explainable_review_record",
+        "non_autonomy_statement": (
+            "OpenRIは不正断定や採否自動決定を行いません。ここに残すのは、"
+            "人間が確認すべき証拠付きの検査結果、処理理由、未検査領域です。"
+        ),
+        "decision_provenance": {
+            "strictness": profile.get("strictness"),
+            "review_mode": profile.get("review_mode"),
+            "total_checks": summary.total_checks,
+            "experimental_checks_included": any(
+                finding.check_id in {"doi_existence", "pdf_hidden_text", "image_integrity_placeholder"}
+                for finding in findings
+            ),
+            "network_enabled": bool(profile.get("enable_network")),
+            "external_llm_calls_required": ai_review_protocol.get("model_execution_contract", {}).get(
+                "external_llm_calls_required", False
+            ),
+            "activated_rulesets": list(profile.get("activated_rulesets") or []),
+            "input_character_count": profile.get("character_count", 0),
+            "input_word_count": profile.get("word_count", 0),
+        },
+        "routing_explanation": {
+            "recommended_route": submission_processing.get("recommended_route"),
+            "route_label": submission_processing.get("route_label"),
+            "rationale": submission_processing.get("rationale"),
+            "route_drivers": _accountability_route_drivers(findings, submission_processing),
+            "coverage_blockers": ai_review_protocol.get("coverage_blockers", []),
+        },
+        "score_explanation": {
+            "formula": "mean(finding.score) - strictness_penalty - 8*failed - 2*warnings, clamped to 0..100",
+            "mean_finding_score": score_inputs["mean_finding_score"],
+            "strictness_penalty": score_inputs["strictness_penalty"],
+            "failed_penalty": score_inputs["failed_penalty"],
+            "warning_penalty": score_inputs["warning_penalty"],
+            "unclamped_score": score_inputs["unclamped_score"],
+            "final_score": summary.score,
+            "worst_findings": [
+                {
+                    "check_id": finding.check_id,
+                    "status": finding.status.value,
+                    "severity": finding.severity.value,
+                    "score": finding.score,
+                }
+                for finding in sorted(findings, key=lambda item: (item.score, item.severity.value))[:5]
+            ],
+        },
+        "evidence_ledger": evidence_ledger,
+        "claim_explainability": {
+            "claim_count": len(claim_inventory),
+            "support_status_counts": dict(support_counts),
+            "risk_flag_counts": dict(risk_flag_counts),
+            "claims_needing_support": [
+                {
+                    "id": claim.get("id"),
+                    "location": claim.get("location"),
+                    "support_status": claim.get("support_status"),
+                    "risk_flags": claim.get("risk_flags", []),
+                    "linked_findings": claim.get("linked_findings", []),
+                }
+                for claim in claim_inventory
+                if claim.get("support_status") != "local_support_marker_present"
+            ][:8],
+        },
+        "human_accountability": {
+            "required_human_decision": True,
+            "responsibility_matrix": [
+                {
+                    "role": "handling_editor",
+                    "responsibility": "recommended_route、coverage_blocker、査読者割当を確認し、通常査読へ進めるかを判断します。",
+                },
+                {
+                    "role": "statistics_editor",
+                    "responsibility": "statistical_consistency、summary_stat_plausibility、統計claimの再計算と著者照会を担当します。",
+                },
+                {
+                    "role": "research_integrity_officer",
+                    "responsibility": "prompt injection、PDF hidden text、画像未検査、引用placeholderなどの重大疑義を隔離確認します。",
+                },
+                {
+                    "role": "authors",
+                    "responsibility": "evidence、データ/コード、引用、限界、claim修正について検証可能な回答を提出します。",
+                },
+            ],
+            "author_query_queue": [
+                {
+                    "check_id": finding.check_id,
+                    "question": finding.recommendation,
+                    "evidence_count": len(finding.evidence),
+                }
+                for finding in active[:8]
+            ],
+        },
+        "explainability_gates": {
+            "warning_or_failure_without_evidence": weak_active_evidence,
+            "all_warnings_and_failures_have_evidence": not weak_active_evidence,
+            "skipped_checks_are_blockers_not_passes": [finding.check_id for finding in skipped],
+            "same_input_same_threshold_policy": True,
+            "social_metadata_used_for_leniency": False,
+        },
+        "audit_trail": [
+            {"step": "intake", "status": "completed", "detail": "RunRequestを受け取り、元テキストは外部LLMへ送信していません。"},
+            {"step": "profile", "status": "completed", "detail": "文字数、単語数、section、strictness knobを作成しました。"},
+            {"step": "checks", "status": "completed", "detail": f"{summary.total_checks}件のdeterministic checkを実行しました。"},
+            {"step": "triage", "status": "completed", "detail": submission_processing.get("route_label")},
+            {"step": "ai_review_packet", "status": "completed", "detail": ai_review_protocol.get("run_readiness", {}).get("label")},
+            {"step": "accountability_record", "status": "completed", "detail": "score、route、evidence、claim、coverage blockerを説明可能な形で固定しました。"},
+        ],
+    }
+
+
 def analyze_manuscript(request: RunRequest) -> RunReport:
     text = request.manuscript_text
     profile = manuscript_profile(text, request.strictness)
@@ -819,11 +1037,14 @@ def analyze_manuscript(request: RunRequest) -> RunReport:
     severity_counts = {severity: sum(1 for f in findings if f.severity == severity) for severity in Severity}
 
     strictness_penalty = profile["strictness_knobs"]["score_penalty"]
-    raw_score = round(sum(f.score for f in findings) / max(1, len(findings)) - strictness_penalty)
+    mean_finding_score = round(sum(f.score for f in findings) / max(1, len(findings)), 2)
+    failed_penalty = 8 * failed
+    warning_penalty = 2 * warnings
+    raw_score = round(mean_finding_score - strictness_penalty)
     if failed:
-        raw_score -= 8 * failed
+        raw_score -= failed_penalty
     if warnings:
-        raw_score -= 2 * warnings
+        raw_score -= warning_penalty
 
     summary = RunSummary(
         total_checks=len(findings),
@@ -844,4 +1065,18 @@ def analyze_manuscript(request: RunRequest) -> RunReport:
     )
     report.submission_processing = build_submission_processing(summary, findings, profile)
     report.ai_review_protocol = build_ai_review_protocol(summary, findings, profile, text)
+    report.accountability = build_accountability_record(
+        summary,
+        findings,
+        profile,
+        report.submission_processing,
+        report.ai_review_protocol,
+        {
+            "mean_finding_score": mean_finding_score,
+            "strictness_penalty": strictness_penalty,
+            "failed_penalty": failed_penalty,
+            "warning_penalty": warning_penalty,
+            "unclamped_score": raw_score,
+        },
+    )
     return report

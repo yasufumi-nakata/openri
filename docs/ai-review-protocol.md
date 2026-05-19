@@ -39,7 +39,7 @@ OpenRIの `ai_review_protocol` は、Codex、Claude、その他のAI reviewerに
 
 ## Report fields
 
-`POST /api/runs` と `POST /api/runs/upload` のreportには `ai_review_protocol` が入ります。
+`POST /api/runs` と `POST /api/runs/upload` のreportには `ai_review_protocol` と `accountability` が入ります。
 
 - `run_readiness`: AI査読へ進めるか、重大findingで止めるか、coverage blocker付きで進めるか。
 - `required_ai_reviews`: 実行すべきAI reviewer role。
@@ -47,6 +47,16 @@ OpenRIの `ai_review_protocol` は、Codex、Claude、その他のAI reviewerに
 - `finding_review_instructions`: findingごとにAI reviewerへ渡す確認指示。
 - `test_design`: AIが開発・査読する前提のunit、fixture、golden、adversarial、metamorphic、cross-model、regression gate。
 - `review_packet`: この原稿固有のclaim inventory、reviewer tasks、adversarial challenges、editor handoff。
+
+`accountability` は、AI reviewerや編集部が「なぜこのroute/scoreになったか」を追跡する説明責任レコードです。
+
+- `decision_provenance`: strictness、network有無、ruleset、外部LLM不要、入力サイズ。
+- `routing_explanation`: recommended route、rationale、route driver finding、coverage blocker。
+- `score_explanation`: score算定式、平均finding score、strictness/failed/warning penalty、worst findings。
+- `evidence_ledger`: findingごとのevidence品質、quote/location/data、primary evidence、recommendation。
+- `claim_explainability`: claim数、support_status分布、risk_flag分布、support不足claim。
+- `human_accountability`: handling editor、統計担当、research integrity担当、著者への確認責任と照会キュー。
+- `explainability_gates`: warning/failed findingにevidenceがあるか、skippedを安全扱いしていないか。
 
 ## Review packet
 

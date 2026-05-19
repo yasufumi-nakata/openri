@@ -9,9 +9,11 @@ import {
   Database,
   FileText,
   FlaskConical,
+  GitBranch,
   Home,
   Play,
   RefreshCcw,
+  Scale,
   ShieldAlert,
   Upload,
 } from "lucide-react";
@@ -137,6 +139,7 @@ function App() {
   };
   const submissionProcessing = report?.submission_processing;
   const aiReviewProtocol = report?.ai_review_protocol ?? seedAiReviewProtocol;
+  const accountability = report?.accountability ?? seedAccountability;
   const aiReviewLive = Boolean(report?.ai_review_protocol);
   const reviewPacket = aiReviewProtocol.review_packet ?? seedAiReviewProtocol.review_packet;
   const claimInventory = reviewPacket?.claim_inventory ?? [];
@@ -313,6 +316,84 @@ function App() {
               ))}
             </div>
           ) : null}
+        </section>
+
+        <section className="panel accountability-panel">
+          <div className="panel-heading">
+            <div>
+              <Scale size={18} />
+              <h2>Accountability & Explainability</h2>
+            </div>
+            <span className="small-muted">
+              {accountability.routing_explanation?.recommended_route ?? "Run a manuscript to compute accountability record"}
+            </span>
+          </div>
+          <div className="accountability-grid">
+            <div className="explain-route">
+              <div className="subheading">Route Drivers</div>
+              <strong>{accountability.routing_explanation?.route_label ?? "No route computed yet"}</strong>
+              <p>{accountability.routing_explanation?.rationale ?? accountability.non_autonomy_statement}</p>
+              <div className="driver-list">
+                {(accountability.routing_explanation?.route_drivers ?? []).slice(0, 5).map((driver) => (
+                  <div className="driver-row" key={driver.check_id}>
+                    <span>{driver.check_id}</span>
+                    <strong>{driver.severity} / {driver.status}</strong>
+                    <p>{driver.why_it_matters}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="score-explain">
+              <div className="subheading">Score Explanation</div>
+              <div className="score-formula">
+                <GitBranch size={16} />
+                <span>{accountability.score_explanation?.formula}</span>
+              </div>
+              <div className="score-factor-grid">
+                <Metric label="Mean" value={accountability.score_explanation?.mean_finding_score ?? "-"} tone="neutral" />
+                <Metric label="Strictness" value={accountability.score_explanation?.strictness_penalty ?? "-"} tone="neutral" />
+                <Metric label="Failed penalty" value={accountability.score_explanation?.failed_penalty ?? "-"} tone="critical" />
+                <Metric label="Warning penalty" value={accountability.score_explanation?.warning_penalty ?? "-"} tone="warning" />
+              </div>
+              <div className="gate-list">
+                <div className="gate-row">
+                  <span>Evidence gate</span>
+                  <strong>
+                    {accountability.explainability_gates?.all_warnings_and_failures_have_evidence ? "covered" : "needs evidence"}
+                  </strong>
+                </div>
+                <div className="gate-row">
+                  <span>Skipped checks</span>
+                  <strong>{accountability.explainability_gates?.skipped_checks_are_blockers_not_passes?.length ?? 0}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="ledger-grid">
+            <div>
+              <div className="subheading">Evidence Ledger</div>
+              <div className="ledger-list">
+                {(accountability.evidence_ledger ?? []).slice(0, 8).map((item) => (
+                  <div className="ledger-row" key={item.check_id}>
+                    <span>{item.check_id}</span>
+                    <strong>{item.evidence_quality}</strong>
+                    <small>{item.evidence_count} evidence</small>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="subheading">Human Accountability</div>
+              <div className="responsibility-list">
+                {(accountability.human_accountability?.responsibility_matrix ?? []).map((item) => (
+                  <div className="responsibility-row" key={item.role}>
+                    <strong>{item.role}</strong>
+                    <span>{item.responsibility}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </section>
 
         <section className="panel claim-packet-panel">
@@ -626,6 +707,54 @@ function formatBytes(bytes) {
 function formatReviewKey(key) {
   return key.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
+
+const seedAccountability = {
+  mode: "accountable_explainable_review_record",
+  non_autonomy_statement: "OpenRIは不正断定や採否自動決定ではなく、人間が確認すべき証拠付き検査結果を返します。",
+  routing_explanation: {
+    recommended_route: "pending",
+    route_label: "Run a manuscript to explain routing",
+    rationale: "検査後にroute driver、coverage blocker、人間の確認責任を表示します。",
+    route_drivers: [
+      {
+        check_id: "pending",
+        severity: "info",
+        status: "ready",
+        why_it_matters: "Run TextまたはRun PDF/Fileで説明責任レコードを作成します。",
+      },
+    ],
+  },
+  score_explanation: {
+    formula: "mean(finding.score) - strictness_penalty - 8*failed - 2*warnings",
+    mean_finding_score: "-",
+    strictness_penalty: "-",
+    failed_penalty: "-",
+    warning_penalty: "-",
+  },
+  evidence_ledger: [
+    {
+      check_id: "pending",
+      evidence_quality: "run_required",
+      evidence_count: 0,
+    },
+  ],
+  explainability_gates: {
+    all_warnings_and_failures_have_evidence: true,
+    skipped_checks_are_blockers_not_passes: [],
+  },
+  human_accountability: {
+    responsibility_matrix: [
+      {
+        role: "handling_editor",
+        responsibility: "検査後のrecommended routeとcoverage blockerを確認します。",
+      },
+      {
+        role: "research_integrity_officer",
+        responsibility: "重大findingを不正断定ではなく隔離確認の材料として扱います。",
+      },
+    ],
+  },
+};
 
 const seedAiReviewProtocol = {
   goal: "Codex/Claude等のAI reviewerが、人間査読で確認される論点を分野非依存・証拠優先・忖度なしで検査します。",

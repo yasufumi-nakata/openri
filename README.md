@@ -108,13 +108,17 @@ Web UIでは、本文貼り付けに加えてPDF/TXT/MD/TeXのアップロード
 
 公開チュートリアルは GitHub Pages の [`OpenRI Tutorial`](https://www.yasufumi.net/openri/) に置いています。ローカル実行、CLI、Web UI、API、GitHub Actions 連携を順番に確認できます。
 
-実行後のreportには `ai_review_protocol` が入り、次を確認できます。
+実行後のreportには `ai_review_protocol` と `accountability` が入り、次を確認できます。
 
 - `reviewer_pool`: field-generalist、methodology、statistics、reproducibility、ethics/integrity、adversarial reviewerの役割。
 - `universal_review_dimensions`: claim-evidence、method validity、statistics、reproducibility、citation support、ethics、limitations、adversarial failure modes。
 - `strictness_policy`: 著者名・所属・評判で閾値を変えない、skippedをpassedにしない、未公開原稿を外部LLM/APIへ送らない既定。
 - `test_design`: AIが実装する前提でのunit/fixture/golden/adversarial/metamorphic/cross-model/regression gate。
 - `review_packet`: 原稿固有のclaim inventory、AI reviewer task、adversarial challenge、editor handoff。
+- `accountability.routing_explanation`: recommended routeの理由、route driverになったfinding、coverage blocker。
+- `accountability.score_explanation`: score算定式、平均finding score、strictness/failed/warning penalty。
+- `accountability.evidence_ledger`: findingごとのevidence数、quote/location/dataの有無、primary evidence。
+- `accountability.human_accountability`: handling editor、統計担当、research integrity担当、著者が確認すべき責任分担。
 
 ## ロードマップ
 

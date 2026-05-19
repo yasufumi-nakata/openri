@@ -30,6 +30,7 @@ OpenRIは、システム開発そのものもCodex/Claude等のAI coding agent�
 - `submission_processing.recommended_route`。
 - `ai_review_protocol.run_readiness`、`required_ai_reviews`、`coverage_blockers`。
 - `ai_review_protocol.review_packet.claim_inventory`、`reviewer_tasks`、`adversarial_challenges`。
+- `accountability.routing_explanation`、`score_explanation`、`evidence_ledger`、`explainability_gates`。
 - SARIFの `ruleId` とlocation。
 
 ## Adversarial tests

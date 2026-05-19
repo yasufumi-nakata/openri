@@ -54,9 +54,11 @@ def _max_finding_rank(findings, only_statuses) -> int:
 def _print_human(report) -> None:
     summary = report.summary
     protocol = report.ai_review_protocol or {}
+    accountability = report.accountability or {}
     packet = protocol.get("review_packet", {})
     readiness = protocol.get("run_readiness", {})
     handoff = packet.get("editor_handoff", {})
+    routing = accountability.get("routing_explanation", {})
     print(f"OpenRI report {report.report_id}")
     print(f"title: {report.title}")
     print(f"strictness: {report.strictness}")
@@ -71,6 +73,9 @@ def _print_human(report) -> None:
             f"tasks={handoff.get('task_count', 0)} "
             f"challenges={handoff.get('challenge_count', 0)}"
         )
+    if routing:
+        drivers = ", ".join(item.get("check_id", "") for item in routing.get("route_drivers", [])[:4])
+        print(f"accountability_route: {routing.get('recommended_route')} drivers={drivers}")
     print()
     for f in report.findings:
         marker = {

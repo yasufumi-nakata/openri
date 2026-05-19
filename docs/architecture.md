@@ -10,7 +10,8 @@ OpenRI has one canonical report object: `RunReport`.
 4. Findings are summarized into score, severity counts, and submission routing.
 5. `ai_review_protocol` adds the field-neutral AI review rubric.
 6. `review_packet` adds manuscript-specific claim inventory, reviewer tasks, adversarial challenges, and editor handoff.
-7. Reports can be saved to SQLite and exported as JSON or SARIF.
+7. `accountability` explains route drivers, score inputs, evidence quality, coverage blockers, and human responsibility.
+8. Reports can be saved to SQLite and exported as JSON or SARIF.
 
 ## Extension points
 
