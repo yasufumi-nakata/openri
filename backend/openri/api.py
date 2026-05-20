@@ -56,6 +56,7 @@ def _looks_like_image(payload: bytes) -> bool:
     signatures = (
         b"\x89PNG\r\n\x1a\n",
         b"\xff\xd8\xff",
+        b"BM",
         b"GIF87a",
         b"GIF89a",
         b"RIFF",

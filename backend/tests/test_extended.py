@@ -365,6 +365,26 @@ def test_image_upload_detects_duplicate_region_candidate(tmp_path):
     assert any(ev["data"].get("kind") == "duplicate-region-candidate" for ev in finding["evidence"])
 
 
+def test_bmp_upload_accepts_supported_image_magic(tmp_path):
+    _require_multipart()
+    Image = pytest.importorskip("PIL.Image")
+    image_path = tmp_path / "figure.bmp"
+    Image.new("RGB", (32, 32), "white").save(image_path)
+
+    client = TestClient(app)
+    response = client.post(
+        "/api/runs/upload",
+        files={"file": ("figure.bmp", image_path.read_bytes(), "image/bmp")},
+        data={"strictness": "standard"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["title"] == "figure.bmp"
+    assert payload["manuscript_profile"]["source_metadata"]["suffix"] == ".bmp"
+    assert any(item["check_id"] == "image_integrity" for item in payload["findings"])
+
+
 def test_citation_context_enters_review_packet():
     text = """
 Abstract
