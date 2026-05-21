@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Activity,
+  AlertCircle,
   AlertTriangle,
   Braces,
   CheckCircle2,
@@ -11,6 +12,7 @@ import {
   FlaskConical,
   GitBranch,
   Home,
+  MinusCircle,
   Play,
   RefreshCcw,
   Scale,
@@ -55,6 +57,16 @@ function App() {
   const selectedFinding = useMemo(() => {
     if (!report) return null;
     return report.findings.find((finding) => finding.id === selectedFindingId) || report.findings[0];
+  }, [report, selectedFindingId]);
+
+  useEffect(() => {
+    if (!report) {
+      if (selectedFindingId !== null) setSelectedFindingId(null);
+      return;
+    }
+    if (!report.findings.some((finding) => finding.id === selectedFindingId)) {
+      setSelectedFindingId(report.findings[0]?.id ?? null);
+    }
   }, [report, selectedFindingId]);
 
   async function runChecks() {
@@ -486,14 +498,14 @@ function App() {
             <div className="upload-drop">
               <div>
                 <strong>Submitted PDF / text upload</strong>
-                <span>{uploadFile ? `${uploadFile.name} (${formatBytes(uploadFile.size)})` : "PDF, TXT, MD, TeX, PNG, JPEG, TIFFを選択できます"}</span>
+                <span>{uploadFile ? `${uploadFile.name} (${formatBytes(uploadFile.size)})` : "PDF, TXT, MD, TeX, PNG, JPEG, TIFF, BMP, WEBPを選択できます"}</span>
               </div>
               <label className="file-button">
                 <Upload size={15} />
                 Choose file
                 <input
                   type="file"
-                  accept=".pdf,.txt,.md,.markdown,.tex,.png,.jpg,.jpeg,.tif,.tiff,.webp,text/plain,application/pdf,image/png,image/jpeg,image/tiff,image/webp"
+                  accept=".pdf,.txt,.md,.markdown,.tex,.png,.jpg,.jpeg,.tif,.tiff,.bmp,.webp,text/plain,application/pdf,image/png,image/jpeg,image/tiff,image/bmp,image/webp"
                   onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)}
                 />
               </label>
@@ -671,7 +683,14 @@ function SeverityPill({ severity }) {
 }
 
 function StatusPill({ status }) {
-  const Icon = status === "passed" ? CheckCircle2 : status === "failed" ? AlertTriangle : Activity;
+  const icons = {
+    failed: AlertTriangle,
+    passed: CheckCircle2,
+    ready: Activity,
+    skipped: MinusCircle,
+    warning: AlertCircle,
+  };
+  const Icon = icons[status] ?? AlertCircle;
   return (
     <span className={`pill status-${status}`}>
       <Icon size={13} /> {status}

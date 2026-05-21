@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Iterator, Tuple
 
-
 SENTENCE_BOUNDARIES = {".", "!", "?", "\n", "。", "！", "？"}
 PUNCTUATION_BOUNDARIES = {".", "!", "?", "。", "！", "？"}
 

@@ -1069,10 +1069,15 @@ button.table-row:hover {
 
 .severity-low,
 .severity-info,
-.status-skipped,
 .status-ready {
   color: #345f9f;
   background: #eef4ff;
+}
+
+.status-skipped {
+  color: #56616f;
+  background: #f4f6f8;
+  border: 1px dashed #9aa6b2;
 }
 
 .status-passed {

@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from . import __version__
+from . import __homepage__, __version__
 from .models import Finding, RunReport, Severity, Status
-
 
 _SEVERITY_TO_SARIF_LEVEL = {
     Severity.CRITICAL: "error",
@@ -83,7 +82,7 @@ def report_to_sarif(report: RunReport, artifact_uri: str = "manuscript.txt") -> 
                 "tool": {
                     "driver": {
                         "name": "OpenRI",
-                        "informationUri": "https://github.com/your-org/openri",
+                        "informationUri": __homepage__,
                         "version": __version__,
                         "rules": list(seen_rules.values()),
                     }

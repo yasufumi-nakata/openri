@@ -6,9 +6,23 @@ import sqlite3
 from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Optional
 
 from .models import RunReport
+
+ALLOWED_SUBMISSION_STATUSES = {
+    "editorial_hold",
+    "queued_for_editor_check",
+    "statistics_review",
+    "technical_check",
+    "ready_for_peer_review",
+    "returned_to_author",
+    "rejected",
+}
+
+
+class SubmissionConflictError(ValueError):
+    pass
 
 
 def default_db_path() -> Path:
@@ -19,7 +33,7 @@ def default_db_path() -> Path:
 
 
 class ReportStore:
-    def __init__(self, path: Path | None = None):
+    def __init__(self, path: Optional[Path] = None):
         self.path = path or default_db_path()
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with closing(self._connect()) as conn:
@@ -55,8 +69,13 @@ class ReportStore:
             conn.commit()
 
     def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(str(self.path))
+        conn = sqlite3.connect(str(self.path), timeout=2.0)
         conn.row_factory = sqlite3.Row
+        try:
+            conn.execute("PRAGMA busy_timeout=2000")
+            conn.execute("PRAGMA journal_mode=WAL")
+        except sqlite3.OperationalError:
+            pass
         return conn
 
     def save(self, report: RunReport) -> None:
@@ -82,9 +101,7 @@ class ReportStore:
 
     def get(self, report_id: str) -> Optional[RunReport]:
         with closing(self._connect()) as conn:
-            row = conn.execute(
-                "SELECT payload FROM reports WHERE report_id = ?", (report_id,)
-            ).fetchone()
+            row = conn.execute("SELECT payload FROM reports WHERE report_id = ?", (report_id,)).fetchone()
         if row is None:
             return None
         return RunReport.model_validate_json(row["payload"])
@@ -115,14 +132,17 @@ class ReportStore:
             return cursor.rowcount
 
     def create_submission(self, submission: dict) -> dict:
+        status = str(submission["status"])
+        if status not in ALLOWED_SUBMISSION_STATUSES:
+            raise ValueError(f"invalid submission status: {status}")
         now = datetime.now(timezone.utc).isoformat()
         audit_log = submission.get("audit_log") or [
-            {"at": now, "event": "created", "actor": "openri", "status": submission["status"]}
+            {"at": now, "event": "created", "actor": "openri", "status": status}
         ]
         payload = {
             "submission_id": submission["submission_id"],
             "title": submission["title"],
-            "status": submission["status"],
+            "status": status,
             "recommended_route": submission["recommended_route"],
             "report_id": submission.get("report_id"),
             "author_query_draft": submission.get("author_query_draft", ""),
@@ -130,26 +150,29 @@ class ReportStore:
             "created_at": now,
             "updated_at": now,
         }
-        with closing(self._connect()) as conn:
-            conn.execute(
-                """
-                INSERT INTO submissions
-                (submission_id, title, status, recommended_route, report_id, author_query_draft, audit_log, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    payload["submission_id"],
-                    payload["title"],
-                    payload["status"],
-                    payload["recommended_route"],
-                    payload["report_id"],
-                    payload["author_query_draft"],
-                    json.dumps(payload["audit_log"], ensure_ascii=False),
-                    payload["created_at"],
-                    payload["updated_at"],
-                ),
-            )
-            conn.commit()
+        try:
+            with closing(self._connect()) as conn:
+                conn.execute(
+                    """
+                    INSERT INTO submissions
+                    (submission_id, title, status, recommended_route, report_id, author_query_draft, audit_log, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        payload["submission_id"],
+                        payload["title"],
+                        payload["status"],
+                        payload["recommended_route"],
+                        payload["report_id"],
+                        payload["author_query_draft"],
+                        json.dumps(payload["audit_log"], ensure_ascii=False),
+                        payload["created_at"],
+                        payload["updated_at"],
+                    ),
+                )
+                conn.commit()
+        except sqlite3.IntegrityError as exc:
+            raise SubmissionConflictError(f"submission_id already exists: {payload['submission_id']}") from exc
         return payload
 
     def list_submissions(self, limit: int = 50) -> list[dict]:
@@ -170,6 +193,8 @@ class ReportStore:
         return out
 
     def update_submission_status(self, submission_id: str, status: str, actor: str = "openri") -> Optional[dict]:
+        if status not in ALLOWED_SUBMISSION_STATUSES:
+            raise ValueError(f"invalid submission status: {status}")
         with closing(self._connect()) as conn:
             row = conn.execute("SELECT * FROM submissions WHERE submission_id = ?", (submission_id,)).fetchone()
             if row is None:

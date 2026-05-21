@@ -51,8 +51,10 @@ jobs:
         run: uv run --locked --python 3.12 --extra dev python scripts/build_pages.py
       - name: Validate public tutorial pages
         run: uv run --locked --python 3.12 --extra dev python scripts/validate_pages.py
-      - name: Python fatal lint
+      - name: Python lint
         run: uv run --locked --python 3.12 --extra dev python -m ruff check backend/openri backend/tests scripts
+      - name: Python format
+        run: uv run --locked --python 3.12 --extra dev python -m ruff format --check backend/openri backend/tests scripts
       - name: Compile Python package
         run: uv run --locked --python 3.12 --extra dev python -m compileall -q backend/openri scripts
 

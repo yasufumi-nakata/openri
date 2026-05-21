@@ -6,7 +6,6 @@ from pathlib import Path
 from openri.analyzer import analyze_manuscript
 from openri.models import RunRequest
 
-
 ROOT = Path(__file__).resolve().parents[1]
 SAMPLE_DIR = ROOT / "samples" / "golden"
 REPORT_DIR = ROOT / "backend" / "tests" / "golden_reports"

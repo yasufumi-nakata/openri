@@ -1,24 +1,36 @@
 from __future__ import annotations
 
+import secrets
 import tempfile
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 from uuid import uuid4
 
 from fastapi import Body, Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from starlette.concurrency import run_in_threadpool
 
 from . import __version__
 from .analyzer import OBJECTIVE, analyze_manuscript, get_ai_review_protocol_blueprint, get_check_definitions
-from .config import allowed_cors_origins, configured_api_keys, rate_limit_per_minute, require_api_key, retention_days, upload_limit_bytes
+from .config import (
+    allowed_cors_origins,
+    configured_api_keys,
+    cors_allow_credentials,
+    rate_limit_key_source,
+    rate_limit_per_minute,
+    require_api_key,
+    retention_days,
+    trust_forwarded_for,
+    upload_limit_bytes,
+)
 from .image_inspect import SUPPORTED_IMAGE_SUFFIXES, inspect_image, is_supported_image
 from .models import RunReport, RunRequest
-from .pdf import extract_text_from_pdf
+from .pdf import PDFDependencyUnavailableError, PDFTextExtractionError, extract_text_from_pdf
 from .pdf_inspect import inspect_pdf
 from .sarif import report_to_sarif
-from .store import ReportStore
-
+from .store import ReportStore, SubmissionConflictError
 
 app = FastAPI(
     title="OpenRI API",
@@ -29,17 +41,33 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_cors_origins(),
-    allow_credentials=True,
+    allow_credentials=cors_allow_credentials(),
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 STORE = ReportStore()
 RATE_BUCKETS: dict[str, list[float]] = {}
+RATE_LIMIT_IDENTITY_SALTS = (secrets.token_hex(16), secrets.token_hex(16))
 
 
 TEXT_SUFFIXES = {".txt", ".md", ".markdown", ".tex", ".rst"}
 UPLOAD_SUFFIXES = TEXT_SUFFIXES | {".pdf"} | SUPPORTED_IMAGE_SUFFIXES
+UPLOAD_READ_CHUNK_BYTES = 1024 * 1024
+MULTIPART_OVERHEAD_ALLOWANCE_BYTES = 64 * 1024
+
+
+class SubmissionStatusUpdate(BaseModel):
+    status: Literal[
+        "editorial_hold",
+        "queued_for_editor_check",
+        "statistics_review",
+        "technical_check",
+        "ready_for_peer_review",
+        "returned_to_author",
+        "rejected",
+    ]
+    actor: str = "openri"
 
 
 def _sanitize_filename(filename: Optional[str]) -> str:
@@ -61,6 +89,7 @@ def _looks_like_image(payload: bytes) -> bool:
         b"RIFF",
         b"II*\x00",
         b"MM\x00*",
+        b"BM",
     )
     return payload.startswith(signatures)
 
@@ -70,25 +99,48 @@ def _validate_upload(filename: str, content_type: Optional[str], payload: bytes)
     if suffix not in UPLOAD_SUFFIXES:
         raise HTTPException(
             status_code=422,
-            detail={"error": "unsupported_file_type", "allowed_extensions": sorted(UPLOAD_SUFFIXES), "filename": filename},
+            detail={
+                "error": "unsupported_file_type",
+                "allowed_extensions": sorted(UPLOAD_SUFFIXES),
+                "filename": filename,
+            },
         )
     if suffix == ".pdf" and not _looks_like_pdf(payload):
         raise HTTPException(status_code=422, detail={"error": "invalid_pdf_magic", "filename": filename})
     if suffix in SUPPORTED_IMAGE_SUFFIXES and not _looks_like_image(payload):
         raise HTTPException(status_code=422, detail={"error": "invalid_image_magic", "filename": filename})
-    if suffix in TEXT_SUFFIXES and content_type and content_type not in {
-        "text/plain",
-        "text/markdown",
-        "text/x-tex",
-        "application/octet-stream",
-    }:
-        raise HTTPException(status_code=422, detail={"error": "invalid_text_content_type", "content_type": content_type})
+    if suffix in TEXT_SUFFIXES and content_type:
+        media_type = content_type.split(";", 1)[0].strip().lower()
+        is_allowed_text = media_type.startswith("text/") or media_type in {
+            "application/octet-stream",
+            "application/x-latex",
+            "application/x-tex",
+        }
+        if not is_allowed_text:
+            raise HTTPException(
+                status_code=422, detail={"error": "invalid_text_content_type", "content_type": content_type}
+            )
     return suffix
 
 
 async def _read_upload_form(request: Request):
+    limit = upload_limit_bytes()
+    raw_content_length = request.headers.get("content-length")
+    if raw_content_length:
+        try:
+            content_length = int(raw_content_length)
+        except ValueError:
+            content_length = None
+        if content_length is not None and content_length > limit + MULTIPART_OVERHEAD_ALLOWANCE_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail={"error": "request_too_large", "limit_bytes": limit, "content_length": content_length},
+            )
     try:
-        form = await request.form()
+        try:
+            form = await request.form(max_files=1, max_fields=20, max_part_size=limit)
+        except TypeError:
+            form = await request.form(max_files=1, max_fields=20)
     except (AssertionError, RuntimeError) as exc:
         raise HTTPException(
             status_code=503,
@@ -101,6 +153,18 @@ async def _read_upload_form(request: Request):
     if file is None or not hasattr(file, "read"):
         raise HTTPException(status_code=422, detail={"error": "missing_upload_file", "field": "file"})
     return form, file
+
+
+async def _read_upload_payload(file, limit: int) -> bytes:
+    payload = bytearray()
+    while True:
+        chunk = await file.read(UPLOAD_READ_CHUNK_BYTES)
+        if not chunk:
+            break
+        payload.extend(chunk)
+        if len(payload) > limit:
+            raise HTTPException(status_code=413, detail={"error": "file_too_large", "limit_bytes": limit})
+    return bytes(payload)
 
 
 def _form_text(form, key: str, default: str) -> str:
@@ -127,14 +191,36 @@ def _require_api_key(x_openri_api_key: Optional[str] = Header(default=None)) -> 
         raise HTTPException(status_code=401, detail={"error": "api_key_required"})
 
 
-def _rate_limit(request: Request) -> None:
+def _identity_hash(value: str) -> str:
+    parts = [hash((salt, value)) & ((1 << 64) - 1) for salt in RATE_LIMIT_IDENTITY_SALTS]
+    return "".join(f"{part:016x}" for part in parts)
+
+
+def _rate_limit_identity(request: Request, x_openri_api_key: Optional[str]) -> str:
+    if rate_limit_key_source() == "api_key" and x_openri_api_key:
+        return "api_key:" + _identity_hash(x_openri_api_key)
+    forwarded_for = request.headers.get("x-forwarded-for", "")
+    if trust_forwarded_for() and forwarded_for:
+        first_hop = forwarded_for.split(",", 1)[0].strip() or "unknown"
+        return "forwarded:" + _identity_hash(first_hop)
+    client_host = request.client.host if request.client else "unknown"
+    return "client:" + _identity_hash(client_host)
+
+
+def _rate_limit(request: Request, x_openri_api_key: Optional[str] = Header(default=None)) -> None:
     limit = rate_limit_per_minute()
     if limit <= 0:
         return
-    client = request.client.host if request.client else "unknown"
+    client = _rate_limit_identity(request, x_openri_api_key)
     now = time.time()
     window_start = now - 60
-    bucket = [ts for ts in RATE_BUCKETS.get(client, []) if ts >= window_start]
+    for key, timestamps in list(RATE_BUCKETS.items()):
+        active = [ts for ts in timestamps if ts >= window_start]
+        if active:
+            RATE_BUCKETS[key] = active
+        else:
+            RATE_BUCKETS.pop(key, None)
+    bucket = list(RATE_BUCKETS.get(client, []))
     if len(bucket) >= limit:
         raise HTTPException(status_code=429, detail={"error": "rate_limited", "limit_per_minute": limit})
     bucket.append(now)
@@ -209,16 +295,23 @@ def create_submission(payload: dict = Body(...)) -> dict:
     STORE.save(report)
     route = report.submission_processing["recommended_route"]
     author_query = _author_query_draft(report)
-    submission = STORE.create_submission(
-        {
-            "submission_id": payload.get("submission_id") or f"sub_{uuid4().hex[:12]}",
-            "title": request.title,
-            "status": "editorial_hold" if route.endswith("hold_before_peer_review") else "queued_for_editor_check",
-            "recommended_route": route,
-            "report_id": report.report_id,
-            "author_query_draft": author_query,
-        }
-    )
+    submission_id = payload.get("submission_id") or f"sub_{uuid4().hex[:12]}"
+    try:
+        submission = STORE.create_submission(
+            {
+                "submission_id": submission_id,
+                "title": request.title,
+                "status": "editorial_hold" if route.endswith("hold_before_peer_review") else "queued_for_editor_check",
+                "recommended_route": route,
+                "report_id": report.report_id,
+                "author_query_draft": author_query,
+            }
+        )
+    except SubmissionConflictError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"error": "submission_id_conflict", "submission_id": submission_id},
+        ) from exc
     submission["report"] = report.model_dump(mode="json")
     return submission
 
@@ -229,11 +322,8 @@ def list_submissions(limit: int = 50) -> list[dict]:
 
 
 @app.post("/api/submissions/{submission_id}/status", dependencies=[Depends(_require_api_key)])
-def update_submission_status(submission_id: str, payload: dict = Body(...)) -> dict:
-    status = str(payload.get("status", "")).strip()
-    if not status:
-        raise HTTPException(status_code=422, detail={"error": "status_required"})
-    updated = STORE.update_submission_status(submission_id, status, actor=str(payload.get("actor", "openri")))
+def update_submission_status(submission_id: str, payload: SubmissionStatusUpdate = Body(...)) -> dict:
+    updated = STORE.update_submission_status(submission_id, payload.status, actor=payload.actor)
     if updated is None:
         raise HTTPException(status_code=404, detail="Submission not found")
     return updated
@@ -264,10 +354,8 @@ async def run_uploaded_file(request: Request) -> RunReport:
     if review_mode not in {"integrity_triage", "ai_reviewer_replication"}:
         raise HTTPException(status_code=422, detail={"error": "invalid_review_mode", "value": review_mode})
     filename = _sanitize_filename(file.filename)
-    payload = await file.read()
     limit = upload_limit_bytes()
-    if len(payload) > limit:
-        raise HTTPException(status_code=413, detail={"error": "file_too_large", "limit_bytes": limit})
+    payload = await _read_upload_payload(file, limit)
     suffix = _validate_upload(filename, file.content_type, payload)
 
     pdf_inspection = None
@@ -283,16 +371,45 @@ async def run_uploaded_file(request: Request) -> RunReport:
             handle.write(payload)
             handle.flush()
             pdf_path = Path(handle.name)
-            text = extract_text_from_pdf(pdf_path)
             try:
-                pdf_inspection = inspect_pdf(pdf_path)
+                text = await run_in_threadpool(extract_text_from_pdf, pdf_path)
+                source_metadata["text_extraction"] = {"available": True, "method": "pdf"}
+            except PDFDependencyUnavailableError as exc:
+                source_metadata["text_extraction"] = {"available": False, "reason": str(exc)[:240]}
+                raise HTTPException(
+                    status_code=503,
+                    detail={
+                        "error": "pdf_extraction_unavailable",
+                        "message": "PDF text extraction requires optional PDF dependencies.",
+                        "install": "pip install 'openri[pdf]'",
+                        "source_metadata": source_metadata,
+                    },
+                ) from exc
+            except PDFTextExtractionError as exc:
+                source_metadata["text_extraction"] = {"available": False, "reason": str(exc)[:240]}
+                raise HTTPException(
+                    status_code=422,
+                    detail={
+                        "error": "pdf_text_extraction_failed",
+                        "message": "PDF text extraction failed; please re-upload a readable PDF or submit extracted text.",
+                        "source_metadata": source_metadata,
+                    },
+                ) from exc
+            try:
+                pdf_inspection = await run_in_threadpool(inspect_pdf, pdf_path)
             except Exception as exc:  # noqa: BLE001 - report and keep the main text checks running
-                pdf_inspection = {"available": False, "reason": str(exc), "hidden_text": [], "document_risks": [], "page_count": 0}
+                pdf_inspection = {
+                    "available": False,
+                    "reason": str(exc),
+                    "hidden_text": [],
+                    "document_risks": [],
+                    "page_count": 0,
+                }
     elif is_supported_image(Path(filename)):
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=True) as handle:
             handle.write(payload)
             handle.flush()
-            image_inspection = inspect_image(Path(handle.name))
+            image_inspection = await run_in_threadpool(inspect_image, Path(handle.name))
         text = (
             f"Image-only submission: {filename}\n\n"
             "The uploaded figure file was inspected for image-integrity metadata, compression, and repeated pixel-region candidates."
@@ -304,19 +421,18 @@ async def run_uploaded_file(request: Request) -> RunReport:
         raise HTTPException(status_code=422, detail="No extractable manuscript text was found in the uploaded file.")
 
     rulesets = [item.strip() for item in activated_rulesets.replace(",", " ").split() if item.strip()]
-    report = analyze_manuscript(
-        RunRequest(
-            manuscript_text=text,
-            title=filename,
-            strictness=strictness,  # type: ignore[arg-type]
-            review_mode=review_mode,  # type: ignore[arg-type]
-            activated_rulesets=rulesets,
-            enable_network=enable_network,
-            pdf_inspection=pdf_inspection,
-            image_inspection=image_inspection,
-            source_metadata=source_metadata,
-        )
+    run_request = RunRequest(
+        manuscript_text=text,
+        title=filename,
+        strictness=strictness,  # type: ignore[arg-type]
+        review_mode=review_mode,  # type: ignore[arg-type]
+        activated_rulesets=rulesets,
+        enable_network=enable_network,
+        pdf_inspection=pdf_inspection,
+        image_inspection=image_inspection,
+        source_metadata=source_metadata,
     )
+    report = await run_in_threadpool(analyze_manuscript, run_request)
     STORE.save(report)
     return report
 
@@ -361,8 +477,11 @@ def security_policy() -> dict:
         "hosted_controls": {
             "api_key_header": "X-OpenRI-API-Key",
             "rate_limit_per_minute": rate_limit_per_minute(),
+            "rate_limit_key": rate_limit_key_source(),
+            "trust_x_forwarded_for": trust_forwarded_for(),
             "retention_days": retention_days(),
             "cors_origins": allowed_cors_origins(),
+            "cors_allow_credentials": cors_allow_credentials(),
             "rbac_boundary": "Use gateway/OIDC roles for multi-tenant deployments; built-in API key mode is single-tenant.",
         },
         "audit_policy": "Submission queue entries persist status-change audit_log records. Gateway logs should record authenticated report access.",

@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 from typing import Iterable, List
 
-
 CRITICAL_LABELS = {"critical", "high", "major", "must_fix"}
 
 
@@ -28,10 +27,7 @@ def compare_review_results(paths: Iterable[Path]) -> dict:
         by_model[model] = sorted(keys)
         all_keys.update(keys)
 
-    missing_by_model = {
-        model: sorted(all_keys - set(keys))
-        for model, keys in by_model.items()
-    }
+    missing_by_model = {model: sorted(all_keys - set(keys)) for model, keys in by_model.items()}
     recall = {
         model: 1.0 if not all_keys else round(len(set(keys) & all_keys) / len(all_keys), 3)
         for model, keys in by_model.items()

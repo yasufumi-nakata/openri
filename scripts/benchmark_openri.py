@@ -7,7 +7,6 @@ from pathlib import Path
 from openri.analyzer import analyze_manuscript
 from openri.models import RunRequest, Status
 
-
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SAMPLE_DIR = ROOT / "samples" / "golden"
 

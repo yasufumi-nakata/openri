@@ -3,8 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from openri.models import RunReport, SCHEMA_VERSION
-
+from openri.models import SCHEMA_VERSION, RunReport
 
 ROOT = Path(__file__).resolve().parents[1]
 

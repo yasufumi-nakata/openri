@@ -4,7 +4,6 @@ import hashlib
 from pathlib import Path
 from typing import Any
 
-
 SUPPORTED_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".webp"}
 
 

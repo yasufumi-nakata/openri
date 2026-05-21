@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import List, Optional
 from urllib.parse import urlparse
 
-
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 

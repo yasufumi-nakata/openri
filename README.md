@@ -148,6 +148,7 @@ PYTHONPATH=backend python scripts/benchmark_openri.py
 - サポート窓口: [`SUPPORT.md`](SUPPORT.md)
 - ガバナンス: [`GOVERNANCE.md`](GOVERNANCE.md)
 - メンテナ手順: [`docs/maintainer-guide.md`](docs/maintainer-guide.md)
+- Scorecard triage: [`docs/scorecard-triage.md`](docs/scorecard-triage.md)
 
 GitHub上では、CI、Repository Health、CodeQL、Dependency Review、OpenSSF Scorecard、Dependabotを有効化しています。`main` はbranch protectionでCI成功を必須にする運用を想定しています。
 

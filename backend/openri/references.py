@@ -3,18 +3,18 @@ from __future__ import annotations
 import re
 from typing import Dict, List
 
+from .cues import CLAIM_CUE_RE as CLAIM_RE
 from .text_windows import iter_sentence_spans
-
 
 REFERENCE_HEADING_RE = re.compile(r"^\s*(references|bibliography|参考文献)\s*$", re.IGNORECASE | re.MULTILINE)
 NUMERIC_CITATION_RE = re.compile(r"\[(?P<items>\d{1,3}(?:\s*(?:,|-)\s*\d{1,3})*)\]")
 AUTHOR_YEAR_CITATION_RE = re.compile(r"\(([A-Z][A-Za-z-]+(?:\s+et\s+al\.)?),\s*(20\d{2}|19\d{2})\)")
 DOI_RE = re.compile(r"\b10\.\d{4,9}/[-._;()/:A-Z0-9]+\b", re.IGNORECASE)
-CLAIM_RE = re.compile(
-    r"\b(significant|significantly|novel|first|caus(?:e|al|es|ed|ation)|"
-    r"robust|prove|definitive|conclusive|improves?|predicts?|associated|"
-    r"有意|新規|初めて|因果|証明|改善|関連)\b",
-    re.IGNORECASE,
+ITEM_START_PATTERNS = (
+    re.compile(r"^\[\d+\]"),
+    re.compile(r"^\d+[\).]"),
+    re.compile(r"^[A-Z][A-Za-z'’.-]+,\s*(?:[A-Z]\.?\s*){1,5}(?:[,;.]|\s)"),
+    re.compile(r"^[A-Z][A-Za-z'’.-]+\s+(?:[A-Z]{1,5}\.?\s*){1,5}(?:[,;.]|\s)"),
 )
 
 
@@ -22,7 +22,7 @@ def reference_section(text: str) -> str:
     match = REFERENCE_HEADING_RE.search(text)
     if not match:
         return ""
-    return text[match.end():].strip()
+    return text[match.end() :].strip()
 
 
 def extract_reference_items(text: str) -> List[Dict[str, object]]:
@@ -38,7 +38,7 @@ def extract_reference_items(text: str) -> List[Dict[str, object]]:
                 items.append(_reference_item(len(items) + 1, " ".join(current)))
                 current = []
             continue
-        starts_item = bool(re.match(r"^(\[\d+\]|\d+[\).]|[A-Z][A-Za-z-]+,\s)", line))
+        starts_item = _starts_reference_item(line)
         if starts_item and current:
             items.append(_reference_item(len(items) + 1, " ".join(current)))
             current = [line]
@@ -49,6 +49,10 @@ def extract_reference_items(text: str) -> List[Dict[str, object]]:
     return items
 
 
+def _starts_reference_item(line: str) -> bool:
+    return any(pattern.match(line) for pattern in ITEM_START_PATTERNS)
+
+
 def _reference_item(index: int, text: str) -> Dict[str, object]:
     doi_match = DOI_RE.search(text)
     year_match = re.search(r"\b(19\d{2}|20\d{2})\b", text)
@@ -57,7 +61,9 @@ def _reference_item(index: int, text: str) -> Dict[str, object]:
         "text": text[:500],
         "doi": doi_match.group(0) if doi_match else None,
         "year": int(year_match.group(1)) if year_match else None,
-        "has_placeholder_doi": bool(doi_match and doi_match.group(0).lower().startswith(("10.0000/", "10.1234/", "10.9999/"))),
+        "has_placeholder_doi": bool(
+            doi_match and doi_match.group(0).lower().startswith(("10.0000/", "10.1234/", "10.9999/"))
+        ),
     }
 
 
@@ -113,10 +119,14 @@ def citation_context_audit(text: str) -> Dict[str, object]:
     for _, sentence in iter_sentence_spans(text):
         if len(sentence) < 35 or not CLAIM_RE.search(sentence):
             continue
-        has_citation = bool(NUMERIC_CITATION_RE.search(sentence) or AUTHOR_YEAR_CITATION_RE.search(sentence) or DOI_RE.search(sentence))
+        has_citation = bool(
+            NUMERIC_CITATION_RE.search(sentence) or AUTHOR_YEAR_CITATION_RE.search(sentence) or DOI_RE.search(sentence)
+        )
         has_stat = bool(re.search(r"\b(t|F|z|p|CI|OR|RR|HR|β|r)\s*(?:\(|=|<|>)", sentence, re.IGNORECASE))
         if not has_citation and not has_stat:
-            unsupported_claims.append({"quote": sentence[:300], "reason": "claim lacks local citation/statistic marker"})
+            unsupported_claims.append(
+                {"quote": sentence[:300], "reason": "claim lacks local citation/statistic marker"}
+            )
         if len(unsupported_claims) >= 8:
             break
 
