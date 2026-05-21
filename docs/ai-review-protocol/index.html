@@ -23,6 +23,7 @@
             <a href="../tutorial/">Tutorial</a>
             <a href="../checking-your-paper/">Reading results</a>
             <a href="../github-action/">GitHub Action</a>
+            <a href="../security-scorecard-triage/">Security</a>
             <a href="../distributions/">Packages</a>
             <a class="button" href="https://github.com/yasufumi-nakata/openri">GitHub</a>
           </div>
@@ -43,8 +44,10 @@
 <h2>Universal review dimensions</h2>
 <ol><li><code>claim_evidence_alignment</code>: 主要claimが結果、図表、引用、限界記述で支えられているか。</li><li><code>method_validity</code>: 研究デザイン、対象、測定、除外、交絡、代替説明がclaimに見合うか。</li><li><code>statistical_soundness</code>: 数値、検定、効果量、丸め、表本文の整合性に破綻がないか。</li><li><code>reproducibility</code>: データ、コード、材料、プロトコル、実行環境を第三者が追跡できるか。</li><li><code>citation_support</code>: 引用が実在し、引用文脈が本文claimを本当に支えているか。</li><li><code>ethics_transparency</code>: 倫理、同意、COI、資金、登録、透明性項目が明示されているか。</li><li><code>limitations_and_scope</code>: 限界、外的妥当性、失敗条件、反証可能性がclaimを適切に縛っているか。</li><li><code>adversarial_failure_modes</code>: prompt injection、不可視テキスト、画像/PDF加工、重複、過剰claimを含まないか。</li></ol>
 <h2>Report fields</h2>
-<p><code>POST /api/runs</code> と <code>POST /api/runs/upload</code> のreportには <code>ai_review_protocol</code> が入ります。</p>
+<p><code>POST /api/runs</code> と <code>POST /api/runs/upload</code> のreportには <code>ai_review_protocol</code> と <code>accountability</code> が入ります。</p>
 <ul><li><code>run_readiness</code>: AI査読へ進めるか、重大findingで止めるか、coverage blocker付きで進めるか。</li><li><code>required_ai_reviews</code>: 実行すべきAI reviewer role。</li><li><code>coverage_blockers</code>: 未検査・不明・unsupportedな領域。</li><li><code>finding_review_instructions</code>: findingごとにAI reviewerへ渡す確認指示。</li><li><code>test_design</code>: AIが開発・査読する前提のunit、fixture、golden、adversarial、metamorphic、cross-model、regression gate。</li><li><code>review_packet</code>: この原稿固有のclaim inventory、reviewer tasks、adversarial challenges、editor handoff。</li></ul>
+<p><code>accountability</code> は、AI reviewerや編集部が「なぜこのroute/scoreになったか」を追跡する説明責任レコードです。</p>
+<ul><li><code>decision_provenance</code>: strictness、network有無、ruleset、外部LLM不要、入力サイズ。</li><li><code>routing_explanation</code>: recommended route、rationale、route driver finding、coverage blocker。</li><li><code>score_explanation</code>: score算定式、平均finding score、strictness/failed/warning penalty、worst findings。</li><li><code>evidence_ledger</code>: findingごとのevidence品質、quote/location/data、primary evidence、recommendation。</li><li><code>claim_explainability</code>: claim数、support_status分布、risk_flag分布、support不足claim。</li><li><code>human_accountability</code>: handling editor、統計担当、research integrity担当、著者への確認責任と照会キュー。</li><li><code>explainability_gates</code>: warning/failed findingにevidenceがあるか、skippedを安全扱いしていないか。</li></ul>
 <h2>Review packet</h2>
 <p><code>review_packet</code> は、rubricを実際の査読作業へ落とすための原稿固有パケットです。</p>
 <ul><li><code>claim_inventory</code>: 強いclaim候補を <code>id</code>, <code>quote</code>, <code>location</code>, <code>section</code>, <code>claim_type</code>, <code>support_status</code>, <code>linked_findings</code>, <code>risk_flags</code> で固定します。</li><li><code>reviewer_tasks</code>: AI reviewer roleごとに、確認すべきclaim、finding、coverage blocker、出力schema、acceptance gateを渡します。</li><li><code>adversarial_challenges</code>: claimやfindingに対し、反証、代替説明、著者照会、最弱の支持可能表現を強制的に返させる課題です。</li><li><code>editor_handoff</code>: claim数、task数、challenge数をまとめ、編集部がどこまでAI査読に回せるかを確認します。</li></ul>

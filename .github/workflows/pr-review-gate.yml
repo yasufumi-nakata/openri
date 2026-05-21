@@ -1,0 +1,32 @@
+name: PR Review Gate
+
+on:
+  pull_request:
+    branches: ["main"]
+    types: [opened, reopened, synchronize, ready_for_review]
+  pull_request_review:
+    types: [submitted, dismissed]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  require-approval:
+    name: Require approved PR review
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.draft == false }}
+    steps:
+      - name: Check for an approving review
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          approvals="$(gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}/reviews" \
+            --jq '[.[] | select(.state == "APPROVED") | .user.login] | unique | length')"
+          echo "Approving reviewers: ${approvals}"
+          if [ "${approvals}" -lt 1 ]; then
+            echo "At least one approved pull request review is required before merge."
+            exit 1
+          fi

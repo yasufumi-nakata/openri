@@ -47,16 +47,19 @@ Recommended settings:
 - Issues and Discussions enabled.
 - Squash merge enabled and delete branch on merge enabled.
 - Secret scanning and push protection enabled when available.
-- Branch protection on `main` requiring CI status checks.
+- Branch protection on `main` requiring pull requests, at least one approving review, stale-review dismissal on new commits, conversation resolution, and CI status checks.
 
 Required status checks should include:
 
+- `Require approved PR review`
 - `Repository health`
 - `Backend tests and package (3.9)`
 - `Backend tests and package (3.11)`
 - `Backend tests and package (3.12)`
 - `Frontend build`
 - `OSS health and lint`
+
+OpenSSF Scorecard alerts that are operational rather than code defects are tracked in [`docs/security-scorecard-triage.md`](security-scorecard-triage.md). After changing branch protection, run the `OpenSSF Scorecard` workflow manually from GitHub Actions or with `gh workflow run scorecard.yml --repo yasufumi-nakata/openri --ref main`.
 
 ## Triage rules
 

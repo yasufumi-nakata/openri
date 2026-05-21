@@ -56,6 +56,7 @@ def _looks_like_image(payload: bytes) -> bool:
     signatures = (
         b"\x89PNG\r\n\x1a\n",
         b"\xff\xd8\xff",
+        b"BM",
         b"GIF87a",
         b"GIF89a",
         b"RIFF",
@@ -279,20 +280,29 @@ async def run_uploaded_file(request: Request) -> RunReport:
         "suffix": suffix,
     }
     if suffix == ".pdf":
-        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=True) as handle:
-            handle.write(payload)
-            handle.flush()
-            pdf_path = Path(handle.name)
-            text = extract_text_from_pdf(pdf_path)
+        temp_path: Optional[Path] = None
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as handle:
+                handle.write(payload)
+                temp_path = Path(handle.name)
+            text = extract_text_from_pdf(temp_path)
             try:
-                pdf_inspection = inspect_pdf(pdf_path)
+                pdf_inspection = inspect_pdf(temp_path)
             except Exception as exc:  # noqa: BLE001 - report and keep the main text checks running
                 pdf_inspection = {"available": False, "reason": str(exc), "hidden_text": [], "document_risks": [], "page_count": 0}
+        finally:
+            if temp_path is not None:
+                temp_path.unlink(missing_ok=True)
     elif is_supported_image(Path(filename)):
-        with tempfile.NamedTemporaryFile(suffix=suffix, delete=True) as handle:
-            handle.write(payload)
-            handle.flush()
-            image_inspection = inspect_image(Path(handle.name))
+        temp_path = None
+        try:
+            with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as handle:
+                handle.write(payload)
+                temp_path = Path(handle.name)
+            image_inspection = inspect_image(temp_path)
+        finally:
+            if temp_path is not None:
+                temp_path.unlink(missing_ok=True)
         text = (
             f"Image-only submission: {filename}\n\n"
             "The uploaded figure file was inspected for image-integrity metadata, compression, and repeated pixel-region candidates."

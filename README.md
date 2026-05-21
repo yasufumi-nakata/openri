@@ -149,7 +149,7 @@ PYTHONPATH=backend python scripts/benchmark_openri.py
 - ガバナンス: [`GOVERNANCE.md`](GOVERNANCE.md)
 - メンテナ手順: [`docs/maintainer-guide.md`](docs/maintainer-guide.md)
 
-GitHub上では、CI、Repository Health、CodeQL、Dependency Review、OpenSSF Scorecard、Dependabotを有効化しています。`main` はbranch protectionでCI成功を必須にする運用を想定しています。
+GitHub上では、CI、Repository Health、CodeQL、Dependency Review、OpenSSF Scorecard、Dependabotを有効化しています。`main` はbranch protectionでCI成功とPRレビューを必須にする運用を想定しています。OpenSSF Scorecard由来の運用alertは [`docs/security-scorecard-triage.md`](docs/security-scorecard-triage.md) に、即時解消可否と再確認日を証拠付きで記録します。
 
 ## 既知の限界
 

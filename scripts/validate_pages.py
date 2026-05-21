@@ -17,6 +17,7 @@ REQUIRED_PAGES = [
     Path("ai-review-protocol/index.html"),
     Path("deployment/index.html"),
     Path("distributions/index.html"),
+    Path("security-scorecard-triage/index.html"),
     Path("packages/index.html"),
 ]
 

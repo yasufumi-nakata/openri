@@ -26,7 +26,9 @@ def read_version() -> str:
 
 
 def run(command: list[str], cwd: Path = ROOT) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(command, cwd=cwd, text=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    executable = shutil.which(command[0]) if sys.platform == "win32" else None
+    resolved = [executable or command[0], *command[1:]]
+    return subprocess.run(resolved, cwd=cwd, text=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 
 def sha256(path: Path) -> str:
@@ -176,6 +178,7 @@ def write_index(version: str, entries: list[dict[str, object]]) -> None:
             <a href="../tutorial/">Tutorial</a>
             <a href="../checking-your-paper/">Reading results</a>
             <a href="../github-action/">GitHub Action</a>
+            <a href="../security-scorecard-triage/">Security</a>
             <a href="../distributions/">Packages</a>
             <a class="button" href="https://github.com/yasufumi-nakata/openri">GitHub</a>
           </div>

@@ -86,7 +86,7 @@ function App() {
 
   async function runUploadedFile() {
     if (!uploadFile) {
-      setError("PDFまたはテキストファイルを選択してください。");
+      setError("PDF、テキスト、画像ファイルを選択してください。");
       return;
     }
     setUploadMode("file");
@@ -486,14 +486,14 @@ function App() {
             <div className="upload-drop">
               <div>
                 <strong>Submitted PDF / text upload</strong>
-                <span>{uploadFile ? `${uploadFile.name} (${formatBytes(uploadFile.size)})` : "PDF, TXT, MD, TeX, PNG, JPEG, TIFFを選択できます"}</span>
+                <span>{uploadFile ? `${uploadFile.name} (${formatBytes(uploadFile.size)})` : "PDF, TXT, MD, TeX, PNG, JPEG, TIFF, BMP, WEBP を選択できます"}</span>
               </div>
               <label className="file-button">
                 <Upload size={15} />
                 Choose file
                 <input
                   type="file"
-                  accept=".pdf,.txt,.md,.markdown,.tex,.png,.jpg,.jpeg,.tif,.tiff,.webp,text/plain,application/pdf,image/png,image/jpeg,image/tiff,image/webp"
+                  accept=".pdf,.txt,.md,.markdown,.tex,.png,.jpg,.jpeg,.tif,.tiff,.bmp,.webp,text/plain,application/pdf,image/png,image/jpeg,image/tiff,image/bmp,image/webp"
                   onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)}
                 />
               </label>

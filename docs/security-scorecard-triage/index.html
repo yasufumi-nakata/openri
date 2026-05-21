@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Security Scorecard triage | OpenRI Tutorial</title>
+    <meta name="description" content="OpenRI の公開チュートリアル関連ドキュメントです。">
+    <link rel="stylesheet" href="../assets/openri-pages.css">
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <nav class="nav" aria-label="Primary navigation">
+          <a class="brand" href="../" aria-label="OpenRI tutorial home">
+            <span class="brand-mark">RI</span>
+            <span>
+              <strong>OpenRI</strong>
+              <span>Open Research Integrity</span>
+            </span>
+          </a>
+          <div class="nav-links">
+            <a href="../">Home</a>
+            <a href="../tutorial/">Tutorial</a>
+            <a href="../checking-your-paper/">Reading results</a>
+            <a href="../github-action/">GitHub Action</a>
+            <a href="../security-scorecard-triage/">Security</a>
+            <a href="../distributions/">Packages</a>
+            <a class="button" href="https://github.com/yasufumi-nakata/openri">GitHub</a>
+          </div>
+        </nav>
+      </header>
+
+      <main>
+        <article class="article section">
+          <p class="breadcrumb"><a href="../">OpenRI Tutorial</a> / Security Scorecard triage</p>
+          <h1>Security Scorecard triage</h1>
+<p>This page records the public operational response for OpenSSF Scorecard alerts that are not ordinary code defects. It is intentionally evidence-based: OpenRI should not hide residual risk, and it should not add badges or claims before the external service state proves them.</p>
+<h2>2026-05-22 alert register</h2>
+<p>Issue: <a href="https://github.com/yasufumi-nakata/openri/issues/31">#31 OpenSSF Scorecard の残留 alert を運用対応する</a></p>
+<p>Repository creation date from GitHub REST metadata: <code>2026-05-17T15:07:49Z</code>.</p>
+<p>The current authenticated maintenance session could not read private security alert APIs without additional repository administration scope. Public triage therefore uses the issue record, repository files, and repeatable commands below as evidence.</p>
+<h2>CodeReviewID</h2>
+<p>Alert: <code>Found 0/15 approved changesets -- score normalized to 0</code>.</p>
+<p>Repository-side mitigation added:</p>
+<ul><li><code>.github/CODEOWNERS</code> assigns all paths to <code>@yasufumi-nakata</code>.</li><li><code>.github/workflows/pr-review-gate.yml</code> fails a PR until at least one <code>APPROVED</code> review exists.</li><li><code>docs/maintainer-guide.md</code> lists the required <code>main</code> branch protection settings and includes <code>Require approved PR review</code> in the required checks.</li></ul>
+<p>Required GitHub setting after this PR is merged:</p>
+<ul><li>Protect <code>main</code>.</li><li>Require a pull request before merging.</li><li>Require at least one approval.</li><li>Dismiss stale approvals on new commits.</li><li>Require conversation resolution.</li><li>Require status checks including <code>Require approved PR review</code> and the existing CI checks.</li></ul>
+<p>The GitHub branch protection rule itself is not a git-tracked file. The Scorecard workflow has a <code>branch_protection_rule</code> trigger and a <code>workflow_dispatch</code> trigger so maintainers can rerun Scorecard immediately after applying the setting.</p>
+<h2>MaintainedID</h2>
+<p>Alert: <code>Repository was created within the last 90 days.</code></p>
+<p>This is repository-age based and cannot be corrected by a code change. The repository was created on <code>2026-05-17T15:07:49Z</code>, so the first full 90-day recheck window starts after <code>2026-08-15T15:07:49Z</code>. Recheck on <code>2026-08-16</code> UTC or later and keep the alert open only if Scorecard still reports the repository as too new.</p>
+<h2>CIIBestPracticesID</h2>
+<p>Alert: <code>no effort to earn an OpenSSF best practices badge detected</code>.</p>
+<p>Verification on <code>2026-05-22</code>:</p>
+<ul><li>Searching <code>https://www.bestpractices.dev/en/projects?q=openri</code> returned <code>Zero Projects</code>.</li><li>No OpenRI project URL or passing badge ID exists yet.</li></ul>
+<p>Do not add an OpenSSF Best Practices badge to <code>README.md</code> until a real <code>bestpractices.dev/projects/&lt;id&gt;</code> entry exists for <code>yasufumi-nakata/openri</code>. The correct follow-up is to register the project, complete the criteria truthfully, then add the real badge link.</p>
+<h2>Recheck commands</h2>
+<pre class="terminal"><code>gh api repos/yasufumi-nakata/openri --jq &#x27;{created_at,default_branch,pushed_at}&#x27;
+gh workflow run scorecard.yml --repo yasufumi-nakata/openri --ref main
+gh run list --repo yasufumi-nakata/openri --workflow &quot;OpenSSF Scorecard&quot; --limit 5
+gh api repos/yasufumi-nakata/openri/code-scanning/alerts --paginate</code></pre>
+<p>If the code scanning API returns <code>403</code>, ask a repository administrator to run the command or refresh <code>gh</code> with the required security-administration scope. Do not treat an unreadable alert list as resolved.</p>
+        </article>
+      </main>
+
+      <footer class="site-footer">
+        <div class="section">
+          OpenRI は evidence-backed findings を返す査読前テストランナーです。不正認定や採否自動決定は行いません。
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

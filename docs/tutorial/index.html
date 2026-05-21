@@ -22,6 +22,7 @@
             <a href="../">Home</a>
             <a href="../checking-your-paper/">Reading results</a>
             <a href="../github-action/">GitHub Action</a>
+            <a href="../security-scorecard-triage/">Security</a>
             <a href="../distributions/">Packages</a>
             <a class="button" href="https://github.com/yasufumi-nakata/openri">GitHub</a>
           </div>
@@ -32,12 +33,13 @@
         <section class="hero">
           <div>
             <p class="eyebrow">Tutorial</p>
-            <h1>1本のサンプル原稿で、OpenRI の report を最後まで読む。</h1>
+            <h1>査読前の赤信号を、1本のサンプル原稿で最後まで踏み抜く。</h1>
             <p class="hero-copy">
-              このページでは、ローカルインストール、CLI、Web UI、API、GitHub Actions 連携を順に確認します。結果は「不正の断定」ではなく、人間が確認すべき証拠付き finding として扱います。
+              OpenRI は「合格っぽい雰囲気」を返しません。p値の再計算、透明性項目、引用、画像/PDF、隠し指示、AI reviewer protocol を、査読前に止めるべき証拠付き finding として一気に確認します。
             </p>
             <div class="hero-actions">
               <a class="button primary" href="#local">ローカル実行へ</a>
+              <a class="button" href="#proof">実行証跡を見る</a>
               <a class="button" href="#ci">CI 組み込みへ</a>
             </div>
           </div>
@@ -47,13 +49,55 @@
           </figure>
         </section>
 
+        <section class="section" id="proof" aria-labelledby="proof-heading">
+          <div class="section-heading">
+            <h2 id="proof-heading">この環境で実際に動かした結果</h2>
+            <p>以下は 2026-05-22 JST にこの checkout で取得した実測値です。未公開原稿を外部APIへ送らず、ローカルAPIとWeb UIだけで確認しています。</p>
+          </div>
+          <div class="proof-grid">
+            <div class="proof-card">
+              <strong>Runtime</strong>
+              <span>Python 3.14.2 / Node v24.13.0 / npm 11.6.2</span>
+            </div>
+            <div class="proof-card">
+              <strong>Sample</strong>
+              <span><code>samples/high_risk_manuscript.txt</code></span>
+            </div>
+            <div class="proof-card">
+              <strong>CLI result</strong>
+              <span>score 22/100, passed 1, warnings 6, failed 2, skipped 4</span>
+            </div>
+            <div class="proof-card">
+              <strong>Route</strong>
+              <span><code>integrity_hold_before_peer_review</code></span>
+            </div>
+          </div>
+          <pre class="terminal"><code>OpenRI report openri_42a9a2938e6f
+title: high_risk_manuscript.txt
+strictness: strict
+score: 22/100  passed=1 warnings=6 failed=2 skipped=4
+ai_review_readiness: blocked_before_ai_peer_review - 重大findingを解消するまでAI査読本体に進めません
+review_packet: claims=5 tasks=7 challenges=10
+accountability_route: integrity_hold_before_peer_review</code></pre>
+          <div class="screenshot-grid">
+            <figure class="screenshot-card">
+              <img src="../assets/openri-report-preview.png" alt="OpenRI Web UI after running the high-risk sample">
+              <figcaption>Web UIで高リスクサンプルを実行した画面。summary、review checks、evidence、AI reviewer protocolを横断して確認できます。</figcaption>
+            </figure>
+            <figure class="screenshot-card">
+              <img src="../assets/openri-api-health.png" alt="OpenRI API health endpoint returning ok status">
+              <figcaption>ローカルAPIの <code>GET /api/health</code>。UIとCLIが同じbackendを見ていることを最初に確認します。</figcaption>
+            </figure>
+          </div>
+        </section>
+
         <section class="section" aria-labelledby="local">
           <div class="steps">
             <article class="step" id="local">
               <div class="step-number">1</div>
               <div>
                 <h2>ローカル環境を用意します</h2>
-                <p>開発 checkout から使う場合は、PDF 抽出、Crossref 照合、API server、テスト用依存をまとめて入れます。</p>
+                <p>開発 checkout から使う場合は、PDF 抽出、画像検査、Crossref 照合、API server、テスト用依存をまとめて入れます。</p>
                 <pre class="terminal"><code>git clone https://github.com/yasufumi-nakata/openri.git
 cd openri
 python3 -m venv .venv
@@ -71,6 +115,7 @@ pip install -e ".[pdf,image,network,server,dev]"</code></pre>
                 <pre class="terminal"><code>openri check samples/high_risk_manuscript.txt --strictness strict
 openri list --limit 5
 openri show &lt;report_id&gt; --json</code></pre>
+                <p>ここで重要なのは exit code だけではありません。finding ごとの <code>evidence.quote</code>、<code>evidence.location</code>、再計算値、推奨確認事項まで見ます。</p>
               </div>
             </article>
 
@@ -106,7 +151,7 @@ npm run dev -- --host 127.0.0.1 --port 5173</code></pre>
               <div class="step-number">5</div>
               <div>
                 <h2>API で report を取得します</h2>
-                <p>テキスト原稿は JSON、PDF/TXT/MD/TeX/画像ファイルは multipart upload で送ります。</p>
+                <p>テキスト原稿は JSON、PDF/TXT/MD/TeX/PNG/JPEG/TIFF/BMP/WEBP は multipart upload で送ります。画像単体ではEXIF、形式、重複領域候補、圧縮履歴レビュー対象を返します。</p>
                 <pre class="terminal"><code>curl -X POST http://127.0.0.1:8008/api/runs \
   -H 'Content-Type: application/json' \
   --data '{"title":"paper","manuscript_text":"Results\n t(58) = 2.15, p = 0.003.","strictness":"standard"}'
@@ -114,6 +159,9 @@ npm run dev -- --host 127.0.0.1 --port 5173</code></pre>
 curl -X POST http://127.0.0.1:8008/api/runs/upload \
   -F file=@manuscript.pdf \
   -F strictness=strict</code></pre>
+                <pre class="terminal"><code>curl -X POST http://127.0.0.1:8008/api/runs/upload \
+  -F file=@figure.bmp \
+  -F strictness=standard</code></pre>
               </div>
             </article>
 
@@ -130,7 +178,7 @@ curl -X POST http://127.0.0.1:8008/api/runs/upload \
     fail-on: high
     sarif-path: openri-results.sarif.json
     network: "false"</code></pre>
-                <p>詳しい workflow は <a href="../github-action/">GitHub Action wrapper</a> を参照してください。</p>
+                <p>詳しい workflow は <a href="../github-action/">GitHub Action wrapper</a> を参照してください。リポジトリ運用側のScorecard対応は <a href="../security-scorecard-triage/">Security Scorecard triage</a> に記録しています。</p>
               </div>
             </article>
           </div>
