@@ -83,7 +83,7 @@
       &quot;route_drivers&quot;: []
     },
     &quot;score_explanation&quot;: {
-      &quot;formula&quot;: &quot;mean(finding.score) - strictness_penalty - 8*failed - 2*warnings&quot;
+      &quot;formula&quot;: &quot;mean(non-skipped finding.score) - strictness_penalty - 8*failed - 2*warnings - skipped_penalty&quot;
     },
     &quot;evidence_ledger&quot;: [],
     &quot;human_accountability&quot;: {}

@@ -86,7 +86,7 @@ OpenRIの主眼は、著者が自分の原稿を軽く点検することでは�
       "route_drivers": []
     },
     "score_explanation": {
-      "formula": "mean(finding.score) - strictness_penalty - 8*failed - 2*warnings"
+      "formula": "mean(non-skipped finding.score) - strictness_penalty - 8*failed - 2*warnings - skipped_penalty"
     },
     "evidence_ledger": [],
     "human_accountability": {}

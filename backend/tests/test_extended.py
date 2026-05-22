@@ -180,12 +180,13 @@ def test_summary_stat_non_analyzable_pairs_are_not_reported_as_passed():
     assert any(ev.data.get("reason") == "mean_has_no_decimal_places" for ev in finding.evidence)
 
 
-def test_skipped_findings_are_excluded_and_cap_final_score():
+def test_skipped_findings_are_excluded_and_penalized_without_global_cap():
     report = analyze_manuscript(RunRequest(manuscript_text="Methods\nResults\nNothing here."))
     explanation = report.accountability["score_explanation"]
     assert explanation["skipped_count_excluded"] == report.summary.skipped
-    assert explanation["skipped_score_cap"] == 50
-    assert report.summary.score <= 50
+    assert explanation["skipped_penalty"] == min(20, 2 * report.summary.skipped)
+    assert explanation["skipped_score_cap"] is None
+    assert report.summary.score > 50
 
 
 def test_run_report_schema_version_and_json_schema_validation():
@@ -621,7 +622,7 @@ def test_rate_limit_can_key_trusted_forwarded_for(monkeypatch, tmp_path):
     assert all("203.0.113" not in key for key in api_module.RATE_BUCKETS)
 
 
-def test_rate_limit_api_key_identity_uses_digest(monkeypatch, tmp_path):
+def test_rate_limit_api_key_identity_falls_back_without_api_key_auth(monkeypatch, tmp_path):
     monkeypatch.setattr(api_module, "STORE", ReportStore(tmp_path / "reports.sqlite3"))
     monkeypatch.setattr(api_module, "RATE_BUCKETS", {})
     monkeypatch.setenv("OPENRI_RATE_LIMIT_PER_MINUTE", "1")
@@ -631,7 +632,28 @@ def test_rate_limit_api_key_identity_uses_digest(monkeypatch, tmp_path):
     first = client.post("/api/runs", json=payload, headers={"X-OpenRI-API-Key": "secret-a"})
     second = client.post("/api/runs", json=payload, headers={"X-OpenRI-API-Key": "secret-b"})
     assert first.status_code == 200
+    assert second.status_code == 429
+    keys = list(api_module.RATE_BUCKETS)
+    assert len(keys) == 1
+    assert keys[0].startswith("client:")
+    assert "secret-" not in keys[0]
+
+
+def test_rate_limit_api_key_identity_uses_digest_for_validated_keys(monkeypatch, tmp_path):
+    monkeypatch.setattr(api_module, "STORE", ReportStore(tmp_path / "reports.sqlite3"))
+    monkeypatch.setattr(api_module, "RATE_BUCKETS", {})
+    monkeypatch.setenv("OPENRI_RATE_LIMIT_PER_MINUTE", "1")
+    monkeypatch.setenv("OPENRI_RATE_LIMIT_KEY", "api_key")
+    monkeypatch.setenv("OPENRI_REQUIRE_API_KEY", "true")
+    monkeypatch.setenv("OPENRI_API_KEYS", "secret-a,secret-b")
+    client = TestClient(app)
+    payload = {"manuscript_text": "Methods\nResults\nt(30)=0.00, p=1.00.", "title": "keyed"}
+    first = client.post("/api/runs", json=payload, headers={"X-OpenRI-API-Key": "secret-a"})
+    second = client.post("/api/runs", json=payload, headers={"X-OpenRI-API-Key": "secret-b"})
+    invalid = client.post("/api/runs", json=payload, headers={"X-OpenRI-API-Key": "rotated-attacker-key"})
+    assert first.status_code == 200
     assert second.status_code == 200
+    assert invalid.status_code == 401
     keys = list(api_module.RATE_BUCKETS)
     assert len(keys) == 2
     assert all(key.startswith("api_key:") for key in keys)

@@ -183,11 +183,16 @@ def _form_bool(form, key: str, default: bool = False) -> bool:
     return str(value).lower() in {"1", "true", "yes", "on"}
 
 
+def _api_key_is_configured(api_key: Optional[str]) -> bool:
+    if not api_key:
+        return False
+    return any(secrets.compare_digest(api_key, configured_key) for configured_key in configured_api_keys())
+
+
 def _require_api_key(x_openri_api_key: Optional[str] = Header(default=None)) -> None:
     if not require_api_key():
         return
-    keys = configured_api_keys()
-    if not keys or x_openri_api_key not in keys:
+    if not _api_key_is_configured(x_openri_api_key):
         raise HTTPException(status_code=401, detail={"error": "api_key_required"})
 
 
@@ -197,7 +202,7 @@ def _identity_hash(value: str) -> str:
 
 
 def _rate_limit_identity(request: Request, x_openri_api_key: Optional[str]) -> str:
-    if rate_limit_key_source() == "api_key" and x_openri_api_key:
+    if rate_limit_key_source() == "api_key" and require_api_key() and _api_key_is_configured(x_openri_api_key):
         return "api_key:" + _identity_hash(x_openri_api_key)
     forwarded_for = request.headers.get("x-forwarded-for", "")
     if trust_forwarded_for() and forwarded_for:
@@ -478,6 +483,7 @@ def security_policy() -> dict:
             "api_key_header": "X-OpenRI-API-Key",
             "rate_limit_per_minute": rate_limit_per_minute(),
             "rate_limit_key": rate_limit_key_source(),
+            "rate_limit_api_key_requires_auth": True,
             "trust_x_forwarded_for": trust_forwarded_for(),
             "retention_days": retention_days(),
             "cors_origins": allowed_cors_origins(),

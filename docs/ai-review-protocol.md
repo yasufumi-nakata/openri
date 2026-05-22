@@ -52,7 +52,7 @@ OpenRIの `ai_review_protocol` は、Codex、Claude、その他のAI reviewerに
 
 - `decision_provenance`: strictness、network有無、ruleset、外部LLM不要、入力サイズ。
 - `routing_explanation`: recommended route、rationale、route driver finding、coverage blocker。
-- `score_explanation`: score算定式、平均finding score、strictness/failed/warning penalty、worst findings。
+- `score_explanation`: score算定式、平均finding score、strictness/failed/warning/skipped penalty、worst findings。
 - `evidence_ledger`: findingごとのevidence品質、quote/location/data、primary evidence、recommendation。
 - `claim_explainability`: claim数、support_status分布、risk_flag分布、support不足claim。
 - `human_accountability`: handling editor、統計担当、research integrity担当、著者への確認責任と照会キュー。

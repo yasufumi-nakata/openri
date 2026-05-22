@@ -19,7 +19,7 @@ The frontend reads `VITE_OPENRI_API_BASE`; local development defaults to `http:/
 - `OPENRI_REQUIRE_API_KEY`: set `true` to require `X-OpenRI-API-Key` for report-producing endpoints.
 - `OPENRI_API_KEYS`: comma-separated accepted API keys for small hosted deployments.
 - `OPENRI_RATE_LIMIT_PER_MINUTE`: in-process per-client write limit. Use gateway limits for production.
-- `OPENRI_RATE_LIMIT_KEY`: `client_ip` by default, or `api_key` to bucket authenticated requests by `X-OpenRI-API-Key`.
+- `OPENRI_RATE_LIMIT_KEY`: `client_ip` by default, or `api_key` to bucket authenticated requests by `X-OpenRI-API-Key`. `api_key` bucketing only applies when `OPENRI_REQUIRE_API_KEY=true` and the key is in `OPENRI_API_KEYS`; otherwise OpenRI falls back to the client IP bucket.
 - `OPENRI_TRUST_X_FORWARDED_FOR`: set `true` only behind a trusted reverse proxy that strips untrusted incoming `X-Forwarded-For` headers.
 - `OPENRI_RETENTION_DAYS`: delete stored reports older than this during report-producing requests. `0` disables pruning.
 - `OPENRI_DB_PATH`: SQLite report store path.
@@ -32,7 +32,7 @@ Use local/dev mode only for trusted local manuscripts. Hosted use should place O
 
 Reverse proxies should enforce request-size limits before traffic reaches OpenRI. For nginx, set `client_max_body_size` to the same or lower value than `OPENRI_UPLOAD_LIMIT_BYTES`; for other gateways, configure the equivalent total request-body limit. OpenRI also checks `Content-Length`, streams upload reads in chunks, and rejects oversized file payloads, but the gateway remains the first line of defense for very large multipart bodies.
 
-When rate limiting behind a load balancer, prefer `OPENRI_RATE_LIMIT_KEY=api_key` for authenticated hosted deployments. Use `OPENRI_TRUST_X_FORWARDED_FOR=true` only if the proxy is trusted and removes spoofed client-supplied forwarding headers before forwarding to OpenRI. The built-in limiter is process-local and per worker; production deployments should still enforce gateway-level rate limits.
+When rate limiting behind a load balancer, prefer `OPENRI_REQUIRE_API_KEY=true` with `OPENRI_RATE_LIMIT_KEY=api_key` for authenticated hosted deployments. Do not rely on arbitrary client-supplied `X-OpenRI-API-Key` values for throttling when API-key authentication is disabled; OpenRI will fall back to the IP bucket in that mode. Use `OPENRI_TRUST_X_FORWARDED_FOR=true` only if the proxy is trusted and removes spoofed client-supplied forwarding headers before forwarding to OpenRI. The built-in limiter is process-local and per worker; production deployments should still enforce gateway-level rate limits.
 
 Do not set `OPENRI_CORS_ORIGINS=*` for public deployments. OpenRI rejects the wildcard at startup because credentials, browser cookies, and API keys must be scoped to explicit trusted origins.
 

@@ -1030,10 +1030,11 @@ def build_accountability_record(
             "coverage_blockers": ai_review_protocol.get("coverage_blockers", []),
         },
         "score_explanation": {
-            "formula": "mean(non-skipped finding.score) - strictness_penalty - 8*failed - 2*warnings, clamped to 0..100 and capped when skipped checks remain",
+            "formula": "mean(non-skipped finding.score) - strictness_penalty - 8*failed - 2*warnings - skipped_penalty, clamped to 0..100",
             "mean_finding_score": score_inputs["mean_finding_score"],
             "scored_finding_count": score_inputs["scored_finding_count"],
             "skipped_count_excluded": score_inputs["skipped_count_excluded"],
+            "skipped_penalty": score_inputs["skipped_penalty"],
             "skipped_score_cap": score_inputs["skipped_score_cap"],
             "strictness_penalty": score_inputs["strictness_penalty"],
             "failed_penalty": score_inputs["failed_penalty"],
@@ -1160,14 +1161,15 @@ def analyze_manuscript(request: RunRequest) -> RunReport:
     mean_finding_score = round(sum(f.score for f in scored_findings) / max(1, len(scored_findings)), 2)
     failed_penalty = 8 * failed
     warning_penalty = 2 * warnings
+    skipped_penalty = min(20, 2 * skipped)
     raw_score = round(mean_finding_score - strictness_penalty)
     if failed:
         raw_score -= failed_penalty
     if warnings:
         raw_score -= warning_penalty
-    skipped_score_cap = 50 if skipped else None
-    if skipped_score_cap is not None:
-        raw_score = min(raw_score, skipped_score_cap)
+    if skipped_penalty:
+        raw_score -= skipped_penalty
+    skipped_score_cap = None
 
     summary = RunSummary(
         total_checks=len(findings),
@@ -1198,6 +1200,7 @@ def analyze_manuscript(request: RunRequest) -> RunReport:
             "mean_finding_score": mean_finding_score,
             "scored_finding_count": len(scored_findings),
             "skipped_count_excluded": skipped,
+            "skipped_penalty": skipped_penalty,
             "skipped_score_cap": skipped_score_cap,
             "strictness_penalty": strictness_penalty,
             "failed_penalty": failed_penalty,
