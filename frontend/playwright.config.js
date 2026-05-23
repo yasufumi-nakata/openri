@@ -1,4 +1,13 @@
 import { defineConfig, devices } from "@playwright/test";
+import { existsSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const localPython = [".venv/bin/python", ".venv-claude/bin/python"]
+  .map((candidate) => resolve(repoRoot, candidate))
+  .find((candidate) => existsSync(candidate));
+const openriPython = process.env.OPENRI_PYTHON ?? localPython ?? "python3";
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -9,7 +18,7 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: "PYTHONPATH=backend python3 -m uvicorn openri.api:app --host 127.0.0.1 --port 8008",
+      command: `PYTHONPATH=backend ${openriPython} -m uvicorn openri.api:app --host 127.0.0.1 --port 8008`,
       url: "http://127.0.0.1:8008/api/health",
       cwd: "..",
       reuseExistingServer: false,

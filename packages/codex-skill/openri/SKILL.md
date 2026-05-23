@@ -9,7 +9,7 @@ Use this skill when a task involves OpenRI reports, manuscript integrity checks,
 
 ## Safety Defaults
 
-- Treat OpenRI findings as evidence-backed review tasks for a human reviewer.
+- Treat OpenRI findings as evidence-backed guardrails for a model-agnostic AI reviewer or AI editor.
 - Do not describe findings as proof of research misconduct.
 - Do not send unpublished manuscripts to external APIs or external LLMs unless the user explicitly approves that exact transfer.
 - Keep network-backed checks opt-in.
@@ -39,7 +39,7 @@ Summaries should include:
 
 - finding ID, severity, status, and message
 - the relevant evidence quote or data
-- the human follow-up task
+- the AI reviewer / AI editor follow-up task
 - any coverage blocker or unsupported input
 
 If a check is skipped, unknown, unsupported, or not implemented, report it as a blocker or explicit limitation rather than treating it as a pass.

@@ -1,10 +1,528 @@
 {
+  "accountability": {
+    "audit_trail": [
+      {
+        "detail": "RunRequestを受け取り、元テキストは外部LLMへ送信していません。",
+        "status": "completed",
+        "step": "intake"
+      },
+      {
+        "detail": "文字数、単語数、section、strictness knobを作成しました。",
+        "status": "completed",
+        "step": "profile"
+      },
+      {
+        "detail": "13件のdeterministic checkを実行しました。",
+        "status": "completed",
+        "step": "checks"
+      },
+      {
+        "detail": "AI査読へ回付可能",
+        "status": "completed",
+        "step": "triage"
+      },
+      {
+        "detail": "AI査読は開始できますが、未検査領域を合格扱いしません",
+        "status": "completed",
+        "step": "ai_review_packet"
+      },
+      {
+        "detail": "score、route、evidence、claim、coverage blockerを説明可能な形で固定しました。",
+        "status": "completed",
+        "step": "accountability_record"
+      }
+    ],
+    "autonomous_ai_accountability": {
+      "ai_final_judgment_supported": true,
+      "fail_closed_conditions": [
+        "critical/high findingが未解決で、override理由と証拠がない",
+        "coverage blockerをpassedとして扱った",
+        "外部LLM/APIへ未公開原稿を送る許可ログがない",
+        "出力がreviewer_tasksのacceptance_gateを満たさない"
+      ],
+      "model_version_drift_policy": "GPT-5.5からGPT-6.7のようにモデル世代が変わる場合も、モデル名で閾値を分岐せず、benchmark、golden report、cross-model disagreementを再実行して差分を監査します。",
+      "openri_role": "OpenRIは採否判断エンジン本体ではなく、AI reviewer/AI editorのpreflight/evidence/accountability layerです。",
+      "required_decision_inputs": [
+        "findings",
+        "evidence_ledger",
+        "coverage_blockers",
+        "review_packet.claim_inventory",
+        "review_packet.reviewer_tasks",
+        "review_packet.adversarial_challenges",
+        "model_agnostic_reviewer_contract"
+      ],
+      "required_model_run_record": [
+        "provider",
+        "model_name",
+        "model_version_or_snapshot",
+        "prompt_or_policy_version",
+        "run_id",
+        "timestamp"
+      ]
+    },
+    "claim_explainability": {
+      "claim_count": 1,
+      "claims_needing_support": [
+        {
+          "id": "claim_01",
+          "linked_findings": [
+            "claim_evidence_alignment",
+            "ruleset_coverage"
+          ],
+          "location": "line 4",
+          "risk_flags": [
+            "no_local_support_marker"
+          ],
+          "support_status": "needs_support_evidence"
+        }
+      ],
+      "risk_flag_counts": {
+        "no_local_support_marker": 1
+      },
+      "support_status_counts": {
+        "needs_support_evidence": 1
+      }
+    },
+    "decision_provenance": {
+      "activated_rulesets": [],
+      "experimental_checks_included": true,
+      "external_llm_calls_required": false,
+      "input_character_count": 721,
+      "input_word_count": 110,
+      "network_enabled": false,
+      "review_mode": "ai_reviewer_replication",
+      "strictness": "standard",
+      "total_checks": 13
+    },
+    "evidence_ledger": [
+      {
+        "check_id": "statistical_consistency",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "表内・複数行・片側検定の代表的なAPA表記も確認しました。効果量/CIは別findingでcoverage blockerとして扱います。",
+        "score": 100,
+        "severity": "low",
+        "status": "passed"
+      },
+      {
+        "check_id": "summary_stat_plausibility",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "整数項目の平均値を報告する場合は、M = ..., n = ... のように書くとGRIM系の検査を追加できます。",
+        "score": 72,
+        "severity": "info",
+        "status": "skipped"
+      },
+      {
+        "check_id": "effect_size_ci_coverage",
+        "evidence_count": 2,
+        "evidence_quality": "quote_location_data",
+        "has_location": true,
+        "has_quote": true,
+        "has_structured_data": true,
+        "primary_evidence": {
+          "data": {
+            "kind": "Cohen's d",
+            "value": 0.0
+          },
+          "location": "line 14",
+          "quote": "Cohen's d = 0.00"
+        },
+        "recommendation": "効果量、信頼区間、p値、サンプルサイズの相互整合は統計担当または次段checkで確認してください。",
+        "score": 76,
+        "severity": "info",
+        "status": "warning"
+      },
+      {
+        "check_id": "reporting_transparency",
+        "evidence_count": 1,
+        "evidence_quality": "data_only",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": true,
+        "primary_evidence": {
+          "data": {
+            "detected_sections": [
+              "ethics",
+              "data",
+              "code",
+              "conflicts",
+              "funding"
+            ],
+            "missing_sections": [],
+            "thresholds": {
+              "medium_at": 3,
+              "warning_at": 1
+            }
+          },
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "項目の存在だけでなく、リンク先の到達性と再現可能性を次段で確認してください。",
+        "score": 100,
+        "severity": "low",
+        "status": "passed"
+      },
+      {
+        "check_id": "citation_integrity",
+        "evidence_count": 1,
+        "evidence_quality": "data_only",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": true,
+        "primary_evidence": {
+          "data": {
+            "doi_count": 1,
+            "has_references": true,
+            "numbered_reference_ids": [
+              1
+            ],
+            "numeric_citation_groups": 0,
+            "numeric_citation_numbers": [],
+            "reference_entry_count": 1
+          },
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "次段ではCrossref/OpenAlex/Semantic Scholar APIで全参考文献の実在性と引用文脈を検証してください。",
+        "score": 92,
+        "severity": "low",
+        "status": "passed"
+      },
+      {
+        "check_id": "citation_context",
+        "evidence_count": 1,
+        "evidence_quality": "data_only",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": true,
+        "primary_evidence": {
+          "data": {
+            "external_lookup_policy": "Crossref/OpenAlex/Semantic Scholar checks require explicit network opt-in.",
+            "inline_citations": [
+              {
+                "items": [
+                  1
+                ],
+                "quote": "[1]",
+                "style": "numeric"
+              }
+            ],
+            "placeholder_references": [],
+            "reference_count": 1,
+            "references": [
+              {
+                "doi": "10.1101/2025.01.01.123456",
+                "has_placeholder_doi": false,
+                "index": 1,
+                "text": "[1] Doe J. Transparent work. doi: 10.1101/2025.01.01.123456.",
+                "year": 2025
+              }
+            ],
+            "unresolved_numeric_citations": [],
+            "unsupported_claims": []
+          },
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "引用がclaimを本当に支えているかは、review_packetのclaim inventoryを用いてAI reviewer/AI editorが判断前に確認してください。",
+        "score": 92,
+        "severity": "low",
+        "status": "passed"
+      },
+      {
+        "check_id": "claim_evidence_alignment",
+        "evidence_count": 1,
+        "evidence_quality": "quote_location_data",
+        "has_location": true,
+        "has_quote": true,
+        "has_structured_data": true,
+        "primary_evidence": {
+          "data": {
+            "review_action": "claimを支える結果・図表・引用・限界を明示し、証拠を超える表現は弱めてください。",
+            "risk_flags": [
+              "claim_without_local_support_marker"
+            ],
+            "support_markers": {
+              "local_citation": false,
+              "local_figure_or_table": false,
+              "local_limitation": false,
+              "local_statistic": false
+            }
+          },
+          "location": "line 4",
+          "quote": "We report a transparent descriptive analysis with modest claims."
+        },
+        "recommendation": "AI reviewer/AI editorには、各claimについて支持する結果、図表、引用、限界、代替説明を1対1で確認させてください。",
+        "score": 78,
+        "severity": "medium",
+        "status": "warning"
+      },
+      {
+        "check_id": "prompt_injection",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "PDFの座標・色・レイヤー情報に基づく不可視テキスト検査も併用してください(image_integrity_pdfで対応中)。",
+        "score": 100,
+        "severity": "low",
+        "status": "passed"
+      },
+      {
+        "check_id": "template_text",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "分野別の定型文を許容する場合はルールセットを調整してください。",
+        "score": 96,
+        "severity": "low",
+        "status": "passed"
+      },
+      {
+        "check_id": "image_integrity",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "画像ファイルを添付できるようにすると、複製・不自然な圧縮・メタデータ検査を追加できます。",
+        "score": 70,
+        "severity": "info",
+        "status": "skipped"
+      },
+      {
+        "check_id": "doi_existence",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "CIで参考文献の実在性を確認したい場合は OPENRI_NETWORK=1 を設定するか、CLIで --network を指定してください。",
+        "score": 70,
+        "severity": "info",
+        "status": "skipped"
+      },
+      {
+        "check_id": "ruleset_coverage",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "分野が決まっている原稿では、CONSORT/PRISMA/MDAR-strict などの ruleset を有効化してください。",
+        "score": 72,
+        "severity": "info",
+        "status": "skipped"
+      },
+      {
+        "check_id": "pdf_hidden_text",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "openri check manuscript.pdf を使うと、白色文字・極小フォント・ページ外座標などを検査します。",
+        "score": 72,
+        "severity": "info",
+        "status": "skipped"
+      }
+    ],
+    "explainability_gates": {
+      "all_warnings_and_failures_have_evidence": true,
+      "same_input_same_threshold_policy": true,
+      "skipped_checks_are_blockers_not_passes": [
+        "summary_stat_plausibility",
+        "image_integrity",
+        "doi_existence",
+        "ruleset_coverage",
+        "pdf_hidden_text"
+      ],
+      "social_metadata_used_for_leniency": false,
+      "warning_or_failure_without_evidence": []
+    },
+    "human_accountability": {
+      "author_query_queue": [
+        {
+          "check_id": "effect_size_ci_coverage",
+          "evidence_count": 2,
+          "question": "効果量、信頼区間、p値、サンプルサイズの相互整合は統計担当または次段checkで確認してください。"
+        },
+        {
+          "check_id": "claim_evidence_alignment",
+          "evidence_count": 1,
+          "question": "AI reviewer/AI editorには、各claimについて支持する結果、図表、引用、限界、代替説明を1対1で確認させてください。"
+        }
+      ],
+      "compatibility_note": "このフィールドは既存UI/API互換のため残します。OpenRIの主対象は、AI reviewer/AI editorが自律判断する前に必要な証拠、coverage blocker、監査可能性を固定することです。",
+      "required_human_decision": false,
+      "responsibility_matrix": [
+        {
+          "responsibility": "任意の監査担当を残す場合は、recommended_route、coverage_blocker、AI reviewer割当を監査します。",
+          "role": "handling_editor"
+        },
+        {
+          "responsibility": "statistical_consistency、summary_stat_plausibility、統計claimの再計算と著者照会を担当します。",
+          "role": "statistics_editor"
+        },
+        {
+          "responsibility": "prompt injection、PDF hidden text、画像未検査、引用placeholderなどの重大疑義を隔離確認します。",
+          "role": "research_integrity_officer"
+        },
+        {
+          "responsibility": "evidence、データ/コード、引用、限界、claim修正について検証可能な回答を提出します。",
+          "role": "authors"
+        }
+      ]
+    },
+    "mode": "accountable_explainable_review_record",
+    "non_autonomy_statement": "OpenRIは不正断定や採否自動決定を行いません。ここに残すのは、AI reviewer/AI editorが判断前に扱うべき証拠付き検査結果、処理理由、未検査領域です。",
+    "routing_explanation": {
+      "coverage_blockers": [
+        {
+          "check_ids": [
+            "summary_stat_plausibility",
+            "image_integrity",
+            "doi_existence",
+            "ruleset_coverage",
+            "pdf_hidden_text"
+          ],
+          "id": "skipped_checks",
+          "message": "skipped checkは安全ではなく、検査条件不足としてAI査読パケットに残します。",
+          "severity": "medium"
+        },
+        {
+          "action": "CONSORT、PRISMA、MDAR-strictなど、該当rulesetを指定してください。",
+          "id": "field_ruleset_not_selected",
+          "message": "分野別報告ガイドラインが未指定です。分野非依存core reviewは可能ですが、専門領域の項目漏れ検査は未完了です。",
+          "severity": "medium"
+        },
+        {
+          "action": "許可済み環境で --network または enable_network を明示的に有効化してください。",
+          "id": "network_reference_checks_disabled",
+          "message": "外部DB照合は無効です。未公開原稿を外部送信しない既定は維持しつつ、許可された環境ではDOI/引用の実在性照合を追加してください。",
+          "severity": "low"
+        },
+        {
+          "action": "提出元がPDFの場合は POST /api/runs/upload または openri check manuscript.pdf を使ってください。",
+          "id": "pdf_integrity_not_available_for_text_input",
+          "message": "PDF座標/色/フォントサイズの検査情報がありません。PDF提出ではupload/CLI経由で検査してください。",
+          "severity": "low"
+        }
+      ],
+      "rationale": "既知の機械検査では重大findingはありません。AI reviewer/AI editorへ証拠付きガードレールを渡せます。",
+      "recommended_route": "route_to_peer_review",
+      "route_drivers": [
+        {
+          "check_id": "claim_evidence_alignment",
+          "drives_route": true,
+          "evidence_count": 1,
+          "score": 78,
+          "severity": "medium",
+          "status": "warning",
+          "title": "Claim-evidence alignment",
+          "why_it_matters": "AI reviewer/AI editorには、各claimについて支持する結果、図表、引用、限界、代替説明を1対1で確認させてください。"
+        }
+      ],
+      "route_label": "AI査読へ回付可能"
+    },
+    "score_explanation": {
+      "failed_penalty": 0,
+      "final_score": 75,
+      "formula": "mean(finding.score) - strictness_penalty - 8*failed - 2*warnings, clamped to 0..100",
+      "mean_finding_score": 83.85,
+      "strictness_penalty": 5,
+      "unclamped_score": 75,
+      "warning_penalty": 4,
+      "worst_findings": [
+        {
+          "check_id": "image_integrity",
+          "score": 70,
+          "severity": "info",
+          "status": "skipped"
+        },
+        {
+          "check_id": "doi_existence",
+          "score": 70,
+          "severity": "info",
+          "status": "skipped"
+        },
+        {
+          "check_id": "summary_stat_plausibility",
+          "score": 72,
+          "severity": "info",
+          "status": "skipped"
+        },
+        {
+          "check_id": "ruleset_coverage",
+          "score": 72,
+          "severity": "info",
+          "status": "skipped"
+        },
+        {
+          "check_id": "pdf_hidden_text",
+          "score": 72,
+          "severity": "info",
+          "status": "skipped"
+        }
+      ]
+    }
+  },
   "ai_review_protocol": {
     "ai_coding_protocol": [
       {
         "id": "ai_changes_need_tests",
         "label": "AIが書いた変更はテストで固定する",
-        "rule": "Codex/Claude等が実装したcheck、API field、UI表示には、少なくとも1つの回帰テストまたはビルド検証を付けます。"
+        "rule": "どのAI coding agentや将来モデルが実装した変更でも、check、API field、UI表示には、少なくとも1つの回帰テストまたはビルド検証を付けます。"
       },
       {
         "id": "no_self_approval",
@@ -80,14 +598,137 @@
         "instruction": "効果量、信頼区間、p値、サンプルサイズの相互整合は統計担当または次段checkで確認してください。",
         "severity": "info",
         "status": "warning"
+      },
+      {
+        "check_id": "claim_evidence_alignment",
+        "evidence_count": 1,
+        "evidence_preview": [
+          {
+            "data": {
+              "review_action": "claimを支える結果・図表・引用・限界を明示し、証拠を超える表現は弱めてください。",
+              "risk_flags": [
+                "claim_without_local_support_marker"
+              ],
+              "support_markers": {
+                "local_citation": false,
+                "local_figure_or_table": false,
+                "local_limitation": false,
+                "local_statistic": false
+              }
+            },
+            "location": "line 4",
+            "quote": "We report a transparent descriptive analysis with modest claims."
+          }
+        ],
+        "instruction": "AI reviewer/AI editorには、各claimについて支持する結果、図表、引用、限界、代替説明を1対1で確認させてください。",
+        "severity": "medium",
+        "status": "warning"
       }
     ],
-    "goal": "人間査読が本来確認する論点を、Codex/Claude等のAI reviewerが分野非依存に、証拠優先かつ忖度なしで実行できるようにする。",
+    "goal": "査読で確認されてきた論点を、モデル名や世代に依存しないAI reviewer/AI editorが、分野非依存に、証拠優先かつ忖度なしで実行できるようにする。",
     "mode": "ai_reviewer_replication",
+    "model_agnostic_reviewer_contract": {
+      "drift_regression_gates": [
+        "scripts/benchmark_openri.py",
+        "scripts/benchmark_peer_review_corpus.py",
+        "backend/tests",
+        "cross-model disagreement report when reviewer model changes"
+      ],
+      "fail_closed_conditions": [
+        "critical/high findingが未解決で、override理由と証拠がない",
+        "coverage blockerをpassedとして扱った",
+        "外部LLM/APIへ未公開原稿を送る許可ログがない",
+        "出力がreviewer_tasksのacceptance_gateを満たさない"
+      ],
+      "mode": "model_agnostic_reviewer_contract",
+      "model_identity_policy": {
+        "model_name_is_informational": true,
+        "model_version_examples": [
+          "gpt-5.5",
+          "gpt-6.7",
+          "claude-future",
+          "local-reviewer"
+        ],
+        "no_branching_on_brand_or_version": true,
+        "required_run_metadata": [
+          "provider",
+          "model_name",
+          "model_version_or_snapshot",
+          "prompt_or_policy_version",
+          "run_id",
+          "timestamp"
+        ]
+      },
+      "purpose": "AI reviewer/AI editorの内部モデルがGPT-5.5、GPT-6.7、Claude、ローカルモデル、または未登場のagent実装へ変わっても、OpenRI側の検査、証拠、coverage blocker、acceptance gateを同じ形で渡せるようにする。",
+      "required_capabilities": [
+        {
+          "id": "structured_output",
+          "requirement": "reviewer_tasksのoutput_schemaに従ったJSONまたは同等の構造化出力を返す。"
+        },
+        {
+          "id": "evidence_grounding",
+          "requirement": "各判断をquote/location/dataまたはcoverage blockerに紐づけ、証拠なしの合格を禁止する。"
+        },
+        {
+          "id": "coverage_blocker_respect",
+          "requirement": "skipped、unknown、unsupported、not implementedをpassed扱いにしない。"
+        },
+        {
+          "id": "adversarial_challenge_execution",
+          "requirement": "主要claimと重大findingについて反証、代替説明、最弱の支持可能表現を返す。"
+        },
+        {
+          "id": "audit_log_emission",
+          "requirement": "最終判断に使ったfinding、無視したblocker、追加確認不能だった項目を監査ログへ残す。"
+        }
+      ]
+    },
     "model_execution_contract": {
-      "claude": "同じrubricを渡し、methodology/claim-evidence/limitationsの独立査読者として使えます。",
-      "codex": "コード、テスト、API/UI整合、fixture/golden reportを検証するreviewer/implementerとして使います。",
+      "accepted_model_version_examples": [
+        "gpt-5.5",
+        "gpt-6.7",
+        "claude-future",
+        "local-reviewer"
+      ],
       "external_llm_calls_required": false,
+      "fail_closed_conditions": [
+        "critical/high findingが未解決で、override理由と証拠がない",
+        "coverage blockerをpassedとして扱った",
+        "外部LLM/APIへ未公開原稿を送る許可ログがない",
+        "出力がreviewer_tasksのacceptance_gateを満たさない"
+      ],
+      "model_name_is_informational": true,
+      "provider_agnostic": true,
+      "required_capabilities": [
+        {
+          "id": "structured_output",
+          "requirement": "reviewer_tasksのoutput_schemaに従ったJSONまたは同等の構造化出力を返す。"
+        },
+        {
+          "id": "evidence_grounding",
+          "requirement": "各判断をquote/location/dataまたはcoverage blockerに紐づけ、証拠なしの合格を禁止する。"
+        },
+        {
+          "id": "coverage_blocker_respect",
+          "requirement": "skipped、unknown、unsupported、not implementedをpassed扱いにしない。"
+        },
+        {
+          "id": "adversarial_challenge_execution",
+          "requirement": "主要claimと重大findingについて反証、代替説明、最弱の支持可能表現を返す。"
+        },
+        {
+          "id": "audit_log_emission",
+          "requirement": "最終判断に使ったfinding、無視したblocker、追加確認不能だった項目を監査ログへ残す。"
+        }
+      ],
+      "required_run_metadata": [
+        "provider",
+        "model_name",
+        "model_version_or_snapshot",
+        "prompt_or_policy_version",
+        "run_id",
+        "timestamp"
+      ],
       "unpublished_manuscript_default": "外部LLM/APIへ送信しません。送る場合は明示許可、送信範囲、ログ、削除方針を必須にします。"
     },
     "plugin_security_boundary": {
@@ -136,6 +777,20 @@
             "warning"
           ],
           "target": "effect_size_ci_coverage"
+        },
+        {
+          "id": "challenge_finding_claim_evidence_alignment",
+          "prompt": "このfindingを著者に照会する場合、必要な原データ、再解析、修正文、または除外判断は何か。",
+          "required_answer": [
+            "editorial_action",
+            "author_query",
+            "evidence_to_request"
+          ],
+          "risk_flags": [
+            "medium",
+            "warning"
+          ],
+          "target": "claim_evidence_alignment"
         }
       ],
       "claim_inventory": [
@@ -144,6 +799,7 @@
           "claim_type": "general_claim",
           "id": "claim_01",
           "linked_findings": [
+            "claim_evidence_alignment",
             "ruleset_coverage"
           ],
           "location": "line 4",
@@ -168,7 +824,7 @@
         }
       ],
       "editor_handoff": {
-        "challenge_count": 2,
+        "challenge_count": 3,
         "claim_count": 1,
         "task_count": 7,
         "use": "AI reviewerへ渡す前に、claim inventory、finding、coverage blockerを同じpacketとして固定します。"
@@ -214,7 +870,9 @@
           "related_claim_ids": [
             "claim_01"
           ],
-          "related_finding_ids": [],
+          "related_finding_ids": [
+            "claim_evidence_alignment"
+          ],
           "reviewer_id": "field_generalist"
         },
         {
@@ -267,7 +925,7 @@
           "reviewer_id": "reproducibility_reviewer"
         },
         {
-          "acceptance_gate": "prompt injectionまたはhidden PDF textが残る原稿を通常査読へ進めない。",
+          "acceptance_gate": "prompt injectionまたはhidden PDF textが残る原稿をAI判断へ進めない。",
           "id": "task_integrity_and_ai_safety",
           "instruction": "AI査読操作、PDF不可視テキスト、画像未検査、引用/DOI、倫理/COI/資金の重大リスクを隔離確認してください。",
           "output_schema": [
@@ -289,21 +947,22 @@
             "claim_id",
             "strongest_counterargument",
             "weakest_defensible_claim",
-            "must_fix_before_review"
+            "must_fix_before_ai_judgment"
           ],
           "priority": "high",
           "related_claim_ids": [
             "claim_01"
           ],
           "related_finding_ids": [
-            "effect_size_ci_coverage"
+            "effect_size_ci_coverage",
+            "claim_evidence_alignment"
           ],
           "reviewer_id": "adversarial_reviewer"
         },
         {
           "acceptance_gate": "skipped/unsupportedを安全扱いしない。",
           "id": "task_coverage_blocker_resolution",
-          "instruction": "coverage blockerをpassed扱いにせず、どの追加入力または検査で解消するかを編集部向けに列挙してください。",
+          "instruction": "coverage blockerをpassed扱いにせず、どの追加入力または検査で解消するかをAI reviewer/AI editor向けに列挙してください。",
           "output_schema": [
             "blocker_id",
             "missing_input",
@@ -360,13 +1019,13 @@
       "state": "ai_review_with_coverage_blockers",
       "summary": {
         "failed": 0,
-        "score": 77,
+        "score": 75,
         "skipped": 5,
-        "warnings": 1
+        "warnings": 2
       }
     },
     "strictness_policy": {
-      "acceptance_boundary": "OpenRIは採否を自動決定しません。AI reviewerは査読前/査読中に潰すべき論点と証拠を返します。",
+      "acceptance_boundary": "OpenRIは採否エンジン本体ではありません。AI reviewer/AI editorが自律判断する運用では、OpenRIのfinding、coverage blocker、evidence ledgerを判断前の必須ガードレールとして扱います。",
       "blocked_is_not_passed": true,
       "charity_rule": "著者の文章意図は公平に読むが、証拠不足・数値不整合・未確認引用を好意的に補完しません。",
       "evidence_first": true,
@@ -387,8 +1046,9 @@
         "unsupported claimを曖昧な表現で隠した原稿をwarning以上にする"
       ],
       "cross_model_review_tests": [
-        "Codex/Claude等の複数AI reviewerに同じrubricを渡し、重大findingの一致率を見る",
-        "不一致の場合は多数決ではなく、evidence不足として追加確認に戻す"
+        "GPT-5.5、GPT-6.7、Claude、ローカルモデルなど複数AI reviewerに同じrubricを渡し、重大findingの一致率を見る",
+        "不一致の場合は多数決ではなく、evidence不足として追加確認に戻す",
+        "モデル名や世代が変わっても、OpenRI側の入力schema、finding contract、acceptance gateを変えない"
       ],
       "fixture_classes": [
         "clean transparent manuscript",
@@ -506,7 +1166,7 @@
       {
         "id": "adversarial_failure_modes",
         "label": "Adversarial failure modes",
-        "pass_condition": "AI reviewerや編集処理を操作する経路を検出した場合、通常査読へ進めず隔離確認すること。",
+        "pass_condition": "AI reviewer/AI editorを操作する経路を検出した場合、AI判断へ進めず隔離確認すること。",
         "required_evidence": [
           "prompt injection検査",
           "PDF hidden text検査",
@@ -523,7 +1183,7 @@
       "category": "statistics",
       "check_id": "statistical_consistency",
       "evidence": [],
-      "id": "finding_58ab2bff06",
+      "id": "finding_3e84dad422",
       "message": "1件の検定表記を再計算し、重大な不整合は見つかりませんでした。",
       "recommendation": "表内・複数行・片側検定の代表的なAPA表記も確認しました。効果量/CIは別findingでcoverage blockerとして扱います。",
       "score": 100,
@@ -539,7 +1199,7 @@
       "category": "statistics",
       "check_id": "summary_stat_plausibility",
       "evidence": [],
-      "id": "finding_ea2368167f",
+      "id": "finding_dfa900f99a",
       "message": "平均値とサンプルサイズの組を検出できませんでした。",
       "recommendation": "整数項目の平均値を報告する場合は、M = ..., n = ... のように書くとGRIM系の検査を追加できます。",
       "score": 72,
@@ -573,7 +1233,7 @@
           "quote": "95% CI [-0.20, 0.20]"
         }
       ],
-      "id": "finding_eec9b05f8d",
+      "id": "finding_475213d5d5",
       "message": "1件の効果量と1件の信頼区間を抽出しましたが、整合性再計算は未対応です。",
       "recommendation": "効果量、信頼区間、p値、サンプルサイズの相互整合は統計担当または次段checkで確認してください。",
       "score": 76,
@@ -610,7 +1270,7 @@
           "quote": null
         }
       ],
-      "id": "finding_dd5deb7610",
+      "id": "finding_a0b5766457",
       "message": "主要な透明性項目が原稿中に検出されました。",
       "recommendation": "項目の存在だけでなく、リンク先の到達性と再現可能性を次段で確認してください。",
       "score": 100,
@@ -630,21 +1290,27 @@
           "data": {
             "doi_count": 1,
             "has_references": true,
-            "numeric_citation_groups": 1
+            "numbered_reference_ids": [
+              1
+            ],
+            "numeric_citation_groups": 0,
+            "numeric_citation_numbers": [],
+            "reference_entry_count": 1
           },
           "location": null,
           "quote": null
         }
       ],
-      "id": "finding_85c2746298",
+      "id": "finding_8ca04a34bb",
       "message": "引用の機械的な不整合は検出されませんでした。",
       "recommendation": "次段ではCrossref/OpenAlex/Semantic Scholar APIで全参考文献の実在性と引用文脈を検証してください。",
-      "score": 90,
+      "score": 92,
       "severity": "low",
       "status": "passed",
       "tags": [
         "citation",
-        "doi"
+        "doi",
+        "reference-linkage"
       ],
       "title": "Citation integrity"
     },
@@ -682,9 +1348,9 @@
           "quote": null
         }
       ],
-      "id": "finding_d515e94a78",
+      "id": "finding_4bce297cc2",
       "message": "参考文献リストと本文中引用の基本構造を抽出し、明確な番号不整合は見つかりませんでした。",
-      "recommendation": "引用がclaimを本当に支えているかは、review_packetのclaim inventoryを用いて人間またはAI reviewerが確認してください。",
+      "recommendation": "引用がclaimを本当に支えているかは、review_packetのclaim inventoryを用いてAI reviewer/AI editorが判断前に確認してください。",
       "score": 92,
       "severity": "low",
       "status": "passed",
@@ -696,10 +1362,44 @@
       "title": "Structured reference and citation-context audit"
     },
     {
+      "category": "manuscript-quality",
+      "check_id": "claim_evidence_alignment",
+      "evidence": [
+        {
+          "data": {
+            "review_action": "claimを支える結果・図表・引用・限界を明示し、証拠を超える表現は弱めてください。",
+            "risk_flags": [
+              "claim_without_local_support_marker"
+            ],
+            "support_markers": {
+              "local_citation": false,
+              "local_figure_or_table": false,
+              "local_limitation": false,
+              "local_statistic": false
+            }
+          },
+          "location": "line 4",
+          "quote": "We report a transparent descriptive analysis with modest claims."
+        }
+      ],
+      "id": "finding_96a9fe4982",
+      "message": "1件のclaim候補を確認し、1件で局所的な証拠・引用・限界との対応確認が必要です。",
+      "recommendation": "AI reviewer/AI editorには、各claimについて支持する結果、図表、引用、限界、代替説明を1対1で確認させてください。",
+      "score": 78,
+      "severity": "medium",
+      "status": "warning",
+      "tags": [
+        "claim-evidence",
+        "overclaim",
+        "explainability"
+      ],
+      "title": "Claim-evidence alignment"
+    },
+    {
       "category": "ai-safety",
       "check_id": "prompt_injection",
       "evidence": [],
-      "id": "finding_e2249a47b2",
+      "id": "finding_bbda90b068",
       "message": "26件のrulesetパターンを走査しましたが、検出はありませんでした。",
       "recommendation": "PDFの座標・色・レイヤー情報に基づく不可視テキスト検査も併用してください(image_integrity_pdfで対応中)。",
       "score": 100,
@@ -716,7 +1416,7 @@
       "category": "manuscript-quality",
       "check_id": "template_text",
       "evidence": [],
-      "id": "finding_2ec01479c1",
+      "id": "finding_d1df87a4c6",
       "message": "明確な重複段落、近接重複、テンプレート表現の過剰反復は検出されませんでした。",
       "recommendation": "分野別の定型文を許容する場合はルールセットを調整してください。",
       "score": 96,
@@ -731,7 +1431,7 @@
       "category": "image-integrity",
       "check_id": "image_integrity",
       "evidence": [],
-      "id": "finding_706b00ea38",
+      "id": "finding_85e376004d",
       "message": "図表参照を検出できませんでした。",
       "recommendation": "画像ファイルを添付できるようにすると、複製・不自然な圧縮・メタデータ検査を追加できます。",
       "score": 70,
@@ -746,7 +1446,7 @@
       "category": "references",
       "check_id": "doi_existence",
       "evidence": [],
-      "id": "finding_7aa9dee2d1",
+      "id": "finding_c57e6acb06",
       "message": "Crossref問い合わせはネットワーク不要モードで無効化されています(--network で有効化)。",
       "recommendation": "CIで参考文献の実在性を確認したい場合は OPENRI_NETWORK=1 を設定するか、CLIで --network を指定してください。",
       "score": 70,
@@ -764,7 +1464,7 @@
       "category": "research-integrity",
       "check_id": "ruleset_coverage",
       "evidence": [],
-      "id": "finding_bbb1eff78f",
+      "id": "finding_7e0338eacd",
       "message": "分野別rulesetは指定されていません(--ruleset consort prisma など)。",
       "recommendation": "分野が決まっている原稿では、CONSORT/PRISMA/MDAR-strict などの ruleset を有効化してください。",
       "score": 72,
@@ -780,7 +1480,7 @@
       "category": "ai-safety",
       "check_id": "pdf_hidden_text",
       "evidence": [],
-      "id": "finding_5687852ba8",
+      "id": "finding_29ce2281c0",
       "message": "PDF不可視テキスト検査はCLIでPDFを直接渡したときのみ実行されます。",
       "recommendation": "openri check manuscript.pdf を使うと、白色文字・極小フォント・ページ外座標などを検査します。",
       "score": 72,
@@ -822,13 +1522,18 @@
     },
     "word_count": 110
   },
-  "objective": "OpenRIは、投稿システムに提出された論文を編集部側で受理した後、プログラミングのテストランナーに近い形で、統計不整合、研究透明性の不足、引用・参考文献の不整合、LLM査読を操作する隠し指示、再現性リスクを機械的に検査するOSS基盤です。採否判定や不正断定ではなく、査読に回す前に編集者・integrity担当・統計担当・AI reviewerが確認すべき証拠付きfinding、処理ルート、分野非依存のAI査読プロトコルを返します。",
+  "objective": "OpenRIは、投稿システムに提出された論文を編集部側で受理した後、プログラミングのテストランナーに近い形で、統計不整合、研究透明性の不足、引用・参考文献の不整合、LLM査読を操作する隠し指示、再現性リスクを機械的に検査するOSS基盤です。OpenRI自体は採否判定や不正断定を行わず、将来のGPT-5.5、GPT-6.7、Claude、ローカルモデルなどモデル名やバージョンが変わるAI reviewer/AI editorに対して、証拠付きfinding、coverage blocker、分野非依存のAI査読プロトコル、監査可能な判断材料を返すガードレール層として動きます。",
   "report_id": "golden-stable-id",
   "schema_version": "openri-report-v1",
   "strictness": "standard",
   "submission_processing": {
+    "autonomous_ai_guardrails": [
+      "AI reviewer/AI editorが最終判断する運用でも、OpenRIのcoverage blockerをpassed扱いにしません。",
+      "モデル名や世代で閾値を変えず、finding/evidence/acceptance gateを同じ形で渡します。",
+      "判断に使ったmodel_name、model_version_or_snapshot、prompt_or_policy_version、run_idを監査ログへ残します。"
+    ],
     "editorial_guardrails": [
-      "findingは不正断定ではなく、査読前に確認すべき証拠です。",
+      "findingは不正断定ではなく、AI判断前に処理すべき証拠です。",
       "未公開原稿を外部LLM/APIへ送る前提にはしません。",
       "critical/high findingがある場合も、著者照会・統計確認・integrity確認の材料として扱います。"
     ],
@@ -839,12 +1544,35 @@
         "evidence_count": 2,
         "severity": "info",
         "status": "warning"
+      },
+      {
+        "action": "AI reviewer/AI editorには、各claimについて支持する結果、図表、引用、限界、代替説明を1対1で確認させてください。",
+        "check_id": "claim_evidence_alignment",
+        "evidence_count": 1,
+        "severity": "medium",
+        "status": "warning"
       }
     ],
     "mode": "submitted_manuscript_triage",
-    "rationale": "既知の機械検査では重大findingはありません。分野専門家による通常査読に進められます。",
+    "rationale": "既知の機械検査では重大findingはありません。AI reviewer/AI editorへ証拠付きガードレールを渡せます。",
     "recommended_route": "route_to_peer_review",
-    "route_label": "通常査読へ回付可能",
+    "review_actions": [
+      {
+        "action": "効果量、信頼区間、p値、サンプルサイズの相互整合は統計担当または次段checkで確認してください。",
+        "check_id": "effect_size_ci_coverage",
+        "evidence_count": 2,
+        "severity": "info",
+        "status": "warning"
+      },
+      {
+        "action": "AI reviewer/AI editorには、各claimについて支持する結果、図表、引用、限界、代替説明を1対1で確認させてください。",
+        "check_id": "claim_evidence_alignment",
+        "evidence_count": 1,
+        "severity": "medium",
+        "status": "warning"
+      }
+    ],
+    "route_label": "AI査読へ回付可能",
     "stages": [
       {
         "detail": "提出ファイルを受け取り、元ファイルを保持したまま検査用テキストを作成します。",
@@ -859,21 +1587,21 @@
         "status": "completed"
       },
       {
-        "detail": "12件のcheckを実行しました。",
+        "detail": "13件のcheckを実行しました。",
         "id": "mechanical_tests",
         "label": "機械検査",
         "status": "completed"
       },
       {
-        "detail": "通常査読へ回付可能",
+        "detail": "AI査読へ回付可能",
         "id": "triage",
-        "label": "編集部トリアージ",
+        "label": "AI判断トリアージ",
         "status": "review"
       },
       {
-        "detail": "findingごとのevidence、再計算値、該当行/ページ、推奨確認事項を編集者へ渡します。",
-        "id": "human_packet",
-        "label": "人間確認パケット",
+        "detail": "findingごとのevidence、再計算値、該当行/ページ、coverage blocker、acceptance gateをAI reviewer/AI editorへ渡します。",
+        "id": "ai_guardrail_packet",
+        "label": "AI判断ガードレールパケット",
         "status": "ready"
       }
     ]
@@ -881,17 +1609,17 @@
   "summary": {
     "failed": 0,
     "passed": 6,
-    "score": 77,
+    "score": 75,
     "severity_counts": {
       "critical": 0,
       "high": 0,
       "info": 6,
       "low": 6,
-      "medium": 0
+      "medium": 1
     },
     "skipped": 5,
-    "total_checks": 12,
-    "warnings": 1
+    "total_checks": 13,
+    "warnings": 2
   },
   "title": "clean_transparent.txt"
 }

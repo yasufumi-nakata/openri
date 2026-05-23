@@ -53,4 +53,4 @@ curl -LO https://www.yasufumi.net/openri/packages/skill/openri-codex-skill-0.3.2
 
 ## Safety defaults
 
-OpenRI は採否判定や研究不正認定を自動化しません。配布パッケージでも、finding は人間が確認すべき証拠付き検査結果として扱います。ネットワーク照合は opt-in とし、未公開原稿を外部 LLM や外部 API に送る既定値は追加しません。
+OpenRI は採否判定や研究不正認定を自動化しません。配布パッケージでも、finding は AI reviewer/AI editor が判断前に扱う証拠付き検査結果として扱います。ネットワーク照合は opt-in とし、未公開原稿を外部 LLM や外部 API に送る既定値は追加しません。

@@ -59,6 +59,7 @@ def _print_human(report) -> None:
     readiness = protocol.get("run_readiness", {})
     handoff = packet.get("editor_handoff", {})
     routing = accountability.get("routing_explanation", {})
+    coverage_blockers = routing.get("coverage_blockers", [])
     print(f"OpenRI report {report.report_id}")
     print(f"title: {report.title}")
     print(f"strictness: {report.strictness}")
@@ -75,7 +76,10 @@ def _print_human(report) -> None:
         )
     if routing:
         drivers = ", ".join(item.get("check_id", "") for item in routing.get("route_drivers", [])[:4])
-        print(f"accountability_route: {routing.get('recommended_route')} drivers={drivers}")
+        print(
+            f"accountability_route: {routing.get('recommended_route')} "
+            f"blockers={len(coverage_blockers)} drivers={drivers}"
+        )
     print()
     for f in report.findings:
         marker = {
@@ -136,6 +140,11 @@ def cmd_check(args: argparse.Namespace) -> int:
     if args.sarif:
         sarif_payload = report_to_sarif(report, artifact_uri=source_name)
         Path(args.sarif).expanduser().write_text(json.dumps(sarif_payload, indent=2, ensure_ascii=False))
+
+    if args.out:
+        out_path = Path(args.out).expanduser()
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(report.model_dump_json(indent=2) + "\n", encoding="utf-8")
 
     if args.json:
         sys.stdout.write(report.model_dump_json(indent=2))
@@ -212,6 +221,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_check.add_argument("--no-experimental", action="store_true", help="Skip experimental checks")
     p_check.add_argument("--json", action="store_true", help="Print the report as JSON")
+    p_check.add_argument("--out", metavar="PATH", help="Write the full JSON report to PATH")
     p_check.add_argument("--sarif", metavar="PATH", help="Write SARIF 2.1.0 output to PATH")
     p_check.add_argument("--save", action="store_true", help="Persist the report to the SQLite store")
     p_check.add_argument(

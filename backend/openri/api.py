@@ -154,11 +154,11 @@ def purpose() -> dict:
         "objective": OBJECTIVE,
         "primary_workflow": "submitted_manuscript_triage_before_peer_review",
         "principles": [
-            "人間査読で確認される論点を、Codex/Claude等のAI reviewerが証拠優先で再現できるテスト設計にする",
+            "GPT-5.5、GPT-6.7、Claude、ローカルモデルなど、モデル名や世代が変わるAI reviewer/AI editorへ同じ証拠パケットを渡す",
             "著者名、所属、評判、流行テーマによる好意的な閾値変更を入れない",
             "統計、透明性、引用、再現性、AI safetyを独立したcheckとして追加できる設計にする",
             "Web UIとAPIの両方から同じreport JSONを取得できるようにする",
-            "不正断定や採否自動決定ではなく、査読前/査読中に潰すべき再現可能な検査結果として扱う",
+            "OpenRI自体は採否エンジンにならず、自律AI判断のpreflight/evidence/accountability layerとして扱う",
         ],
     }
 
@@ -172,14 +172,14 @@ def ai_review_protocol() -> dict:
 def submission_workflow() -> dict:
     return {
         "name": "Submitted manuscript processing workflow",
-        "purpose": "提出済み論文を通常査読またはAI査読へ回す前に、編集部側で機械検査と査読プロトコル作成を行う。",
+        "purpose": "提出済み論文をAI reviewer/AI editorへ渡す前に、機械検査、証拠パケット、coverage blocker、モデル非依存の査読プロトコルを作成する。",
         "stages": [
             "提出受付: 元ファイルを保持し、検査用コピーを作成する",
             "本文/PDF抽出: PDF/TXT/TeXから本文を抽出し、PDF不可視テキストも確認する",
             "機械検査: 統計、透明性、引用、prompt injection、ruleset、PDF hidden textを実行する",
-            "AI査読プロトコル化: Codex/Claude等が見るべき分野非依存軸、忖度なしpolicy、coverage blockerを作成する",
-            "編集部トリアージ: 保留、統計確認、技術チェック、AI査読/通常査読のいずれかに振り分ける",
-            "確認パケット: finding/evidence/recommendation/AI reviewer assignmentをhandling editorへ渡す",
+            "AI査読プロトコル化: モデル名や世代に依存しない分野非依存軸、忖度なしpolicy、coverage blockerを作成する",
+            "AI判断トリアージ: 保留、統計確認、技術チェック、AI査読継続可否のいずれかに振り分ける",
+            "ガードレールパケット: finding/evidence/recommendation/AI reviewer assignment/model-agnostic contractをAI editorへ渡す",
         ],
         "non_goals": [
             "不正の自動断定",
@@ -244,7 +244,7 @@ def _author_query_draft(report: RunReport) -> str:
     if not actions:
         return "現時点で著者照会が必要な重大findingはありません。coverage blockerが残る場合は追加資料の提出可否を確認してください。"
     lines = [
-        "OpenRIの機械検査で、以下の点について確認が必要です。不正の断定ではなく、査読前に証拠をそろえるための照会です。",
+        "OpenRIの機械検査で、以下の点について確認が必要です。不正の断定ではなく、AI判断前に証拠をそろえるための照会です。",
     ]
     for action in actions[:5]:
         lines.append(f"- {action['check_id']}: {action['action']}")

@@ -33,12 +33,12 @@
         <article class="article section">
           <p class="breadcrumb"><a href="../">OpenRI Tutorial</a> / Reading results</p>
           <h1>自分の論文をOpenRIでチェックすると何が起きるか</h1>
-<p>OpenRIにPDFまたはテキスト原稿を渡すと、採否判定や不正断定ではなく、機械的に再確認できるfindingを返します。 同時に、Codex/Claude等のAI reviewerが人間査読の論点を分野非依存・証拠優先・忖度なしで見るための <code>ai_review_protocol</code> も返します。</p>
+<p>OpenRIにPDFまたはテキスト原稿を渡すと、採否判定や不正断定ではなく、機械的に再確認できるfindingを返します。 同時に、GPT-5.5、GPT-6.7、Claude、ローカルモデルなど将来変わり得るAI reviewer/AI editorが、査読論点を分野非依存・証拠優先・忖度なしで見るための <code>ai_review_protocol</code> も返します。</p>
 <h2>PDFの場合</h2>
 <ol><li>サーバー側でPDF本文を抽出します。</li><li>抽出テキストに対して、p値再計算、GRIM風の平均値/n整合性、透明性項目、引用/DOI、prompt injection、重複表現、rulesetなどを検査します。</li><li>PDFそのものに対して、白色文字、極小フォント、ページ外配置などの不可視/隠しテキスト候補を検査します。</li><li>結果はWeb UIとAPIの同じJSON reportで確認できます。</li></ol>
 <p>スキャン画像だけのPDFや、本文抽出できないPDFは現時点では検査できません。その場合はOCRを先に通すか、本文テキストも併せて入力してください。</p>
 <h2>出る結果</h2>
-<ul><li><code>score</code>: 0-100の目安です。低いほど人間確認が必要です。</li><li><code>passed</code>: 既知の機械検査で問題が見つからなかった項目です。</li><li><code>warning</code>: 不足・不整合・未実装範囲など、確認すべき項目です。</li><li><code>failed</code>: p値不整合や隠し指示など、重大な再確認対象です。</li><li><code>skipped</code>: ネットワーク検査やPDF専用検査など、条件不足で走らなかった項目です。</li><li><code>evidence</code>: 原稿中の該当引用、行番号、再計算値、検出パターンなどです。</li><li><code>ai_review_protocol</code>: AI reviewer role、universal review dimensions、coverage blocker、AI開発前提のテスト設計です。</li></ul>
+<ul><li><code>score</code>: 0-100の目安です。低いほどAI判断前の追加検査やcoverage blocker解消が必要です。</li><li><code>passed</code>: 既知の機械検査で問題が見つからなかった項目です。</li><li><code>warning</code>: 不足・不整合・未実装範囲など、確認すべき項目です。</li><li><code>failed</code>: p値不整合や隠し指示など、重大な再確認対象です。</li><li><code>skipped</code>: ネットワーク検査やPDF専用検査など、条件不足で走らなかった項目です。</li><li><code>evidence</code>: 原稿中の該当引用、行番号、再計算値、検出パターンなどです。</li><li><code>ai_review_protocol</code>: AI reviewer role、universal review dimensions、coverage blocker、model-agnostic contract、AI開発前提のテスト設計です。</li></ul>
 <h2>現時点で検出できる代表例</h2>
 <ul><li><code>t(58) = 2.15, p = 0.003</code> のような報告p値を再計算し、実際のp値との差を示します。</li><li><code>M = 2.34, n = 17</code> のような平均値/n表記が、整数項目の平均としてあり得るかを確認します。</li><li>ethics、data availability、code availability、conflict of interest、fundingの記載漏れ候補を出します。</li><li>placeholder DOIや参考文献セクション不足を検出します。</li><li><code>Ignore previous instructions</code> のようなLLM査読操作の隠し指示を検出します。</li><li>PDF内の白色文字・極小フォント・ページ外テキストを検出します。</li></ul>
 <h2>Web UIでの使い方</h2>
@@ -52,7 +52,7 @@
   -H &#x27;Content-Type: application/json&#x27; \
   --data &#x27;{&quot;title&quot;:&quot;paper&quot;,&quot;manuscript_text&quot;:&quot;Results\n t(58) = 2.15, p = 0.003.&quot;,&quot;strictness&quot;:&quot;standard&quot;}&#x27;</code></pre>
 <h2>注意</h2>
-<p>OpenRIは「不正です」と断定しません。あくまで、査読者や著者が確認すべき場所を証拠付きで出すテストランナーです。特にp値、引用、透明性項目、PDF不可視テキストは、原稿の文脈や分野ルールに応じて人間が最終確認してください。 ただし、<code>ai_review_protocol.strictness_policy</code> は、著者名、所属、評判、流行テーマによる好意的な閾値変更を禁止します。<code>skipped</code> や未対応領域は安全ではなく、coverage blockerとして扱ってください。</p>
+<p>OpenRIは「不正です」と断定しません。あくまで、AI reviewer/AI editorが判断前に扱うべき場所を証拠付きで出すテストランナーです。特にp値、引用、透明性項目、PDF不可視テキストは、原稿の文脈や分野ルールに応じてAI判断の入力として明示的に処理してください。 ただし、<code>ai_review_protocol.strictness_policy</code> は、著者名、所属、評判、流行テーマによる好意的な閾値変更を禁止します。<code>skipped</code> や未対応領域は安全ではなく、coverage blockerとして扱ってください。</p>
         </article>
       </main>
 

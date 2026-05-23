@@ -5,7 +5,7 @@ OpenRI aims to become a best-in-class, open, evidence-backed review system. The 
 ## Current foundation
 
 - Deterministic integrity checks for statistics, transparency, citations, prompt injection, duplicate text, ruleset coverage, DOI lookup, and PDF hidden text.
-- AI reviewer protocol with no-social-leniency policy.
+- Model-agnostic AI reviewer protocol with no-social-leniency policy.
 - Claim-centered review packet for AI reviewer handoff.
 - Web UI, API, CLI, SARIF output, and SQLite report store.
 - CI and package release workflow.
@@ -22,9 +22,10 @@ OpenRI aims to become a best-in-class, open, evidence-backed review system. The 
    - field-specific reporting omissions
 
 2. **Cross-model review evaluation**
-   - run Codex, Claude, and other AI reviewers on the same `review_packet`
+   - run GPT-5.5, GPT-6.7, Claude, local, and future AI reviewers on the same `review_packet`
    - compare high-severity finding recall
    - treat disagreement as evidence/rubric debt, not majority truth
+   - treat model names and versions as audit metadata, not acceptance thresholds
 
 3. **Image integrity**
    - EXIF inspection

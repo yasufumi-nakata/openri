@@ -186,7 +186,7 @@ def write_index(version: str, entries: list[dict[str, object]]) -> None:
         <article class="article section">
           <p class="breadcrumb"><a href="../">OpenRI Tutorial</a> / Packages</p>
           <h1>OpenRI package registry</h1>
-          <p>GitHub Pages から取得できる OpenRI の配布物です。未公開原稿を外部 API へ送らない既定値は、CLI、API、MCP、Codex skill の各入口で維持します。</p>
+          <p>GitHub Pages から取得できる OpenRI の配布物です。未公開原稿を外部 API へ送らない既定値と、モデル非依存のAI判断ガードレールは、CLI、API、MCP、Codex skill の各入口で維持します。</p>
           <div class="package-grid">
             <section class="package-card">
               <h2>Python</h2>
