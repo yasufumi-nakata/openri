@@ -1050,7 +1050,7 @@ def build_accountability_record(
             ][:8],
         },
         "human_accountability": {
-            "required_human_decision": False,
+            "required_human_decision": True,
             "compatibility_note": (
                 "このフィールドは既存UI/API互換のため残します。OpenRIの主対象は、AI reviewer/AI editorが"
                 "自律判断する前に必要な証拠、coverage blocker、監査可能性を固定することです。"

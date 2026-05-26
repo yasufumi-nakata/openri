@@ -155,13 +155,22 @@ def manuscript_from_peersum(row: dict, max_chars: int) -> str:
 
 
 def review_text_from_reviewbench(row: dict) -> str:
-    raw = row.get("reviews_json") or "[]"
-    try:
-        reviews = json.loads(raw)
-    except json.JSONDecodeError:
-        return raw
+    raw = row.get("reviews_json")
+    if raw in (None, ""):
+        reviews: Any = []
+    elif isinstance(raw, str):
+        try:
+            reviews = json.loads(raw)
+        except json.JSONDecodeError:
+            return raw
+    else:
+        reviews = raw
+    if isinstance(reviews, dict):
+        reviews = [reviews]
+    if not isinstance(reviews, list):
+        return str(reviews)
     chunks: List[str] = []
-    for review in reviews if isinstance(reviews, list) else []:
+    for review in reviews:
         if not isinstance(review, dict):
             continue
         for key, value in review.items():
@@ -269,13 +278,18 @@ def summarize_corpus(
         )
         review_concerns = detect_review_concerns(review_text)
         openri_flags = openri_dimension_flags(report)
-        overlap = len(review_concerns & openri_flags) / len(review_concerns) if review_concerns else 1.0
+        overlap = (
+            len(review_concerns & openri_flags) / len(review_concerns)
+            if review_concerns
+            else None
+        )
 
         active = [finding.check_id for finding in report.findings if finding.status in {Status.WARNING, Status.FAILED}]
         scores.append(report.summary.score)
         coverage_blockers.append(len(report.ai_review_protocol.get("coverage_blockers", [])))
         claim_counts.append(len(report.ai_review_protocol.get("review_packet", {}).get("claim_inventory", [])))
-        concern_overlap.append(overlap)
+        if overlap is not None:
+            concern_overlap.append(overlap)
         route_counts[report.submission_processing["recommended_route"]] += 1
         readiness_counts[report.ai_review_protocol["run_readiness"]["state"]] += 1
         active_findings.update(active)
@@ -295,7 +309,7 @@ def summarize_corpus(
                 "claim_count": claim_counts[-1],
                 "review_concern_categories": sorted(review_concerns),
                 "openri_dimension_categories": sorted(openri_flags),
-                "review_concern_overlap_proxy": round(overlap, 3),
+                "review_concern_overlap_proxy": round(overlap, 3) if overlap is not None else None,
             }
         )
 
@@ -407,7 +421,7 @@ def write_markdown(report: dict, path: Path) -> None:
                 f"{case.get('decision') or '-'} | "
                 f"{', '.join(case['active_findings']) or '-'} | "
                 f"{', '.join(case['review_concern_categories']) or '-'} | "
-                f"{case['review_concern_overlap_proxy']} |"
+                f"{case['review_concern_overlap_proxy'] if case['review_concern_overlap_proxy'] is not None else '-'} |"
             )
         lines.append("")
     path.write_text("\n".join(lines), encoding="utf-8")

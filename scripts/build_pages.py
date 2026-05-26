@@ -213,8 +213,10 @@ def build_pages() -> None:
         (target_dir / "index.html").write_text(render_markdown_page(source, slug), encoding="utf-8")
     package_dir = DOCS / "packages"
     package_dir.mkdir(parents=True, exist_ok=True)
-    (package_dir / "index.html").write_text(
-        """<!doctype html>
+    package_index = package_dir / "index.html"
+    if not package_index.exists():
+        package_index.write_text(
+            """<!doctype html>
 <html lang="ja">
   <head>
     <meta charset="utf-8">
@@ -239,8 +241,8 @@ def build_pages() -> None:
   </body>
 </html>
 """,
-        encoding="utf-8",
-    )
+            encoding="utf-8",
+        )
 
 
 def main() -> int:

@@ -19,6 +19,7 @@ from openri.sarif import report_to_sarif
 from openri.store import ReportStore
 from openri.text_windows import iter_sentence_spans
 from scripts import benchmark_peer_review_corpus as peer_benchmark
+from scripts import build_pages as pages_builder
 
 
 def _by_id(report, check_id):
@@ -617,6 +618,43 @@ The method significantly improves performance in Figure 1.
     assert "reviewbench" in rendered
 
 
+def test_reviewbench_payload_shapes_and_empty_reviews_do_not_inflate_overlap():
+    assert (
+        peer_benchmark.review_text_from_reviewbench(
+            {"reviews_json": [{"summary": "The evidence and reproducibility details are incomplete."}]}
+        )
+        == "The evidence and reproducibility details are incomplete."
+    )
+    assert (
+        peer_benchmark.review_text_from_reviewbench({"reviews_json": {"summary": "A single review object."}})
+        == "A single review object."
+    )
+    assert peer_benchmark.review_text_from_reviewbench({"reviews_json": 123}) == "123"
+
+    corpus = peer_benchmark.summarize_corpus(
+        name="reviewbench",
+        dataset="fixture/reviewbench",
+        split="test",
+        rows=[
+            {
+                "row_idx": 0,
+                "row": {
+                    "title": "No review text",
+                    "abstract": "A short manuscript without reviewer text.",
+                    "reviews_json": [],
+                },
+            }
+        ],
+        rows_total=1,
+        source_url="fixture://reviewbench",
+        max_chars=1000,
+    )
+
+    assert corpus["cases"][0]["review_concern_categories"] == []
+    assert corpus["cases"][0]["review_concern_overlap_proxy"] is None
+    assert corpus["review_concern_overlap_proxy_mean"] == 0.0
+
+
 def test_peer_review_corpus_fetch_uses_cache(monkeypatch, tmp_path):
     calls = {"count": 0}
 
@@ -653,3 +691,21 @@ def test_peer_review_corpus_fetch_uses_cache(monkeypatch, tmp_path):
     assert calls["count"] == 1
     assert first["cache_status"] == "miss"
     assert second["cache_status"] == "hit"
+
+
+def test_build_pages_preserves_existing_package_registry(monkeypatch, tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "source.md").write_text("# Source\n\nSee [distribution](distributions.md).", encoding="utf-8")
+    package_dir = docs / "packages"
+    package_dir.mkdir()
+    package_index = package_dir / "index.html"
+    package_index.write_text("<html>registry</html>", encoding="utf-8")
+
+    monkeypatch.setattr(pages_builder, "DOCS", docs)
+    monkeypatch.setattr(pages_builder, "PUBLIC_DOCS", {"source.md": ("source", "Source")})
+
+    pages_builder.build_pages()
+
+    assert (docs / "source" / "index.html").exists()
+    assert package_index.read_text(encoding="utf-8") == "<html>registry</html>"
