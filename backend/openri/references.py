@@ -15,6 +15,11 @@ ITEM_START_PATTERNS = (
     re.compile(r"^\d+[\).]"),
     re.compile(r"^[A-Z][A-Za-z'’.-]+,\s*(?:[A-Z]\.?\s*){1,5}(?:[,;.]|\s)"),
     re.compile(r"^[A-Z][A-Za-z'’.-]+\s+(?:[A-Z]{1,5}\.?\s*){1,5}(?:[,;.]|\s)"),
+    re.compile(
+        r"^(?:[A-Z][A-Za-z&'’.-]+|of|and|for|the)"
+        r"(?:\s+(?:[A-Z][A-Za-z&'’.-]+|of|and|for|the)){1,12}"
+        r"[,.]?\s+\(?(?:19|20)\d{2}\)?[).,]?\s"
+    ),
 )
 
 

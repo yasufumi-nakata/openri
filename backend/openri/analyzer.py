@@ -38,6 +38,12 @@ SECTION_NAMES = {
     "結果": "結果",
     "考察": "考察",
 }
+SECTION_VARIANT_NAMES = {
+    "materials and methods": "methods",
+    "methods and materials": "methods",
+    "results and discussion": "results",
+}
+SECTION_VARIANT_PREFIXES = ("and ", "& ", "/ ", "(", "[", "- ", "– ", "— ")
 
 
 OBJECTIVE = (
@@ -312,8 +318,18 @@ def _section_heading_from_line(raw_line: str) -> Optional[str]:
         prefix = parts[0].rstrip(".)")
         if prefix and all(char.isdigit() or char == "." for char in prefix):
             line = parts[1].strip()
-    line = line.rstrip(":：").strip()
-    return SECTION_NAMES.get(line.lower())
+    line = re.sub(r"\s+", " ", line.rstrip(":：").strip().lower())
+    if line in SECTION_NAMES:
+        return SECTION_NAMES[line]
+    if line in SECTION_VARIANT_NAMES:
+        return SECTION_VARIANT_NAMES[line]
+    for name, canonical in sorted(SECTION_NAMES.items(), key=lambda item: len(item[0]), reverse=True):
+        if not line.startswith(f"{name} "):
+            continue
+        suffix = line[len(name) :].strip()
+        if suffix.startswith(SECTION_VARIANT_PREFIXES):
+            return canonical
+    return None
 
 
 def _iter_section_headings(text: str):

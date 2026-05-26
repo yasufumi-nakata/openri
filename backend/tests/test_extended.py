@@ -828,9 +828,21 @@ def test_critical_warning_routes_to_integrity_hold():
 
 
 def test_section_for_offset_requires_heading_line():
-    text = "Abstract concepts are difficult to formalize.\n\n1. Methods\nThe actual claim is here."
+    text = """Abstract concepts are difficult to formalize.
+
+1. Methods
+The actual claim is here.
+
+## Methods (Pre-registered)
+The preregistered analysis claim is here.
+
+Results and Discussion
+The combined result claim is here.
+"""
     assert analyzer_module._section_for_offset(text, text.index("Abstract")) == "unknown"
     assert analyzer_module._section_for_offset(text, text.index("actual claim")) == "methods"
+    assert analyzer_module._section_for_offset(text, text.index("preregistered analysis")) == "methods"
+    assert analyzer_module._section_for_offset(text, text.index("combined result")) == "results"
 
 
 def test_reference_items_detect_author_initial_formats():
@@ -838,10 +850,14 @@ def test_reference_items_detect_author_initial_formats():
 Smith, J. 2024. A registered report.
 O'Brien, S. 2023. A replication study.
 Smith JA, Jones MB. 2022. A Vancouver-style citation.
+World Health Organization, 2021. Global status report.
+Centers for Disease Control and Prevention. 2020. Public health guidance.
 """
     refs = references_module.extract_reference_items(text)
-    assert [ref["year"] for ref in refs] == [2024, 2023, 2022]
+    assert [ref["year"] for ref in refs] == [2024, 2023, 2022, 2021, 2020]
     assert "O'Brien" in refs[1]["text"]
+    assert "World Health Organization" in refs[3]["text"]
+    assert "Centers for Disease Control" in refs[4]["text"]
 
 
 def test_report_store_uses_wal_and_busy_timeout(tmp_path):

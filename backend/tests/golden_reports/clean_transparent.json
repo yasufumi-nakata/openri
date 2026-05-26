@@ -1,4 +1,507 @@
 {
+  "accountability": {
+    "audit_trail": [
+      {
+        "detail": "RunRequestを受け取り、元テキストは外部LLMへ送信していません。",
+        "status": "completed",
+        "step": "intake"
+      },
+      {
+        "detail": "文字数、単語数、section、strictness knobを作成しました。",
+        "status": "completed",
+        "step": "profile"
+      },
+      {
+        "detail": "13件のdeterministic checkを実行しました。",
+        "status": "completed",
+        "step": "checks"
+      },
+      {
+        "detail": "技術チェック後に通常査読へ",
+        "status": "completed",
+        "step": "triage"
+      },
+      {
+        "detail": "AI査読は開始できますが、未検査領域を合格扱いしません",
+        "status": "completed",
+        "step": "ai_review_packet"
+      },
+      {
+        "detail": "score、route、evidence、claim、coverage blockerを説明可能な形で固定しました。",
+        "status": "completed",
+        "step": "accountability_record"
+      }
+    ],
+    "claim_explainability": {
+      "claim_count": 1,
+      "claims_needing_support": [
+        {
+          "id": "claim_01",
+          "linked_findings": [
+            "claim_evidence_alignment",
+            "ruleset_coverage"
+          ],
+          "location": "line 4",
+          "risk_flags": [
+            "no_local_support_marker"
+          ],
+          "support_status": "needs_support_evidence"
+        }
+      ],
+      "risk_flag_counts": {
+        "no_local_support_marker": 1
+      },
+      "support_status_counts": {
+        "needs_support_evidence": 1
+      }
+    },
+    "decision_provenance": {
+      "activated_rulesets": [],
+      "experimental_checks_included": true,
+      "external_llm_calls_required": false,
+      "input_character_count": 721,
+      "input_word_count": 110,
+      "network_enabled": false,
+      "review_mode": "ai_reviewer_replication",
+      "strictness": "standard",
+      "total_checks": 13
+    },
+    "evidence_ledger": [
+      {
+        "check_id": "statistical_consistency",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "表内・複数行・片側検定の代表的なAPA表記も確認しました。効果量/CIは別findingでcoverage blockerとして扱います。",
+        "score": 100,
+        "severity": "low",
+        "status": "passed"
+      },
+      {
+        "check_id": "summary_stat_plausibility",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "整数項目の平均値を報告する場合は、M = ..., n = ... のように書くとGRIM系の検査を追加できます。",
+        "score": 72,
+        "severity": "info",
+        "status": "skipped"
+      },
+      {
+        "check_id": "effect_size_ci_coverage",
+        "evidence_count": 2,
+        "evidence_quality": "quote_location_data",
+        "has_location": true,
+        "has_quote": true,
+        "has_structured_data": true,
+        "primary_evidence": {
+          "data": {
+            "kind": "Cohen's d",
+            "value": 0.0
+          },
+          "location": "line 14",
+          "quote": "Cohen's d = 0.00"
+        },
+        "recommendation": "効果量、信頼区間、p値、サンプルサイズの相互整合は統計担当または次段checkで確認してください。",
+        "score": 76,
+        "severity": "info",
+        "status": "warning"
+      },
+      {
+        "check_id": "reporting_transparency",
+        "evidence_count": 1,
+        "evidence_quality": "data_only",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": true,
+        "primary_evidence": {
+          "data": {
+            "detected_sections": [
+              "ethics",
+              "data",
+              "code",
+              "conflicts",
+              "funding"
+            ],
+            "missing_sections": [],
+            "thresholds": {
+              "medium_at": 3,
+              "warning_at": 1
+            }
+          },
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "項目の存在だけでなく、リンク先の到達性と再現可能性を次段で確認してください。",
+        "score": 100,
+        "severity": "low",
+        "status": "passed"
+      },
+      {
+        "check_id": "citation_integrity",
+        "evidence_count": 1,
+        "evidence_quality": "data_only",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": true,
+        "primary_evidence": {
+          "data": {
+            "doi_count": 1,
+            "has_references": true,
+            "numbered_reference_ids": [
+              1
+            ],
+            "numeric_citation_groups": 0,
+            "numeric_citation_numbers": [],
+            "reference_entry_count": 1
+          },
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "次段ではCrossref/OpenAlex/Semantic Scholar APIで全参考文献の実在性と引用文脈を検証してください。",
+        "score": 92,
+        "severity": "low",
+        "status": "passed"
+      },
+      {
+        "check_id": "citation_context",
+        "evidence_count": 1,
+        "evidence_quality": "data_only",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": true,
+        "primary_evidence": {
+          "data": {
+            "external_lookup_policy": "Crossref/OpenAlex/Semantic Scholar checks require explicit network opt-in.",
+            "inline_citations": [
+              {
+                "items": [
+                  1
+                ],
+                "quote": "[1]",
+                "style": "numeric"
+              }
+            ],
+            "placeholder_references": [],
+            "reference_count": 1,
+            "references": [
+              {
+                "doi": "10.1101/2025.01.01.123456",
+                "has_placeholder_doi": false,
+                "index": 1,
+                "text": "[1] Doe J. Transparent work. doi: 10.1101/2025.01.01.123456.",
+                "year": 2025
+              }
+            ],
+            "unresolved_numeric_citations": [],
+            "unsupported_claims": [
+              {
+                "quote": "We report a transparent descriptive analysis with modest claims.",
+                "reason": "claim lacks local citation/statistic marker"
+              }
+            ]
+          },
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "重要claimごとに、本文中引用・結果・図表・限界記述との対応をreview_packetで確認してください。",
+        "score": 65,
+        "severity": "medium",
+        "status": "warning"
+      },
+      {
+        "check_id": "claim_evidence_alignment",
+        "evidence_count": 1,
+        "evidence_quality": "quote_location_data",
+        "has_location": true,
+        "has_quote": true,
+        "has_structured_data": true,
+        "primary_evidence": {
+          "data": {
+            "review_action": "claimを支える結果・図表・引用・限界を明示し、証拠を超える表現は弱めてください。",
+            "risk_flags": [
+              "claim_without_local_support_marker"
+            ],
+            "support_markers": {
+              "local_citation": false,
+              "local_figure_or_table": false,
+              "local_limitation": false,
+              "local_statistic": false
+            }
+          },
+          "location": "line 4",
+          "quote": "We report a transparent descriptive analysis with modest claims."
+        },
+        "recommendation": "人間査読では、各claimについて支持する結果、図表、引用、限界、代替説明を1対1で確認してください。",
+        "score": 78,
+        "severity": "medium",
+        "status": "warning"
+      },
+      {
+        "check_id": "prompt_injection",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "PDFの座標・色・レイヤー情報に基づく不可視テキスト検査も併用してください(image_integrity_pdfで対応中)。",
+        "score": 100,
+        "severity": "low",
+        "status": "passed"
+      },
+      {
+        "check_id": "template_text",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "分野別の定型文を許容する場合はルールセットを調整してください。",
+        "score": 96,
+        "severity": "low",
+        "status": "passed"
+      },
+      {
+        "check_id": "image_integrity",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "画像ファイルを添付できるようにすると、複製・不自然な圧縮・メタデータ検査を追加できます。",
+        "score": 70,
+        "severity": "info",
+        "status": "skipped"
+      },
+      {
+        "check_id": "doi_existence",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "CIで参考文献の実在性を確認したい場合は OPENRI_NETWORK=1 を設定するか、CLIで --network を指定してください。",
+        "score": 70,
+        "severity": "info",
+        "status": "skipped"
+      },
+      {
+        "check_id": "ruleset_coverage",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "分野が決まっている原稿では、CONSORT/PRISMA/MDAR-strict などの ruleset を有効化してください。",
+        "score": 72,
+        "severity": "info",
+        "status": "skipped"
+      },
+      {
+        "check_id": "pdf_hidden_text",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "openri check manuscript.pdf を使うと、白色文字・極小フォント・ページ外座標などを検査します。",
+        "score": 72,
+        "severity": "info",
+        "status": "skipped"
+      }
+    ],
+    "explainability_gates": {
+      "all_warnings_and_failures_have_evidence": true,
+      "same_input_same_threshold_policy": true,
+      "skipped_checks_are_blockers_not_passes": [
+        "summary_stat_plausibility",
+        "image_integrity",
+        "doi_existence",
+        "ruleset_coverage",
+        "pdf_hidden_text"
+      ],
+      "social_metadata_used_for_leniency": false,
+      "warning_or_failure_without_evidence": []
+    },
+    "human_accountability": {
+      "author_query_queue": [
+        {
+          "check_id": "effect_size_ci_coverage",
+          "evidence_count": 2,
+          "question": "効果量、信頼区間、p値、サンプルサイズの相互整合は統計担当または次段checkで確認してください。"
+        },
+        {
+          "check_id": "citation_context",
+          "evidence_count": 1,
+          "question": "重要claimごとに、本文中引用・結果・図表・限界記述との対応をreview_packetで確認してください。"
+        },
+        {
+          "check_id": "claim_evidence_alignment",
+          "evidence_count": 1,
+          "question": "人間査読では、各claimについて支持する結果、図表、引用、限界、代替説明を1対1で確認してください。"
+        }
+      ],
+      "required_human_decision": true,
+      "responsibility_matrix": [
+        {
+          "responsibility": "recommended_route、coverage_blocker、査読者割当を確認し、通常査読へ進めるかを判断します。",
+          "role": "handling_editor"
+        },
+        {
+          "responsibility": "statistical_consistency、summary_stat_plausibility、統計claimの再計算と著者照会を担当します。",
+          "role": "statistics_editor"
+        },
+        {
+          "responsibility": "prompt injection、PDF hidden text、画像未検査、引用placeholderなどの重大疑義を隔離確認します。",
+          "role": "research_integrity_officer"
+        },
+        {
+          "responsibility": "evidence、データ/コード、引用、限界、claim修正について検証可能な回答を提出します。",
+          "role": "authors"
+        }
+      ]
+    },
+    "mode": "accountable_explainable_review_record",
+    "non_autonomy_statement": "OpenRIは不正断定や採否自動決定を行いません。ここに残すのは、人間が確認すべき証拠付きの検査結果、処理理由、未検査領域です。",
+    "routing_explanation": {
+      "coverage_blockers": [
+        {
+          "check_ids": [
+            "summary_stat_plausibility",
+            "image_integrity",
+            "doi_existence",
+            "ruleset_coverage",
+            "pdf_hidden_text"
+          ],
+          "id": "skipped_checks",
+          "message": "skipped checkは安全ではなく、検査条件不足としてAI査読パケットに残します。",
+          "severity": "medium"
+        },
+        {
+          "action": "CONSORT、PRISMA、MDAR-strictなど、該当rulesetを指定してください。",
+          "id": "field_ruleset_not_selected",
+          "message": "分野別報告ガイドラインが未指定です。分野非依存core reviewは可能ですが、専門領域の項目漏れ検査は未完了です。",
+          "severity": "medium"
+        },
+        {
+          "action": "許可済み環境で --network または enable_network を明示的に有効化してください。",
+          "id": "network_reference_checks_disabled",
+          "message": "外部DB照合は無効です。未公開原稿を外部送信しない既定は維持しつつ、許可された環境ではDOI/引用の実在性照合を追加してください。",
+          "severity": "low"
+        },
+        {
+          "action": "提出元がPDFの場合は POST /api/runs/upload または openri check manuscript.pdf を使ってください。",
+          "id": "pdf_integrity_not_available_for_text_input",
+          "message": "PDF座標/色/フォントサイズの検査情報がありません。PDF提出ではupload/CLI経由で検査してください。",
+          "severity": "low"
+        }
+      ],
+      "rationale": "透明性・ruleset・引用などの不足候補がありますが、保留ではなく事務局/編集部チェックで解消可能です。",
+      "recommended_route": "technical_check_then_peer_review",
+      "route_drivers": [
+        {
+          "check_id": "claim_evidence_alignment",
+          "drives_route": false,
+          "evidence_count": 1,
+          "score": 78,
+          "severity": "medium",
+          "status": "warning",
+          "title": "Claim-evidence alignment",
+          "why_it_matters": "人間査読では、各claimについて支持する結果、図表、引用、限界、代替説明を1対1で確認してください。"
+        }
+      ],
+      "route_label": "技術チェック後に通常査読へ"
+    },
+    "score_explanation": {
+      "failed_penalty": 0,
+      "final_score": 67,
+      "formula": "mean(non-skipped finding.score) - strictness_penalty - 8*failed - 2*warnings - skipped_penalty, clamped to 0..100",
+      "mean_finding_score": 88.38,
+      "scored_finding_count": 8,
+      "skipped_count_excluded": 5,
+      "skipped_penalty": 10,
+      "skipped_score_cap": null,
+      "strictness_penalty": 5,
+      "unclamped_score": 67,
+      "warning_penalty": 6,
+      "worst_findings": [
+        {
+          "check_id": "citation_context",
+          "score": 65,
+          "severity": "medium",
+          "status": "warning"
+        },
+        {
+          "check_id": "image_integrity",
+          "score": 70,
+          "severity": "info",
+          "status": "skipped"
+        },
+        {
+          "check_id": "doi_existence",
+          "score": 70,
+          "severity": "info",
+          "status": "skipped"
+        },
+        {
+          "check_id": "summary_stat_plausibility",
+          "score": 72,
+          "severity": "info",
+          "status": "skipped"
+        },
+        {
+          "check_id": "ruleset_coverage",
+          "score": 72,
+          "severity": "info",
+          "status": "skipped"
+        }
+      ]
+    }
+  },
   "ai_review_protocol": {
     "ai_coding_protocol": [
       {
@@ -80,6 +583,74 @@
         "instruction": "効果量、信頼区間、p値、サンプルサイズの相互整合は統計担当または次段checkで確認してください。",
         "severity": "info",
         "status": "warning"
+      },
+      {
+        "check_id": "citation_context",
+        "evidence_count": 1,
+        "evidence_preview": [
+          {
+            "data": {
+              "external_lookup_policy": "Crossref/OpenAlex/Semantic Scholar checks require explicit network opt-in.",
+              "inline_citations": [
+                {
+                  "items": [
+                    1
+                  ],
+                  "quote": "[1]",
+                  "style": "numeric"
+                }
+              ],
+              "placeholder_references": [],
+              "reference_count": 1,
+              "references": [
+                {
+                  "doi": "10.1101/2025.01.01.123456",
+                  "has_placeholder_doi": false,
+                  "index": 1,
+                  "text": "[1] Doe J. Transparent work. doi: 10.1101/2025.01.01.123456.",
+                  "year": 2025
+                }
+              ],
+              "unresolved_numeric_citations": [],
+              "unsupported_claims": [
+                {
+                  "quote": "We report a transparent descriptive analysis with modest claims.",
+                  "reason": "claim lacks local citation/statistic marker"
+                }
+              ]
+            },
+            "location": null,
+            "quote": null
+          }
+        ],
+        "instruction": "重要claimごとに、本文中引用・結果・図表・限界記述との対応をreview_packetで確認してください。",
+        "severity": "medium",
+        "status": "warning"
+      },
+      {
+        "check_id": "claim_evidence_alignment",
+        "evidence_count": 1,
+        "evidence_preview": [
+          {
+            "data": {
+              "review_action": "claimを支える結果・図表・引用・限界を明示し、証拠を超える表現は弱めてください。",
+              "risk_flags": [
+                "claim_without_local_support_marker"
+              ],
+              "support_markers": {
+                "local_citation": false,
+                "local_figure_or_table": false,
+                "local_limitation": false,
+                "local_statistic": false
+              }
+            },
+            "location": "line 4",
+            "quote": "We report a transparent descriptive analysis with modest claims."
+          }
+        ],
+        "instruction": "人間査読では、各claimについて支持する結果、図表、引用、限界、代替説明を1対1で確認してください。",
+        "severity": "medium",
+        "status": "warning"
       }
     ],
     "goal": "人間査読が本来確認する論点を、Codex/Claude等のAI reviewerが分野非依存に、証拠優先かつ忖度なしで実行できるようにする。",
@@ -136,6 +707,34 @@
             "warning"
           ],
           "target": "effect_size_ci_coverage"
+        },
+        {
+          "id": "challenge_finding_citation_context",
+          "prompt": "このfindingを著者に照会する場合、必要な原データ、再解析、修正文、または除外判断は何か。",
+          "required_answer": [
+            "editorial_action",
+            "author_query",
+            "evidence_to_request"
+          ],
+          "risk_flags": [
+            "medium",
+            "warning"
+          ],
+          "target": "citation_context"
+        },
+        {
+          "id": "challenge_finding_claim_evidence_alignment",
+          "prompt": "このfindingを著者に照会する場合、必要な原データ、再解析、修正文、または除外判断は何か。",
+          "required_answer": [
+            "editorial_action",
+            "author_query",
+            "evidence_to_request"
+          ],
+          "risk_flags": [
+            "medium",
+            "warning"
+          ],
+          "target": "claim_evidence_alignment"
         }
       ],
       "claim_inventory": [
@@ -144,6 +743,7 @@
           "claim_type": "general_claim",
           "id": "claim_01",
           "linked_findings": [
+            "claim_evidence_alignment",
             "ruleset_coverage"
           ],
           "location": "line 4",
@@ -168,7 +768,7 @@
         }
       ],
       "editor_handoff": {
-        "challenge_count": 2,
+        "challenge_count": 4,
         "claim_count": 1,
         "task_count": 7,
         "use": "AI reviewerへ渡す前に、claim inventory、finding、coverage blockerを同じpacketとして固定します。"
@@ -197,7 +797,12 @@
           }
         ],
         "unresolved_numeric_citations": [],
-        "unsupported_claims": []
+        "unsupported_claims": [
+          {
+            "quote": "We report a transparent descriptive analysis with modest claims.",
+            "reason": "claim lacks local citation/statistic marker"
+          }
+        ]
       },
       "reviewer_tasks": [
         {
@@ -214,7 +819,9 @@
           "related_claim_ids": [
             "claim_01"
           ],
-          "related_finding_ids": [],
+          "related_finding_ids": [
+            "claim_evidence_alignment"
+          ],
           "reviewer_id": "field_generalist"
         },
         {
@@ -278,7 +885,9 @@
           ],
           "priority": "high",
           "related_claim_ids": [],
-          "related_finding_ids": [],
+          "related_finding_ids": [
+            "citation_context"
+          ],
           "reviewer_id": "ethics_integrity_reviewer"
         },
         {
@@ -296,7 +905,9 @@
             "claim_01"
           ],
           "related_finding_ids": [
-            "effect_size_ci_coverage"
+            "effect_size_ci_coverage",
+            "citation_context",
+            "claim_evidence_alignment"
           ],
           "reviewer_id": "adversarial_reviewer"
         },
@@ -360,9 +971,9 @@
       "state": "ai_review_with_coverage_blockers",
       "summary": {
         "failed": 0,
-        "score": 77,
+        "score": 67,
         "skipped": 5,
-        "warnings": 1
+        "warnings": 3
       }
     },
     "strictness_policy": {
@@ -523,7 +1134,7 @@
       "category": "statistics",
       "check_id": "statistical_consistency",
       "evidence": [],
-      "id": "finding_58ab2bff06",
+      "id": "finding_41e21a628d",
       "message": "1件の検定表記を再計算し、重大な不整合は見つかりませんでした。",
       "recommendation": "表内・複数行・片側検定の代表的なAPA表記も確認しました。効果量/CIは別findingでcoverage blockerとして扱います。",
       "score": 100,
@@ -539,7 +1150,7 @@
       "category": "statistics",
       "check_id": "summary_stat_plausibility",
       "evidence": [],
-      "id": "finding_ea2368167f",
+      "id": "finding_cf21810012",
       "message": "平均値とサンプルサイズの組を検出できませんでした。",
       "recommendation": "整数項目の平均値を報告する場合は、M = ..., n = ... のように書くとGRIM系の検査を追加できます。",
       "score": 72,
@@ -573,7 +1184,7 @@
           "quote": "95% CI [-0.20, 0.20]"
         }
       ],
-      "id": "finding_eec9b05f8d",
+      "id": "finding_7b88d163c5",
       "message": "1件の効果量と1件の信頼区間を抽出しましたが、整合性再計算は未対応です。",
       "recommendation": "効果量、信頼区間、p値、サンプルサイズの相互整合は統計担当または次段checkで確認してください。",
       "score": 76,
@@ -610,7 +1221,7 @@
           "quote": null
         }
       ],
-      "id": "finding_dd5deb7610",
+      "id": "finding_056055f041",
       "message": "主要な透明性項目が原稿中に検出されました。",
       "recommendation": "項目の存在だけでなく、リンク先の到達性と再現可能性を次段で確認してください。",
       "score": 100,
@@ -630,21 +1241,27 @@
           "data": {
             "doi_count": 1,
             "has_references": true,
-            "numeric_citation_groups": 1
+            "numbered_reference_ids": [
+              1
+            ],
+            "numeric_citation_groups": 0,
+            "numeric_citation_numbers": [],
+            "reference_entry_count": 1
           },
           "location": null,
           "quote": null
         }
       ],
-      "id": "finding_85c2746298",
+      "id": "finding_9dddb0b407",
       "message": "引用の機械的な不整合は検出されませんでした。",
       "recommendation": "次段ではCrossref/OpenAlex/Semantic Scholar APIで全参考文献の実在性と引用文脈を検証してください。",
-      "score": 90,
+      "score": 92,
       "severity": "low",
       "status": "passed",
       "tags": [
         "citation",
-        "doi"
+        "doi",
+        "reference-linkage"
       ],
       "title": "Citation integrity"
     },
@@ -676,18 +1293,23 @@
               }
             ],
             "unresolved_numeric_citations": [],
-            "unsupported_claims": []
+            "unsupported_claims": [
+              {
+                "quote": "We report a transparent descriptive analysis with modest claims.",
+                "reason": "claim lacks local citation/statistic marker"
+              }
+            ]
           },
           "location": null,
           "quote": null
         }
       ],
-      "id": "finding_d515e94a78",
-      "message": "参考文献リストと本文中引用の基本構造を抽出し、明確な番号不整合は見つかりませんでした。",
-      "recommendation": "引用がclaimを本当に支えているかは、review_packetのclaim inventoryを用いて人間またはAI reviewerが確認してください。",
-      "score": 92,
-      "severity": "low",
-      "status": "passed",
+      "id": "finding_6c0e8c0c38",
+      "message": "1件のclaimで、同一文内の引用・DOI・統計量マーカーが見つかりませんでした。",
+      "recommendation": "重要claimごとに、本文中引用・結果・図表・限界記述との対応をreview_packetで確認してください。",
+      "score": 65,
+      "severity": "medium",
+      "status": "warning",
       "tags": [
         "citation",
         "reference-list",
@@ -696,10 +1318,44 @@
       "title": "Structured reference and citation-context audit"
     },
     {
+      "category": "manuscript-quality",
+      "check_id": "claim_evidence_alignment",
+      "evidence": [
+        {
+          "data": {
+            "review_action": "claimを支える結果・図表・引用・限界を明示し、証拠を超える表現は弱めてください。",
+            "risk_flags": [
+              "claim_without_local_support_marker"
+            ],
+            "support_markers": {
+              "local_citation": false,
+              "local_figure_or_table": false,
+              "local_limitation": false,
+              "local_statistic": false
+            }
+          },
+          "location": "line 4",
+          "quote": "We report a transparent descriptive analysis with modest claims."
+        }
+      ],
+      "id": "finding_aa7af77a6f",
+      "message": "1件のclaim候補を確認し、1件で局所的な証拠・引用・限界との対応確認が必要です。",
+      "recommendation": "人間査読では、各claimについて支持する結果、図表、引用、限界、代替説明を1対1で確認してください。",
+      "score": 78,
+      "severity": "medium",
+      "status": "warning",
+      "tags": [
+        "claim-evidence",
+        "overclaim",
+        "explainability"
+      ],
+      "title": "Claim-evidence alignment"
+    },
+    {
       "category": "ai-safety",
       "check_id": "prompt_injection",
       "evidence": [],
-      "id": "finding_e2249a47b2",
+      "id": "finding_dea715182e",
       "message": "26件のrulesetパターンを走査しましたが、検出はありませんでした。",
       "recommendation": "PDFの座標・色・レイヤー情報に基づく不可視テキスト検査も併用してください(image_integrity_pdfで対応中)。",
       "score": 100,
@@ -716,7 +1372,7 @@
       "category": "manuscript-quality",
       "check_id": "template_text",
       "evidence": [],
-      "id": "finding_2ec01479c1",
+      "id": "finding_f3cdc9758a",
       "message": "明確な重複段落、近接重複、テンプレート表現の過剰反復は検出されませんでした。",
       "recommendation": "分野別の定型文を許容する場合はルールセットを調整してください。",
       "score": 96,
@@ -731,7 +1387,7 @@
       "category": "image-integrity",
       "check_id": "image_integrity",
       "evidence": [],
-      "id": "finding_706b00ea38",
+      "id": "finding_99d6c1e552",
       "message": "図表参照を検出できませんでした。",
       "recommendation": "画像ファイルを添付できるようにすると、複製・不自然な圧縮・メタデータ検査を追加できます。",
       "score": 70,
@@ -746,7 +1402,7 @@
       "category": "references",
       "check_id": "doi_existence",
       "evidence": [],
-      "id": "finding_7aa9dee2d1",
+      "id": "finding_38e0bea96d",
       "message": "Crossref問い合わせはネットワーク不要モードで無効化されています(--network で有効化)。",
       "recommendation": "CIで参考文献の実在性を確認したい場合は OPENRI_NETWORK=1 を設定するか、CLIで --network を指定してください。",
       "score": 70,
@@ -764,7 +1420,7 @@
       "category": "research-integrity",
       "check_id": "ruleset_coverage",
       "evidence": [],
-      "id": "finding_bbb1eff78f",
+      "id": "finding_802afef4eb",
       "message": "分野別rulesetは指定されていません(--ruleset consort prisma など)。",
       "recommendation": "分野が決まっている原稿では、CONSORT/PRISMA/MDAR-strict などの ruleset を有効化してください。",
       "score": 72,
@@ -780,7 +1436,7 @@
       "category": "ai-safety",
       "check_id": "pdf_hidden_text",
       "evidence": [],
-      "id": "finding_5687852ba8",
+      "id": "finding_ea4bb6661f",
       "message": "PDF不可視テキスト検査はCLIでPDFを直接渡したときのみ実行されます。",
       "recommendation": "openri check manuscript.pdf を使うと、白色文字・極小フォント・ページ外座標などを検査します。",
       "score": 72,
@@ -834,17 +1490,17 @@
     ],
     "human_actions": [
       {
-        "action": "効果量、信頼区間、p値、サンプルサイズの相互整合は統計担当または次段checkで確認してください。",
-        "check_id": "effect_size_ci_coverage",
-        "evidence_count": 2,
-        "severity": "info",
+        "action": "重要claimごとに、本文中引用・結果・図表・限界記述との対応をreview_packetで確認してください。",
+        "check_id": "citation_context",
+        "evidence_count": 1,
+        "severity": "medium",
         "status": "warning"
       }
     ],
     "mode": "submitted_manuscript_triage",
-    "rationale": "既知の機械検査では重大findingはありません。分野専門家による通常査読に進められます。",
-    "recommended_route": "route_to_peer_review",
-    "route_label": "通常査読へ回付可能",
+    "rationale": "透明性・ruleset・引用などの不足候補がありますが、保留ではなく事務局/編集部チェックで解消可能です。",
+    "recommended_route": "technical_check_then_peer_review",
+    "route_label": "技術チェック後に通常査読へ",
     "stages": [
       {
         "detail": "提出ファイルを受け取り、元ファイルを保持したまま検査用テキストを作成します。",
@@ -859,13 +1515,13 @@
         "status": "completed"
       },
       {
-        "detail": "12件のcheckを実行しました。",
+        "detail": "13件のcheckを実行しました。",
         "id": "mechanical_tests",
         "label": "機械検査",
         "status": "completed"
       },
       {
-        "detail": "通常査読へ回付可能",
+        "detail": "技術チェック後に通常査読へ",
         "id": "triage",
         "label": "編集部トリアージ",
         "status": "review"
@@ -880,18 +1536,18 @@
   },
   "summary": {
     "failed": 0,
-    "passed": 6,
-    "score": 77,
+    "passed": 5,
+    "score": 67,
     "severity_counts": {
       "critical": 0,
       "high": 0,
       "info": 6,
-      "low": 6,
-      "medium": 0
+      "low": 5,
+      "medium": 2
     },
     "skipped": 5,
-    "total_checks": 12,
-    "warnings": 1
+    "total_checks": 13,
+    "warnings": 3
   },
   "title": "clean_transparent.txt"
 }

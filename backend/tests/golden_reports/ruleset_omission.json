@@ -1,4 +1,557 @@
 {
+  "accountability": {
+    "audit_trail": [
+      {
+        "detail": "RunRequestを受け取り、元テキストは外部LLMへ送信していません。",
+        "status": "completed",
+        "step": "intake"
+      },
+      {
+        "detail": "文字数、単語数、section、strictness knobを作成しました。",
+        "status": "completed",
+        "step": "profile"
+      },
+      {
+        "detail": "13件のdeterministic checkを実行しました。",
+        "status": "completed",
+        "step": "checks"
+      },
+      {
+        "detail": "技術チェック後に通常査読へ",
+        "status": "completed",
+        "step": "triage"
+      },
+      {
+        "detail": "AI査読は開始できますが、未検査領域を合格扱いしません",
+        "status": "completed",
+        "step": "ai_review_packet"
+      },
+      {
+        "detail": "score、route、evidence、claim、coverage blockerを説明可能な形で固定しました。",
+        "status": "completed",
+        "step": "accountability_record"
+      }
+    ],
+    "claim_explainability": {
+      "claim_count": 0,
+      "claims_needing_support": [],
+      "risk_flag_counts": {},
+      "support_status_counts": {}
+    },
+    "decision_provenance": {
+      "activated_rulesets": [
+        "consort"
+      ],
+      "experimental_checks_included": true,
+      "external_llm_calls_required": false,
+      "input_character_count": 203,
+      "input_word_count": 28,
+      "network_enabled": false,
+      "review_mode": "ai_reviewer_replication",
+      "strictness": "standard",
+      "total_checks": 13
+    },
+    "evidence_ledger": [
+      {
+        "check_id": "statistical_consistency",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "t(df), F(df1, df2), χ2(df), z(df) と p 値を標準形式で記載すると自動検査できます。",
+        "score": 70,
+        "severity": "info",
+        "status": "skipped"
+      },
+      {
+        "check_id": "summary_stat_plausibility",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "整数項目の平均値を報告する場合は、M = ..., n = ... のように書くとGRIM系の検査を追加できます。",
+        "score": 72,
+        "severity": "info",
+        "status": "skipped"
+      },
+      {
+        "check_id": "effect_size_ci_coverage",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "査読前には、主要claimに対応する効果量と信頼区間の有無を確認してください。",
+        "score": 72,
+        "severity": "info",
+        "status": "skipped"
+      },
+      {
+        "check_id": "reporting_transparency",
+        "evidence_count": 1,
+        "evidence_quality": "data_only",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": true,
+        "primary_evidence": {
+          "data": {
+            "detected_sections": [],
+            "missing_sections": [
+              "ethics",
+              "data",
+              "code",
+              "conflicts",
+              "funding"
+            ],
+            "thresholds": {
+              "medium_at": 3,
+              "warning_at": 1
+            }
+          },
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "投稿前に、倫理審査/同意、data availability、code availability、COI、funding statementを明示してください。",
+        "score": 45,
+        "severity": "medium",
+        "status": "warning"
+      },
+      {
+        "check_id": "citation_integrity",
+        "evidence_count": 1,
+        "evidence_quality": "data_only",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": true,
+        "primary_evidence": {
+          "data": {
+            "doi_count": 0,
+            "has_references": false,
+            "numbered_reference_ids": [],
+            "numeric_citation_groups": 0,
+            "numeric_citation_numbers": [],
+            "reference_entry_count": 0
+          },
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "次段ではCrossref/OpenAlex/Semantic Scholar APIで全参考文献の実在性と引用文脈を検証してください。",
+        "score": 70,
+        "severity": "low",
+        "status": "skipped"
+      },
+      {
+        "check_id": "citation_context",
+        "evidence_count": 1,
+        "evidence_quality": "data_only",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": true,
+        "primary_evidence": {
+          "data": {
+            "external_lookup_policy": "Crossref/OpenAlex/Semantic Scholar checks require explicit network opt-in.",
+            "inline_citations": [],
+            "placeholder_references": [],
+            "reference_count": 0,
+            "references": [],
+            "unresolved_numeric_citations": [],
+            "unsupported_claims": []
+          },
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "参考文献セクション、本文中引用、DOIを構造化して記載すると、claim-support確認に接続できます。",
+        "score": 70,
+        "severity": "info",
+        "status": "skipped"
+      },
+      {
+        "check_id": "claim_evidence_alignment",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "abstract/results/discussionに主要claim、対応する結果・図表・引用・限界を明示するとclaim単位の査読パケットを作れます。",
+        "score": 72,
+        "severity": "info",
+        "status": "skipped"
+      },
+      {
+        "check_id": "prompt_injection",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "PDFの座標・色・レイヤー情報に基づく不可視テキスト検査も併用してください(image_integrity_pdfで対応中)。",
+        "score": 100,
+        "severity": "low",
+        "status": "passed"
+      },
+      {
+        "check_id": "template_text",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "分野別の定型文を許容する場合はルールセットを調整してください。",
+        "score": 96,
+        "severity": "low",
+        "status": "passed"
+      },
+      {
+        "check_id": "image_integrity",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "画像ファイルを添付できるようにすると、複製・不自然な圧縮・メタデータ検査を追加できます。",
+        "score": 70,
+        "severity": "info",
+        "status": "skipped"
+      },
+      {
+        "check_id": "doi_existence",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "CIで参考文献の実在性を確認したい場合は OPENRI_NETWORK=1 を設定するか、CLIで --network を指定してください。",
+        "score": 70,
+        "severity": "info",
+        "status": "skipped"
+      },
+      {
+        "check_id": "ruleset_coverage",
+        "evidence_count": 1,
+        "evidence_quality": "data_only",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": true,
+        "primary_evidence": {
+          "data": {
+            "detected": [
+              {
+                "id": "trial_design",
+                "label": "Trial design (parallel/cluster/factorial)",
+                "matched_keyword": "parallel group",
+                "reference_url": "",
+                "required_evidence": [],
+                "section_preference": []
+              },
+              {
+                "id": "randomisation_sequence",
+                "label": "Random sequence generation",
+                "matched_keyword": "random sequence",
+                "reference_url": "",
+                "required_evidence": [],
+                "section_preference": []
+              },
+              {
+                "id": "sample_size_calc",
+                "label": "Sample size calculation",
+                "matched_keyword": "sample size",
+                "reference_url": "",
+                "required_evidence": [],
+                "section_preference": []
+              }
+            ],
+            "id": "consort",
+            "missing": [
+              {
+                "id": "allocation_concealment",
+                "label": "Allocation concealment mechanism",
+                "reference_url": "",
+                "required_evidence": [],
+                "section_preference": [],
+                "severity": "medium"
+              },
+              {
+                "id": "blinding",
+                "label": "Blinding (who was blinded and how)",
+                "reference_url": "",
+                "required_evidence": [],
+                "section_preference": [],
+                "severity": "medium"
+              },
+              {
+                "id": "primary_outcome",
+                "label": "Primary outcome (definition, measurement)",
+                "reference_url": "",
+                "required_evidence": [],
+                "section_preference": [],
+                "severity": "medium"
+              },
+              {
+                "id": "registration",
+                "label": "Trial registration (ClinicalTrials.gov, UMIN, etc.)",
+                "reference_url": "",
+                "required_evidence": [],
+                "section_preference": [],
+                "severity": "medium"
+              },
+              {
+                "id": "protocol_access",
+                "label": "Protocol availability",
+                "reference_url": "",
+                "required_evidence": [],
+                "section_preference": [],
+                "severity": "medium"
+              },
+              {
+                "id": "harms_reporting",
+                "label": "Harms / adverse events reporting",
+                "reference_url": "",
+                "required_evidence": [],
+                "section_preference": [],
+                "severity": "medium"
+              },
+              {
+                "id": "funding_role",
+                "label": "Role of funder",
+                "reference_url": "",
+                "required_evidence": [],
+                "section_preference": [],
+                "severity": "medium"
+              },
+              {
+                "id": "itt_analysis",
+                "label": "Intention-to-treat analysis stated",
+                "reference_url": "",
+                "required_evidence": [],
+                "section_preference": [],
+                "severity": "medium"
+              },
+              {
+                "id": "flow_diagram",
+                "label": "CONSORT flow diagram",
+                "reference_url": "",
+                "required_evidence": [],
+                "section_preference": [],
+                "severity": "medium"
+              }
+            ],
+            "name": "CONSORT 2010 checklist (keyword presence)",
+            "not_applicable": [],
+            "total": 12
+          },
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "missing項目は記載漏れ候補です。記載済みでもキーワードが一致しないことがあるため、各項目を確認してください。",
+        "score": 22,
+        "severity": "high",
+        "status": "warning"
+      },
+      {
+        "check_id": "pdf_hidden_text",
+        "evidence_count": 0,
+        "evidence_quality": "no_evidence_attached",
+        "has_location": false,
+        "has_quote": false,
+        "has_structured_data": false,
+        "primary_evidence": {
+          "data": {},
+          "location": null,
+          "quote": null
+        },
+        "recommendation": "openri check manuscript.pdf を使うと、白色文字・極小フォント・ページ外座標などを検査します。",
+        "score": 72,
+        "severity": "info",
+        "status": "skipped"
+      }
+    ],
+    "explainability_gates": {
+      "all_warnings_and_failures_have_evidence": true,
+      "same_input_same_threshold_policy": true,
+      "skipped_checks_are_blockers_not_passes": [
+        "statistical_consistency",
+        "summary_stat_plausibility",
+        "effect_size_ci_coverage",
+        "citation_integrity",
+        "citation_context",
+        "claim_evidence_alignment",
+        "image_integrity",
+        "doi_existence",
+        "pdf_hidden_text"
+      ],
+      "social_metadata_used_for_leniency": false,
+      "warning_or_failure_without_evidence": []
+    },
+    "human_accountability": {
+      "author_query_queue": [
+        {
+          "check_id": "reporting_transparency",
+          "evidence_count": 1,
+          "question": "投稿前に、倫理審査/同意、data availability、code availability、COI、funding statementを明示してください。"
+        },
+        {
+          "check_id": "ruleset_coverage",
+          "evidence_count": 1,
+          "question": "missing項目は記載漏れ候補です。記載済みでもキーワードが一致しないことがあるため、各項目を確認してください。"
+        }
+      ],
+      "required_human_decision": true,
+      "responsibility_matrix": [
+        {
+          "responsibility": "recommended_route、coverage_blocker、査読者割当を確認し、通常査読へ進めるかを判断します。",
+          "role": "handling_editor"
+        },
+        {
+          "responsibility": "statistical_consistency、summary_stat_plausibility、統計claimの再計算と著者照会を担当します。",
+          "role": "statistics_editor"
+        },
+        {
+          "responsibility": "prompt injection、PDF hidden text、画像未検査、引用placeholderなどの重大疑義を隔離確認します。",
+          "role": "research_integrity_officer"
+        },
+        {
+          "responsibility": "evidence、データ/コード、引用、限界、claim修正について検証可能な回答を提出します。",
+          "role": "authors"
+        }
+      ]
+    },
+    "mode": "accountable_explainable_review_record",
+    "non_autonomy_statement": "OpenRIは不正断定や採否自動決定を行いません。ここに残すのは、人間が確認すべき証拠付きの検査結果、処理理由、未検査領域です。",
+    "routing_explanation": {
+      "coverage_blockers": [
+        {
+          "check_ids": [
+            "statistical_consistency",
+            "summary_stat_plausibility",
+            "effect_size_ci_coverage",
+            "citation_integrity",
+            "citation_context",
+            "claim_evidence_alignment",
+            "image_integrity",
+            "doi_existence",
+            "pdf_hidden_text"
+          ],
+          "id": "skipped_checks",
+          "message": "skipped checkは安全ではなく、検査条件不足としてAI査読パケットに残します。",
+          "severity": "medium"
+        },
+        {
+          "action": "許可済み環境で --network または enable_network を明示的に有効化してください。",
+          "id": "network_reference_checks_disabled",
+          "message": "外部DB照合は無効です。未公開原稿を外部送信しない既定は維持しつつ、許可された環境ではDOI/引用の実在性照合を追加してください。",
+          "severity": "low"
+        },
+        {
+          "action": "提出元がPDFの場合は POST /api/runs/upload または openri check manuscript.pdf を使ってください。",
+          "id": "pdf_integrity_not_available_for_text_input",
+          "message": "PDF座標/色/フォントサイズの検査情報がありません。PDF提出ではupload/CLI経由で検査してください。",
+          "severity": "low"
+        }
+      ],
+      "rationale": "透明性・ruleset・引用などの不足候補がありますが、保留ではなく事務局/編集部チェックで解消可能です。",
+      "recommended_route": "technical_check_then_peer_review",
+      "route_drivers": [
+        {
+          "check_id": "ruleset_coverage",
+          "drives_route": true,
+          "evidence_count": 1,
+          "score": 22,
+          "severity": "high",
+          "status": "warning",
+          "title": "Ruleset coverage (CONSORT/PRISMA/MDAR-strict)",
+          "why_it_matters": "missing項目は記載漏れ候補です。記載済みでもキーワードが一致しないことがあるため、各項目を確認してください。"
+        }
+      ],
+      "route_label": "技術チェック後に通常査読へ"
+    },
+    "score_explanation": {
+      "failed_penalty": 0,
+      "final_score": 39,
+      "formula": "mean(non-skipped finding.score) - strictness_penalty - 8*failed - 2*warnings - skipped_penalty, clamped to 0..100",
+      "mean_finding_score": 65.75,
+      "scored_finding_count": 4,
+      "skipped_count_excluded": 9,
+      "skipped_penalty": 18,
+      "skipped_score_cap": null,
+      "strictness_penalty": 5,
+      "unclamped_score": 39,
+      "warning_penalty": 4,
+      "worst_findings": [
+        {
+          "check_id": "ruleset_coverage",
+          "score": 22,
+          "severity": "high",
+          "status": "warning"
+        },
+        {
+          "check_id": "reporting_transparency",
+          "score": 45,
+          "severity": "medium",
+          "status": "warning"
+        },
+        {
+          "check_id": "statistical_consistency",
+          "score": 70,
+          "severity": "info",
+          "status": "skipped"
+        },
+        {
+          "check_id": "citation_context",
+          "score": 70,
+          "severity": "info",
+          "status": "skipped"
+        },
+        {
+          "check_id": "image_integrity",
+          "score": 70,
+          "severity": "info",
+          "status": "skipped"
+        }
+      ]
+    }
+  },
   "ai_review_protocol": {
     "ai_coding_protocol": [
       {
@@ -30,6 +583,7 @@
           "effect_size_ci_coverage",
           "citation_integrity",
           "citation_context",
+          "claim_evidence_alignment",
           "image_integrity",
           "doi_existence",
           "pdf_hidden_text"
@@ -430,8 +984,8 @@
       "state": "ai_review_with_coverage_blockers",
       "summary": {
         "failed": 0,
-        "score": 60,
-        "skipped": 8,
+        "score": 39,
+        "skipped": 9,
         "warnings": 2
       }
     },
@@ -593,7 +1147,7 @@
       "category": "statistics",
       "check_id": "statistical_consistency",
       "evidence": [],
-      "id": "finding_79e1ee69ab",
+      "id": "finding_b69868e441",
       "message": "検定統計量とp値の組を検出できませんでした。",
       "recommendation": "t(df), F(df1, df2), χ2(df), z(df) と p 値を標準形式で記載すると自動検査できます。",
       "score": 70,
@@ -608,7 +1162,7 @@
       "category": "statistics",
       "check_id": "summary_stat_plausibility",
       "evidence": [],
-      "id": "finding_cc1b524509",
+      "id": "finding_72fbbb1176",
       "message": "平均値とサンプルサイズの組を検出できませんでした。",
       "recommendation": "整数項目の平均値を報告する場合は、M = ..., n = ... のように書くとGRIM系の検査を追加できます。",
       "score": 72,
@@ -624,7 +1178,7 @@
       "category": "statistics",
       "check_id": "effect_size_ci_coverage",
       "evidence": [],
-      "id": "finding_4596803846",
+      "id": "finding_8015fd0dfb",
       "message": "効果量または信頼区間を検出できませんでした。",
       "recommendation": "査読前には、主要claimに対応する効果量と信頼区間の有無を確認してください。",
       "score": 72,
@@ -661,7 +1215,7 @@
           "quote": null
         }
       ],
-      "id": "finding_ca5b6f0a0c",
+      "id": "finding_915874ee7c",
       "message": "倫理、データ、コード、利益相反、資金の透明性項目に複数の不足があります。",
       "recommendation": "投稿前に、倫理審査/同意、data availability、code availability、COI、funding statementを明示してください。",
       "score": 45,
@@ -681,13 +1235,16 @@
           "data": {
             "doi_count": 0,
             "has_references": false,
-            "numeric_citation_groups": 0
+            "numbered_reference_ids": [],
+            "numeric_citation_groups": 0,
+            "numeric_citation_numbers": [],
+            "reference_entry_count": 0
           },
           "location": null,
           "quote": null
         }
       ],
-      "id": "finding_1e59c616d2",
+      "id": "finding_5159784b59",
       "message": "引用/参考文献セクションを検出できませんでした。",
       "recommendation": "次段ではCrossref/OpenAlex/Semantic Scholar APIで全参考文献の実在性と引用文脈を検証してください。",
       "score": 70,
@@ -695,7 +1252,8 @@
       "status": "skipped",
       "tags": [
         "citation",
-        "doi"
+        "doi",
+        "reference-linkage"
       ],
       "title": "Citation integrity"
     },
@@ -717,7 +1275,7 @@
           "quote": null
         }
       ],
-      "id": "finding_6764bddfa1",
+      "id": "finding_c123283570",
       "message": "参考文献リストまたは本文中引用を抽出できませんでした。",
       "recommendation": "参考文献セクション、本文中引用、DOIを構造化して記載すると、claim-support確認に接続できます。",
       "score": 70,
@@ -731,10 +1289,26 @@
       "title": "Structured reference and citation-context audit"
     },
     {
+      "category": "manuscript-quality",
+      "check_id": "claim_evidence_alignment",
+      "evidence": [],
+      "id": "finding_67a2711e6a",
+      "message": "検査対象になる主要claim候補を検出できませんでした。",
+      "recommendation": "abstract/results/discussionに主要claim、対応する結果・図表・引用・限界を明示するとclaim単位の査読パケットを作れます。",
+      "score": 72,
+      "severity": "info",
+      "status": "skipped",
+      "tags": [
+        "claim-evidence",
+        "explainability"
+      ],
+      "title": "Claim-evidence alignment"
+    },
+    {
       "category": "ai-safety",
       "check_id": "prompt_injection",
       "evidence": [],
-      "id": "finding_669faf1b0f",
+      "id": "finding_ded4deb7ba",
       "message": "26件のrulesetパターンを走査しましたが、検出はありませんでした。",
       "recommendation": "PDFの座標・色・レイヤー情報に基づく不可視テキスト検査も併用してください(image_integrity_pdfで対応中)。",
       "score": 100,
@@ -751,7 +1325,7 @@
       "category": "manuscript-quality",
       "check_id": "template_text",
       "evidence": [],
-      "id": "finding_0da29a0634",
+      "id": "finding_6aa52eed13",
       "message": "明確な重複段落、近接重複、テンプレート表現の過剰反復は検出されませんでした。",
       "recommendation": "分野別の定型文を許容する場合はルールセットを調整してください。",
       "score": 96,
@@ -766,7 +1340,7 @@
       "category": "image-integrity",
       "check_id": "image_integrity",
       "evidence": [],
-      "id": "finding_917a0012f8",
+      "id": "finding_4fa05b9f5f",
       "message": "図表参照を検出できませんでした。",
       "recommendation": "画像ファイルを添付できるようにすると、複製・不自然な圧縮・メタデータ検査を追加できます。",
       "score": 70,
@@ -781,7 +1355,7 @@
       "category": "references",
       "check_id": "doi_existence",
       "evidence": [],
-      "id": "finding_9deb68959a",
+      "id": "finding_c990f5e94e",
       "message": "Crossref問い合わせはネットワーク不要モードで無効化されています(--network で有効化)。",
       "recommendation": "CIで参考文献の実在性を確認したい場合は OPENRI_NETWORK=1 を設定するか、CLIで --network を指定してください。",
       "score": 70,
@@ -910,7 +1484,7 @@
           "quote": null
         }
       ],
-      "id": "finding_662401e702",
+      "id": "finding_65e626d1b8",
       "message": "1件のrulesetで、12項目中9項目に対応キーワードがありませんでした(coverage=25%)。",
       "recommendation": "missing項目は記載漏れ候補です。記載済みでもキーワードが一致しないことがあるため、各項目を確認してください。",
       "score": 22,
@@ -926,7 +1500,7 @@
       "category": "ai-safety",
       "check_id": "pdf_hidden_text",
       "evidence": [],
-      "id": "finding_a8c6fd97cf",
+      "id": "finding_64e5a146f1",
       "message": "PDF不可視テキスト検査はCLIでPDFを直接渡したときのみ実行されます。",
       "recommendation": "openri check manuscript.pdf を使うと、白色文字・極小フォント・ページ外座標などを検査します。",
       "score": 72,
@@ -1012,7 +1586,7 @@
         "status": "completed"
       },
       {
-        "detail": "12件のcheckを実行しました。",
+        "detail": "13件のcheckを実行しました。",
         "id": "mechanical_tests",
         "label": "機械検査",
         "status": "completed"
@@ -1034,16 +1608,16 @@
   "summary": {
     "failed": 0,
     "passed": 2,
-    "score": 60,
+    "score": 39,
     "severity_counts": {
       "critical": 0,
       "high": 1,
-      "info": 7,
+      "info": 8,
       "low": 3,
       "medium": 1
     },
-    "skipped": 8,
-    "total_checks": 12,
+    "skipped": 9,
+    "total_checks": 13,
     "warnings": 2
   },
   "title": "ruleset_omission.txt"
