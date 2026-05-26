@@ -381,7 +381,7 @@
         }
       ],
       "compatibility_note": "このフィールドは既存UI/API互換のため残します。OpenRIの主対象は、AI reviewer/AI editorが自律判断する前に必要な証拠、coverage blocker、監査可能性を固定することです。",
-      "required_human_decision": false,
+      "required_human_decision": true,
       "responsibility_matrix": [
         {
           "responsibility": "任意の監査担当を残す場合は、recommended_route、coverage_blocker、AI reviewer割当を監査します。",
@@ -1133,7 +1133,7 @@
           "quote": "t(58) = 2.15, p = 0.003"
         }
       ],
-      "id": "finding_66c540e340",
+      "id": "finding_607d0b0ea7",
       "message": "1件の検定表記を再計算し、1件でp値または有意性判定の不整合を検出しました。",
       "recommendation": "原稿中の検定統計量、自由度、片側/両側検定、丸め、p値表記を再確認してください。",
       "score": 60,
@@ -1149,7 +1149,7 @@
       "category": "statistics",
       "check_id": "summary_stat_plausibility",
       "evidence": [],
-      "id": "finding_110a5b1e18",
+      "id": "finding_c6c90b3296",
       "message": "平均値とサンプルサイズの組を検出できませんでした。",
       "recommendation": "整数項目の平均値を報告する場合は、M = ..., n = ... のように書くとGRIM系の検査を追加できます。",
       "score": 72,
@@ -1165,7 +1165,7 @@
       "category": "statistics",
       "check_id": "effect_size_ci_coverage",
       "evidence": [],
-      "id": "finding_cc9dcb755d",
+      "id": "finding_7c26088a25",
       "message": "効果量または信頼区間を検出できませんでした。",
       "recommendation": "査読前には、主要claimに対応する効果量と信頼区間の有無を確認してください。",
       "score": 72,
@@ -1202,7 +1202,7 @@
           "quote": null
         }
       ],
-      "id": "finding_d91df82699",
+      "id": "finding_64a21a079a",
       "message": "主要な透明性項目が原稿中に検出されました。",
       "recommendation": "項目の存在だけでなく、リンク先の到達性と再現可能性を次段で確認してください。",
       "score": 100,
@@ -1233,7 +1233,7 @@
           "quote": null
         }
       ],
-      "id": "finding_68195c4551",
+      "id": "finding_a4b94220a7",
       "message": "引用の機械的な不整合は検出されませんでした。",
       "recommendation": "次段ではCrossref/OpenAlex/Semantic Scholar APIで全参考文献の実在性と引用文脈を検証してください。",
       "score": 92,
@@ -1280,7 +1280,7 @@
           "quote": null
         }
       ],
-      "id": "finding_757cbafcc3",
+      "id": "finding_3c63e874ab",
       "message": "参考文献リストと本文中引用の基本構造を抽出し、明確な番号不整合は見つかりませんでした。",
       "recommendation": "引用がclaimを本当に支えているかは、review_packetのclaim inventoryを用いてAI reviewer/AI editorが判断前に確認してください。",
       "score": 92,
@@ -1297,7 +1297,7 @@
       "category": "manuscript-quality",
       "check_id": "claim_evidence_alignment",
       "evidence": [],
-      "id": "finding_b3cba97c58",
+      "id": "finding_dd981178cc",
       "message": "1件のclaim候補で、局所的な統計・引用・図表・限界マーカーの欠落は検出されませんでした。",
       "recommendation": "マーカーの存在だけでは内容妥当性は保証されないため、AI reviewer packetでclaimごとの文脈確認を続けてください。",
       "score": 96,
@@ -1313,7 +1313,7 @@
       "category": "ai-safety",
       "check_id": "prompt_injection",
       "evidence": [],
-      "id": "finding_4a66c3ec98",
+      "id": "finding_11fc722b77",
       "message": "26件のrulesetパターンを走査しましたが、検出はありませんでした。",
       "recommendation": "PDFの座標・色・レイヤー情報に基づく不可視テキスト検査も併用してください(image_integrity_pdfで対応中)。",
       "score": 100,
@@ -1330,7 +1330,7 @@
       "category": "manuscript-quality",
       "check_id": "template_text",
       "evidence": [],
-      "id": "finding_e2d4a0cf1c",
+      "id": "finding_ad0d3bf1e2",
       "message": "明確な重複段落、近接重複、テンプレート表現の過剰反復は検出されませんでした。",
       "recommendation": "分野別の定型文を許容する場合はルールセットを調整してください。",
       "score": 96,
@@ -1345,7 +1345,7 @@
       "category": "image-integrity",
       "check_id": "image_integrity",
       "evidence": [],
-      "id": "finding_8bfe447571",
+      "id": "finding_e41a17ba97",
       "message": "図表参照を検出できませんでした。",
       "recommendation": "画像ファイルを添付できるようにすると、複製・不自然な圧縮・メタデータ検査を追加できます。",
       "score": 70,
@@ -1360,7 +1360,7 @@
       "category": "references",
       "check_id": "doi_existence",
       "evidence": [],
-      "id": "finding_c5cbbf6835",
+      "id": "finding_9ee6350a19",
       "message": "Crossref問い合わせはネットワーク不要モードで無効化されています(--network で有効化)。",
       "recommendation": "CIで参考文献の実在性を確認したい場合は OPENRI_NETWORK=1 を設定するか、CLIで --network を指定してください。",
       "score": 70,
@@ -1378,7 +1378,7 @@
       "category": "research-integrity",
       "check_id": "ruleset_coverage",
       "evidence": [],
-      "id": "finding_6152fe9a94",
+      "id": "finding_8dad79fa16",
       "message": "分野別rulesetは指定されていません(--ruleset consort prisma など)。",
       "recommendation": "分野が決まっている原稿では、CONSORT/PRISMA/MDAR-strict などの ruleset を有効化してください。",
       "score": 72,
@@ -1394,7 +1394,7 @@
       "category": "ai-safety",
       "check_id": "pdf_hidden_text",
       "evidence": [],
-      "id": "finding_a31745dec2",
+      "id": "finding_0d8d0c7c60",
       "message": "PDF不可視テキスト検査はCLIでPDFを直接渡したときのみ実行されます。",
       "recommendation": "openri check manuscript.pdf を使うと、白色文字・極小フォント・ページ外座標などを検査します。",
       "score": 72,
