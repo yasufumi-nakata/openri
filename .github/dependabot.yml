@@ -8,8 +8,7 @@ updates:
       time: "09:00"
       timezone: "Asia/Tokyo"
     labels:
-      - "dependencies"
-      - "github-actions"
+      - "area:ops"
 
   - package-ecosystem: "pip"
     directory: "/"
@@ -21,8 +20,7 @@ updates:
       time: "09:30"
       timezone: "Asia/Tokyo"
     labels:
-      - "dependencies"
-      - "python"
+      - "area:ops"
     groups:
       python-quality:
         patterns:
@@ -45,8 +43,8 @@ updates:
       time: "10:00"
       timezone: "Asia/Tokyo"
     labels:
-      - "dependencies"
-      - "frontend"
+      - "area:ops"
+      - "area:frontend"
     groups:
       frontend-runtime:
         patterns:
@@ -65,8 +63,7 @@ updates:
       time: "10:30"
       timezone: "Asia/Tokyo"
     labels:
-      - "dependencies"
-      - "npm-package"
+      - "area:ops"
 
   - package-ecosystem: "npm"
     directory: "/packages/mcp/openri-mcp"
@@ -76,5 +73,4 @@ updates:
       time: "11:00"
       timezone: "Asia/Tokyo"
     labels:
-      - "dependencies"
-      - "mcp"
+      - "area:ops"
