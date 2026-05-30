@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from bisect import bisect_right
 import math
 import re
+from bisect import bisect_right
 from collections import Counter
 from dataclasses import dataclass
 from typing import Callable, Optional

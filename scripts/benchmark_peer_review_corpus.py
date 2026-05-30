@@ -1,19 +1,18 @@
 from __future__ import annotations
 
 import argparse
-from collections import Counter
-from datetime import datetime, timezone
 import json
-from pathlib import Path
 import re
 import statistics
 import urllib.parse
 import urllib.request
+from collections import Counter
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set
 
 from openri.analyzer import analyze_manuscript
 from openri.models import RunRequest, Status
-
 
 HF_ROWS_URL = (
     "https://datasets-server.huggingface.co/rows?"

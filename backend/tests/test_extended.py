@@ -25,6 +25,7 @@ from openri.ruleset_loader import discover_keyword_rulesets, load_default_rulese
 from openri.sarif import report_to_sarif
 from openri.store import ReportStore
 from openri.text_windows import iter_sentence_spans
+
 from scripts import benchmark_peer_review_corpus as peer_benchmark
 from scripts import build_pages as pages_builder
 
