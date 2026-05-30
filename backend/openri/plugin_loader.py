@@ -4,10 +4,9 @@ import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Iterable, Optional
+from typing import Callable, Iterable
 
 from .models import Evidence, Finding, Severity, Status
-
 
 PluginCheckFunction = Callable[[str, dict], Finding]
 
@@ -99,7 +98,7 @@ def _keyword_plugin_runner(
             if index >= 0:
                 hits.append(
                     Evidence(
-                        quote=text[index:index + 180],
+                        quote=text[index : index + 180],
                         data={"keyword": keyword, "plugin_source": source},
                     )
                 )

@@ -12,7 +12,6 @@ import tarfile
 from pathlib import Path
 from typing import Iterable
 
-
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 DOCS_PACKAGES = ROOT / "docs" / "packages"
@@ -142,7 +141,7 @@ def render_table(entries: Iterable[dict[str, object]]) -> str:
         rows.append(
             "<tr>"
             f"<td>{html.escape(str(entry['kind']))}</td>"
-            f"<td><a href=\"{html.escape(str(entry['path']))}\">{html.escape(str(entry['name']))}</a></td>"
+            f'<td><a href="{html.escape(str(entry["path"]))}">{html.escape(str(entry["name"]))}</a></td>'
             f"<td><code>{html.escape(str(entry['sha256'])[:16])}</code></td>"
             f"<td>{entry['size']}</td>"
             "</tr>"
@@ -244,7 +243,9 @@ def main() -> int:
     copy_python_artifacts(version, entries)
     copy_npm_artifacts(entries)
     copy_skill_artifact(version, entries)
-    (DOCS_PACKAGES / "manifest.json").write_text(json.dumps({"version": version, "artifacts": entries}, indent=2), encoding="utf-8")
+    (DOCS_PACKAGES / "manifest.json").write_text(
+        json.dumps({"version": version, "artifacts": entries}, indent=2), encoding="utf-8"
+    )
     write_index(version, entries)
     print("OpenRI package artifacts built.")
     return 0

@@ -117,7 +117,7 @@ Web UIでは、本文貼り付けに加えてPDF/TXT/MD/TeXのアップロード
 - `test_design`: AIが実装する前提でのunit/fixture/golden/adversarial/metamorphic/cross-model/regression gate。
 - `review_packet`: 原稿固有のclaim inventory、AI reviewer task、adversarial challenge、editor handoff。
 - `accountability.routing_explanation`: recommended routeの理由、route driverになったfinding、coverage blocker。
-- `accountability.score_explanation`: score算定式、平均finding score、strictness/failed/warning penalty。
+- `accountability.score_explanation`: score算定式、平均finding score、strictness/failed/warning/skipped penalty。
 - `accountability.evidence_ledger`: findingごとのevidence数、quote/location/dataの有無、primary evidence。
 - `accountability.autonomous_ai_accountability`: AI reviewer/AI editorが最終判断する運用で必要な入力、モデル実行メタデータ、fail-closed条件。
 - `accountability.human_accountability`: 既存UI/API互換のため残すlegacy accountability block。主経路は `autonomous_ai_accountability` です。
@@ -159,6 +159,7 @@ PYTHONPATH=backend python scripts/benchmark_peer_review_corpus.py --corpus all -
 - サポート窓口: [`SUPPORT.md`](SUPPORT.md)
 - ガバナンス: [`GOVERNANCE.md`](GOVERNANCE.md)
 - メンテナ手順: [`docs/maintainer-guide.md`](docs/maintainer-guide.md)
+- Scorecard triage: [`docs/scorecard-triage.md`](docs/scorecard-triage.md)
 
 GitHub上では、CI、Repository Health、CodeQL、Dependency Review、OpenSSF Scorecard、Dependabotを有効化しています。`main` はbranch protectionでCI成功を必須にする運用を想定しています。
 

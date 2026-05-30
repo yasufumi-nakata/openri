@@ -1,14 +1,49 @@
 from __future__ import annotations
 
+import re
 from collections import Counter
 from copy import deepcopy
-import re
+from typing import Optional
 
 from .checks import CHECKS
+from .cues import (
+    CAUSAL_CUE_RE,
+    CAUSAL_DESIGN_RE,
+    CITATION_CUE_RE,
+    CLAIM_CUE_RE,
+    FIGURE_CUE_RE,
+    LIMITATION_CUE_RE,
+    NOVELTY_CUE_RE,
+    OVERGENERAL_CUE_RE,
+    STATISTIC_CUE_RE,
+)
 from .models import CheckDefinition, RunReport, RunRequest, RunSummary, Severity, Status
 from .plugin_loader import load_plugin_checks, plugin_security_boundary
 from .references import citation_context_audit
 from .text_windows import iter_sentence_spans
+
+SECTION_NAMES = {
+    "abstract": "abstract",
+    "introduction": "introduction",
+    "method": "method",
+    "methods": "methods",
+    "result": "result",
+    "results": "results",
+    "discussion": "discussion",
+    "conclusion": "conclusion",
+    "references": "references",
+    "bibliography": "bibliography",
+    "倫理": "倫理",
+    "方法": "方法",
+    "結果": "結果",
+    "考察": "考察",
+}
+SECTION_VARIANT_NAMES = {
+    "materials and methods": "methods",
+    "methods and materials": "methods",
+    "results and discussion": "results",
+}
+SECTION_VARIANT_PREFIXES = ("and ", "& ", "/ ", "(", "[", "- ", "– ", "— ")
 
 
 OBJECTIVE = (
@@ -63,7 +98,7 @@ STRICTNESS_KNOBS: dict[str, dict] = {
         "image_severity": "high",
         "score_penalty": 10,
     },
-    }
+}
 
 
 AI_REVIEWER_POOL = [
@@ -310,28 +345,6 @@ MODEL_AGNOSTIC_REVIEWER_CONTRACT = {
         "cross-model disagreement report when reviewer model changes",
     ],
 }
-
-
-CLAIM_CUE_RE = re.compile(
-    r"\b("
-    r"we\s+(show|demonstrate|find|found|report|present|provide|observe|identify)|"
-    r"significant|significantly|robust|novel|first|important|"
-    r"suggests?|indicates?|supports?|improves?|predicts?|associated|association|"
-    r"effect|caus(?:e|al|es|ed|ation)|"
-    r"示す|示した|有意|効果|新規|重要|関連|因果|支持"
-    r")\b",
-    re.IGNORECASE,
-)
-STATISTIC_CUE_RE = re.compile(r"\b(t|z|F|χ2|χ\^2|chi-?square|p|CI|OR|RR|HR|β|r)\s*(?:\(|=|<|>)", re.IGNORECASE)
-CITATION_CUE_RE = re.compile(r"(\[[0-9,\-\s]+\]|\([A-Z][A-Za-z-]+(?:\s+et\s+al\.)?,\s*20\d{2}\)|\b10\.\d{4,9}/)", re.IGNORECASE)
-FIGURE_CUE_RE = re.compile(r"\b(fig\.?|figure|table|supplement|図|表)\s*\d+", re.IGNORECASE)
-LIMITATION_CUE_RE = re.compile(r"\b(limitation|however|although|future|may|might|could|cannot|not powered|pilot|exploratory|限界|ただし|可能性|探索的)\b", re.IGNORECASE)
-CAUSAL_CUE_RE = re.compile(r"\b(caus(?:e|al|es|ed|ation)|mechanism|drives?|leads?\s+to|因果|原因|機序)\b", re.IGNORECASE)
-CAUSAL_DESIGN_RE = re.compile(r"\b(randomi[sz]ed|trial|experiment|controlled|causal inference|instrumental variable|difference-in-differences|RCT)\b", re.IGNORECASE)
-NOVELTY_CUE_RE = re.compile(r"\b(novel|first|new|unprecedented|groundbreaking|新規|初めて)\b", re.IGNORECASE)
-OVERGENERAL_CUE_RE = re.compile(r"\b(always|never|all|none|prove|definitive|conclusive|universal|完全|必ず|全て|証明)\b", re.IGNORECASE)
-
-
 def get_ai_review_protocol_blueprint() -> dict:
     return {
         "mode": "ai_reviewer_replication",
@@ -352,18 +365,48 @@ def _line_number(text: str, start: int) -> str:
     return f"line {text.count(chr(10), 0, start) + 1}"
 
 
+def _section_heading_from_line(raw_line: str) -> Optional[str]:
+    line = raw_line.strip()
+    if not line or len(line) > 120:
+        return None
+    if line.startswith("#"):
+        hashes = len(line) - len(line.lstrip("#"))
+        if hashes > 6:
+            return None
+        line = line[hashes:].strip()
+    parts = line.split(maxsplit=1)
+    if len(parts) == 2:
+        prefix = parts[0].rstrip(".)")
+        if prefix and all(char.isdigit() or char == "." for char in prefix):
+            line = parts[1].strip()
+    line = re.sub(r"\s+", " ", line.rstrip(":：").strip().lower())
+    if line in SECTION_NAMES:
+        return SECTION_NAMES[line]
+    if line in SECTION_VARIANT_NAMES:
+        return SECTION_VARIANT_NAMES[line]
+    for name, canonical in sorted(SECTION_NAMES.items(), key=lambda item: len(item[0]), reverse=True):
+        if not line.startswith(f"{name} "):
+            continue
+        suffix = line[len(name) :].strip()
+        if suffix.startswith(SECTION_VARIANT_PREFIXES):
+            return canonical
+    return None
+
+
+def _iter_section_headings(text: str):
+    offset = 0
+    for line in text.splitlines(keepends=True):
+        heading = _section_heading_from_line(line)
+        if heading:
+            yield offset, heading
+        offset += len(line)
+
+
 def _section_for_offset(text: str, offset: int) -> str:
-    headings = list(
-        re.finditer(
-            r"^\s{0,3}(abstract|introduction|methods?|results?|discussion|conclusion|references|bibliography|倫理|方法|結果|考察)\b",
-            text,
-            re.IGNORECASE | re.MULTILINE,
-        )
-    )
     section = "unknown"
-    for heading in headings:
-        if heading.start() <= offset:
-            section = heading.group(1).lower()
+    for heading_offset, heading in _iter_section_headings(text):
+        if heading_offset <= offset:
+            section = heading
         else:
             break
     return section
@@ -400,7 +443,9 @@ def _claim_risk_flags(sentence: str, full_text: str) -> list[str]:
         flags.append("overgeneralized_language")
     if not has_stat and not has_citation and not FIGURE_CUE_RE.search(sentence):
         flags.append("no_local_support_marker")
-    if not has_limitation and re.search(r"\b(robust|important|groundbreaking|definitive|conclusive|重要|頑健)\b", sentence, re.IGNORECASE):
+    if not has_limitation and re.search(
+        r"\b(robust|important|groundbreaking|definitive|conclusive|重要|頑健)\b", sentence, re.IGNORECASE
+    ):
         flags.append("strong_language_without_local_limitation")
     return flags
 
@@ -428,7 +473,9 @@ def _support_status(support_markers: dict, risk_flags: list[str]) -> str:
 
 
 def _linked_findings_for_claim(claim: dict, findings: list) -> list[str]:
-    active = {finding.check_id for finding in findings if finding.status in {Status.FAILED, Status.WARNING, Status.SKIPPED}}
+    active = {
+        finding.check_id for finding in findings if finding.status in {Status.FAILED, Status.WARNING, Status.SKIPPED}
+    }
     linked = []
     markers = claim.get("support_markers", {})
     flags = set(claim.get("risk_flags", []))
@@ -437,9 +484,21 @@ def _linked_findings_for_claim(claim: dict, findings: list) -> list[str]:
     if markers.get("local_citation") or "novelty_claim_without_local_citation" in flags:
         linked.extend([item for item in ["citation_integrity", "citation_context", "doi_existence"] if item in active])
     if "causal_language_without_explicit_causal_design" in flags:
-        linked.extend([item for item in ["claim_evidence_alignment", "ruleset_coverage", "reporting_transparency"] if item in active])
+        linked.extend(
+            [
+                item
+                for item in ["claim_evidence_alignment", "ruleset_coverage", "reporting_transparency"]
+                if item in active
+            ]
+        )
     if "no_local_support_marker" in flags:
-        linked.extend([item for item in ["claim_evidence_alignment", "reporting_transparency", "ruleset_coverage"] if item in active])
+        linked.extend(
+            [
+                item
+                for item in ["claim_evidence_alignment", "reporting_transparency", "ruleset_coverage"]
+                if item in active
+            ]
+        )
     if flags & {
         "overgeneralized_language",
         "strong_language_without_local_limitation",
@@ -524,11 +583,22 @@ def build_ai_reviewer_tasks(findings: list, claim_inventory: list[dict], coverag
         {
             "id": "task_statistics_recheck",
             "reviewer_id": "statistics_reviewer",
-            "priority": "high" if any(fid in {"statistical_consistency", "summary_stat_plausibility"} for fid in finding_ids) else "medium",
-            "related_claim_ids": [claim["id"] for claim in claim_inventory if claim["support_markers"].get("local_statistic")],
-            "related_finding_ids": [fid for fid in finding_ids if fid in {"statistical_consistency", "summary_stat_plausibility"}],
+            "priority": "high"
+            if any(fid in {"statistical_consistency", "summary_stat_plausibility"} for fid in finding_ids)
+            else "medium",
+            "related_claim_ids": [
+                claim["id"] for claim in claim_inventory if claim["support_markers"].get("local_statistic")
+            ],
+            "related_finding_ids": [
+                fid for fid in finding_ids if fid in {"statistical_consistency", "summary_stat_plausibility"}
+            ],
             "instruction": "統計量、p値、効果量、丸め、表本文の一致、探索/確認分析の区別を再確認してください。",
-            "output_schema": ["statistical_issue", "affected_claim_id", "recomputed_or_needed_value", "decision_impact"],
+            "output_schema": [
+                "statistical_issue",
+                "affected_claim_id",
+                "recomputed_or_needed_value",
+                "decision_impact",
+            ],
             "acceptance_gate": "数値不整合が残るclaimをreview-readyにしない。",
         },
         {
@@ -536,7 +606,9 @@ def build_ai_reviewer_tasks(findings: list, claim_inventory: list[dict], coverag
             "reviewer_id": "reproducibility_reviewer",
             "priority": "high" if any(fid == "reporting_transparency" for fid in finding_ids) else "medium",
             "related_claim_ids": claim_ids,
-            "related_finding_ids": [fid for fid in finding_ids if fid in {"reporting_transparency", "ruleset_coverage"}],
+            "related_finding_ids": [
+                fid for fid in finding_ids if fid in {"reporting_transparency", "ruleset_coverage"}
+            ],
             "instruction": "データ、コード、材料、プロトコル、補足資料、not applicable理由を、claim再現に必要な粒度で確認してください。",
             "output_schema": ["asset", "availability_state", "blocks_reproduction", "author_query"],
             "acceptance_gate": "availability statementの存在だけで再現可能扱いにしない。",
@@ -544,9 +616,23 @@ def build_ai_reviewer_tasks(findings: list, claim_inventory: list[dict], coverag
         {
             "id": "task_integrity_and_ai_safety",
             "reviewer_id": "ethics_integrity_reviewer",
-            "priority": "critical" if any(fid in {"prompt_injection", "pdf_hidden_text"} for fid in finding_ids) else "high",
+            "priority": "critical"
+            if any(fid in {"prompt_injection", "pdf_hidden_text"} for fid in finding_ids)
+            else "high",
             "related_claim_ids": [],
-            "related_finding_ids": [fid for fid in finding_ids if fid in {"prompt_injection", "pdf_hidden_text", "image_integrity", "citation_integrity", "citation_context", "doi_existence"}],
+            "related_finding_ids": [
+                fid
+                for fid in finding_ids
+                if fid
+                in {
+                    "prompt_injection",
+                    "pdf_hidden_text",
+                    "image_integrity",
+                    "citation_integrity",
+                    "citation_context",
+                    "doi_existence",
+                }
+            ],
             "instruction": "AI査読操作、PDF不可視テキスト、画像未検査、引用/DOI、倫理/COI/資金の重大リスクを隔離確認してください。",
             "output_schema": ["risk", "evidence", "editorial_hold_needed", "author_query"],
             "acceptance_gate": "prompt injectionまたはhidden PDF textが残る原稿をAI判断へ進めない。",
@@ -621,7 +707,7 @@ def _evidence_preview(finding) -> list[dict]:
 
 def manuscript_profile(text: str, strictness: str = "standard") -> dict:
     words = re.findall(r"\b[\w'-]+\b", text)
-    sections = re.findall(r"^\s{0,3}(abstract|introduction|methods?|results?|discussion|references|bibliography|倫理|方法|結果|考察)\b", text, re.I | re.M)
+    sections = [heading for _, heading in _iter_section_headings(text)]
     line_starts = [0]
     line_starts.extend(match.end() for match in re.finditer("\n", text))
     return {
@@ -640,6 +726,9 @@ def manuscript_profile(text: str, strictness: str = "standard") -> dict:
 def build_submission_processing(summary: RunSummary, findings: list, profile: dict) -> dict:
     failed = [f for f in findings if f.status == Status.FAILED]
     warnings = [f for f in findings if f.status == Status.WARNING]
+    critical_findings = [
+        f for f in findings if f.status in {Status.FAILED, Status.WARNING} and f.severity == Severity.CRITICAL
+    ]
     high_risk_ids = {
         "prompt_injection",
         "pdf_hidden_text",
@@ -649,15 +738,15 @@ def build_submission_processing(summary: RunSummary, findings: list, profile: di
         "doi_existence",
     }
     high_risk_findings = [
-        f for f in findings
-        if f.check_id in high_risk_ids and f.status in {Status.FAILED, Status.WARNING}
+        f for f in findings if f.check_id in high_risk_ids and f.status in {Status.FAILED, Status.WARNING}
     ]
     transparency_findings = [
-        f for f in findings
+        f
+        for f in findings
         if f.check_id in {"reporting_transparency", "ruleset_coverage"} and f.status == Status.WARNING
     ]
 
-    if any(f.check_id in {"prompt_injection", "pdf_hidden_text"} for f in failed):
+    if any(f.check_id in {"prompt_injection", "pdf_hidden_text"} for f in [*failed, *critical_findings]):
         route = "integrity_hold_before_peer_review"
         route_label = "AI判断前にintegrity確認へ保留"
         rationale = "LLM査読操作やPDF不可視テキストなど、AI reviewer/AI editorの判断前に隔離確認すべきfindingがあります。"
@@ -756,10 +845,7 @@ def build_ai_review_protocol(summary: RunSummary, findings: list, profile: dict,
     failed = [f for f in findings if f.status == Status.FAILED]
     warnings = [f for f in findings if f.status == Status.WARNING]
     skipped = [f for f in findings if f.status == Status.SKIPPED]
-    high_failed = [
-        f for f in failed
-        if f.severity in {Severity.CRITICAL, Severity.HIGH}
-    ]
+    high_failed = [f for f in failed if f.severity in {Severity.CRITICAL, Severity.HIGH}]
 
     coverage_blockers = []
     if skipped:
@@ -796,6 +882,23 @@ def build_ai_review_protocol(summary: RunSummary, findings: list, profile: dict,
                 "severity": "low",
                 "message": "PDF座標/色/フォントサイズの検査情報がありません。PDF提出ではupload/CLI経由で検査してください。",
                 "action": "提出元がPDFの場合は POST /api/runs/upload または openri check manuscript.pdf を使ってください。",
+            }
+        )
+    doi_truncated = []
+    for finding in findings:
+        if finding.check_id != "doi_existence":
+            continue
+        for evidence in finding.evidence:
+            if (evidence.data or {}).get("reason") == "doi_lookup_truncated":
+                doi_truncated.append(evidence.data)
+    if doi_truncated:
+        coverage_blockers.append(
+            {
+                "id": "doi_lookup_truncated",
+                "severity": "low",
+                "message": "DOI照合が安全上限で打ち切られ、未検証の参考文献DOIが残っています。",
+                "data": doi_truncated[0],
+                "action": "未検証DOIを追加バッチ、外部DB照合、または人間確認で処理してください。",
             }
         )
 
@@ -1015,8 +1118,12 @@ def build_accountability_record(
             "coverage_blockers": ai_review_protocol.get("coverage_blockers", []),
         },
         "score_explanation": {
-            "formula": "mean(finding.score) - strictness_penalty - 8*failed - 2*warnings, clamped to 0..100",
+            "formula": "mean(non-skipped finding.score) - strictness_penalty - 8*failed - 2*warnings - skipped_penalty, clamped to 0..100",
             "mean_finding_score": score_inputs["mean_finding_score"],
+            "scored_finding_count": score_inputs["scored_finding_count"],
+            "skipped_count_excluded": score_inputs["skipped_count_excluded"],
+            "skipped_penalty": score_inputs["skipped_penalty"],
+            "skipped_score_cap": score_inputs["skipped_score_cap"],
             "strictness_penalty": score_inputs["strictness_penalty"],
             "failed_penalty": score_inputs["failed_penalty"],
             "warning_penalty": score_inputs["warning_penalty"],
@@ -1111,12 +1218,32 @@ def build_accountability_record(
             "social_metadata_used_for_leniency": False,
         },
         "audit_trail": [
-            {"step": "intake", "status": "completed", "detail": "RunRequestを受け取り、元テキストは外部LLMへ送信していません。"},
-            {"step": "profile", "status": "completed", "detail": "文字数、単語数、section、strictness knobを作成しました。"},
-            {"step": "checks", "status": "completed", "detail": f"{summary.total_checks}件のdeterministic checkを実行しました。"},
+            {
+                "step": "intake",
+                "status": "completed",
+                "detail": "RunRequestを受け取り、元テキストは外部LLMへ送信していません。",
+            },
+            {
+                "step": "profile",
+                "status": "completed",
+                "detail": "文字数、単語数、section、strictness knobを作成しました。",
+            },
+            {
+                "step": "checks",
+                "status": "completed",
+                "detail": f"{summary.total_checks}件のdeterministic checkを実行しました。",
+            },
             {"step": "triage", "status": "completed", "detail": submission_processing.get("route_label")},
-            {"step": "ai_review_packet", "status": "completed", "detail": ai_review_protocol.get("run_readiness", {}).get("label")},
-            {"step": "accountability_record", "status": "completed", "detail": "score、route、evidence、claim、coverage blockerを説明可能な形で固定しました。"},
+            {
+                "step": "ai_review_packet",
+                "status": "completed",
+                "detail": ai_review_protocol.get("run_readiness", {}).get("label"),
+            },
+            {
+                "step": "accountability_record",
+                "status": "completed",
+                "detail": "score、route、evidence、claim、coverage blockerを説明可能な形で固定しました。",
+            },
         ],
     }
 
@@ -1131,7 +1258,9 @@ def analyze_manuscript(request: RunRequest) -> RunReport:
     profile["image_inspection"] = request.image_inspection
     profile["source_metadata"] = dict(request.source_metadata or {})
     all_checks = [*CHECKS, *load_plugin_checks()]
-    active_checks = all_checks if request.include_experimental_checks else [c for c in all_checks if c.maturity != "experimental"]
+    active_checks = (
+        all_checks if request.include_experimental_checks else [c for c in all_checks if c.maturity != "experimental"]
+    )
     findings = [spec.run(text, profile) for spec in active_checks]
 
     passed = sum(1 for f in findings if f.status == Status.PASSED)
@@ -1141,14 +1270,19 @@ def analyze_manuscript(request: RunRequest) -> RunReport:
     severity_counts = {severity: sum(1 for f in findings if f.severity == severity) for severity in Severity}
 
     strictness_penalty = profile["strictness_knobs"]["score_penalty"]
-    mean_finding_score = round(sum(f.score for f in findings) / max(1, len(findings)), 2)
+    scored_findings = [f for f in findings if f.status != Status.SKIPPED]
+    mean_finding_score = round(sum(f.score for f in scored_findings) / max(1, len(scored_findings)), 2)
     failed_penalty = 8 * failed
     warning_penalty = 2 * warnings
+    skipped_penalty = min(20, 2 * skipped)
     raw_score = round(mean_finding_score - strictness_penalty)
     if failed:
         raw_score -= failed_penalty
     if warnings:
         raw_score -= warning_penalty
+    if skipped_penalty:
+        raw_score -= skipped_penalty
+    skipped_score_cap = None
 
     summary = RunSummary(
         total_checks=len(findings),
@@ -1178,6 +1312,10 @@ def analyze_manuscript(request: RunRequest) -> RunReport:
         report.ai_review_protocol,
         {
             "mean_finding_score": mean_finding_score,
+            "scored_finding_count": len(scored_findings),
+            "skipped_count_excluded": skipped,
+            "skipped_penalty": skipped_penalty,
+            "skipped_score_cap": skipped_score_cap,
             "strictness_penalty": strictness_penalty,
             "failed_penalty": failed_penalty,
             "warning_penalty": warning_penalty,

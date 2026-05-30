@@ -10,7 +10,6 @@ from typing import Optional
 from . import __version__
 from .config import crossref_cache_dir
 
-
 CROSSREF_API = "https://api.crossref.org/works/"
 
 
@@ -20,13 +19,19 @@ def _user_agent() -> str:
     return f"OpenRI/{__version__} (https://github.com/yasufumi-nakata/openri{contact})"
 
 
-def lookup_doi(doi: str, timeout: Optional[float] = None, cache_only: Optional[bool] = None, retries: Optional[int] = None) -> dict:
+def lookup_doi(
+    doi: str, timeout: Optional[float] = None, cache_only: Optional[bool] = None, retries: Optional[int] = None
+) -> dict:
     """Return a small dict describing the Crossref lookup outcome for a DOI.
 
     Network is the user's responsibility — callers should gate this on an opt-in flag.
     """
     timeout = timeout if timeout is not None else float(os.environ.get("OPENRI_CROSSREF_TIMEOUT", "4.0"))
-    cache_only = cache_only if cache_only is not None else os.environ.get("OPENRI_CROSSREF_CACHE_ONLY", "").lower() in {"1", "true", "yes"}
+    cache_only = (
+        cache_only
+        if cache_only is not None
+        else os.environ.get("OPENRI_CROSSREF_CACHE_ONLY", "").lower() in {"1", "true", "yes"}
+    )
     retries = retries if retries is not None else int(os.environ.get("OPENRI_CROSSREF_RETRIES", "2"))
     cached = _read_cache(doi)
     if cached is not None:
@@ -52,14 +57,20 @@ def lookup_doi(doi: str, timeout: Optional[float] = None, cache_only: Optional[b
                 "cache": "miss",
                 "attempts": attempt + 1,
             }
-            if exc.code in {404, 400}:
+            if exc.code == 404:
                 _write_cache(doi, result)
                 return result
             last_error = result
         except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-            last_error = {"doi": doi, "status": "error", "error": str(exc)[:160], "cache": "miss", "attempts": attempt + 1}
+            last_error = {
+                "doi": doi,
+                "status": "error",
+                "error": str(exc)[:160],
+                "cache": "miss",
+                "attempts": attempt + 1,
+            }
         if attempt < retries:
-            time.sleep(min(2.0, 0.25 * (2 ** attempt)))
+            time.sleep(min(2.0, 0.25 * (2**attempt)))
     if payload is None:
         return last_error or {"doi": doi, "status": "error", "cache": "miss"}
 
@@ -86,7 +97,7 @@ def _issued_year(message: dict) -> Optional[int]:
 
 
 def _cache_path(doi: str):
-    digest = urllib.request.quote(doi.lower(), safe="").replace("/", "%2F")
+    digest = urllib.request.quote(doi.lower(), safe="")
     return crossref_cache_dir() / f"{digest}.json"
 
 

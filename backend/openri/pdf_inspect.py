@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-
 _NEAR_WHITE_THRESHOLD = 0.95
 
 
@@ -181,14 +180,30 @@ def _pdf_structure_risks(path: Path) -> list[dict]:
     if names and names.get("/JavaScript"):
         risks.append({"kind": "javascript", "severity": "high", "message": "PDF contains JavaScript name tree."})
     if root.get("/OCProperties") if hasattr(root, "get") else False:
-        risks.append({"kind": "optional-content-groups", "severity": "medium", "message": "PDF contains optional content/layer properties."})
+        risks.append(
+            {
+                "kind": "optional-content-groups",
+                "severity": "medium",
+                "message": "PDF contains optional content/layer properties.",
+            }
+        )
 
+    annotated_pages = []
     for index, page in enumerate(reader.pages, start=1):
         try:
             annotations = page.get("/Annots")
         except Exception:
             annotations = None
         if annotations:
-            risks.append({"kind": "annotations", "severity": "medium", "page": index, "message": "PDF page contains annotations."})
-            break
+            annotated_pages.append(index)
+    if annotated_pages:
+        risks.append(
+            {
+                "kind": "annotations",
+                "severity": "medium",
+                "pages": annotated_pages[:20],
+                "page_count": len(annotated_pages),
+                "message": f"PDF has annotations on {len(annotated_pages)} page(s).",
+            }
+        )
     return risks

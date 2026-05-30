@@ -9,6 +9,7 @@ from typing import Callable, Optional
 
 from scipy import stats
 
+from . import cues as cue_patterns
 from .crossref import lookup_doi
 from .models import Evidence, Finding, Severity, Status
 from .references import citation_context_audit
@@ -22,6 +23,15 @@ from .ruleset_loader import (
     merge_patterns,
 )
 
+CLAIM_CAUSAL_CUE_RE = cue_patterns.CAUSAL_CUE_RE
+CLAIM_CAUSAL_DESIGN_RE = cue_patterns.CAUSAL_DESIGN_RE
+CLAIM_CITATION_CUE_RE = cue_patterns.CITATION_CUE_RE
+CLAIM_CUE_RE = cue_patterns.CLAIM_CUE_RE
+CLAIM_FIGURE_CUE_RE = cue_patterns.FIGURE_CUE_RE
+CLAIM_LIMITATION_CUE_RE = cue_patterns.LIMITATION_CUE_RE
+CLAIM_NOVELTY_CUE_RE = cue_patterns.NOVELTY_CUE_RE
+CLAIM_OVERGENERAL_CUE_RE = cue_patterns.OVERGENERAL_CUE_RE
+CLAIM_STATISTIC_CUE_RE = cue_patterns.STATISTIC_CUE_RE
 
 CheckFunction = Callable[[str, dict], Finding]
 
@@ -44,12 +54,17 @@ STAT_RE = re.compile(
     re.IGNORECASE,
 )
 
-EFFECT_RE = re.compile(r"\b(?P<kind>Cohen'?s?\s*d|ηp?2|eta\s*squared|OR|RR|HR|r|β)\s*=\s*(?P<value>-?\d+(?:\.\d+)?)", re.IGNORECASE)
-CI_RE = re.compile(r"\b(?P<level>9[059]%|95\s*percent)\s*CI\s*[\[:(]\s*(?P<low>-?\d+(?:\.\d+)?)\s*,\s*(?P<high>-?\d+(?:\.\d+)?)\s*[\]):]", re.IGNORECASE)
+EFFECT_RE = re.compile(
+    r"\b(?P<kind>Cohen'?s?\s*d|ηp?2|eta\s*squared|OR|RR|HR|r|β)\s*=\s*(?P<value>-?\d+(?:\.\d+)?)", re.IGNORECASE
+)
+CI_RE = re.compile(
+    r"\b(?P<level>9[059]%|95\s*percent)\s*CI\s*[\[:(]\s*(?P<low>-?\d+(?:\.\d+)?)\s*,\s*(?P<high>-?\d+(?:\.\d+)?)\s*[\]):]",
+    re.IGNORECASE,
+)
 
 MEAN_N_RE = re.compile(
-    r"(?:M|mean)\s*=\s*(?P<mean>-?\d+(?:\.\d+)?)"
-    r"(?P<trailer>[\s\S]{0,120}?)(?:n|N)\s*=\s*(?P<n>\d+)",
+    r"\b(?:M|mean)\s*=\s*(?P<mean>-?\d+(?:\.\d+)?)"
+    r"(?P<trailer>[\s\S]{0,120}?)\b(?:n|N)\s*=\s*(?P<n>\d+)\b",
     re.IGNORECASE,
 )
 
@@ -69,24 +84,6 @@ PLACEHOLDER_REFERENCE_RE = re.compile(
     r"\b(TBD|TODO|citation needed|lorem ipsum|fake|placeholder|example reference|unknown journal)\b|\?\?\?",
     re.IGNORECASE,
 )
-CLAIM_CUE_RE = re.compile(
-    r"\b("
-    r"we\s+(show|demonstrate|find|found|report|present|provide|observe|identify)|"
-    r"significant|significantly|robust|novel|first|important|"
-    r"suggests?|indicates?|supports?|improves?|predicts?|associated|association|"
-    r"effect|caus(?:e|al|es|ed|ation)|"
-    r"示す|示した|有意|効果|新規|重要|関連|因果|支持"
-    r")\b",
-    re.IGNORECASE,
-)
-CLAIM_STATISTIC_CUE_RE = re.compile(r"\b(t|z|F|χ2|χ\^2|chi-?square|p|CI|OR|RR|HR|β|r)\s*(?:\(|=|<|>)", re.IGNORECASE)
-CLAIM_CITATION_CUE_RE = re.compile(r"(\[[0-9,\-\s]+\]|\([A-Z][A-Za-z-]+(?:\s+et\s+al\.)?,\s*20\d{2}\)|\b10\.\d{4,9}/)", re.IGNORECASE)
-CLAIM_FIGURE_CUE_RE = re.compile(r"\b(fig\.?|figure|table|supplement|図|表)\s*\d+", re.IGNORECASE)
-CLAIM_LIMITATION_CUE_RE = re.compile(r"\b(limitation|however|although|future|may|might|could|cannot|pilot|exploratory|限界|ただし|可能性|探索的)\b", re.IGNORECASE)
-CLAIM_CAUSAL_CUE_RE = re.compile(r"\b(caus(?:e|al|es|ed|ation)|mechanism|drives?|leads?\s+to|因果|原因|機序)\b", re.IGNORECASE)
-CLAIM_CAUSAL_DESIGN_RE = re.compile(r"\b(randomi[sz]ed|trial|experiment|controlled|causal inference|instrumental variable|difference-in-differences|RCT)\b", re.IGNORECASE)
-CLAIM_NOVELTY_CUE_RE = re.compile(r"\b(novel|first|new|unprecedented|groundbreaking|新規|初めて)\b", re.IGNORECASE)
-CLAIM_OVERGENERAL_CUE_RE = re.compile(r"\b(always|never|all|none|prove|definitive|conclusive|universal|完全|必ず|全て|証明)\b", re.IGNORECASE)
 
 
 def _finding(
@@ -171,7 +168,7 @@ def check_statistical_consistency(text: str, profile: dict) -> Finding:
         calculated = _p_value(test, value, df1, df2)
         if calculated is None or math.isnan(calculated):
             continue
-        if _one_tailed_context(match.group(0)):
+        if _one_tailed_context(match.group(0)) and test.lower() in {"t", "z"}:
             calculated = calculated / 2
 
         consistent, threshold_flip, materially_different = _reported_p_consistent(calculated, reported, op, p_tolerance)
@@ -279,21 +276,38 @@ def check_effect_size_ci_coverage(text: str, profile: dict) -> Finding:
 
 def check_summary_stat_plausibility(text: str, profile: dict) -> Finding:
     implausible: list[Evidence] = []
-    checked = 0
+    detected = 0
+    analyzed = 0
+    skipped_matches: list[Evidence] = []
     integer_context = bool(INTEGER_ITEM_HINT_RE.search(text))
 
     for match in MEAN_N_RE.finditer(text):
-        checked += 1
+        detected += 1
         reported_mean = float(match.group("mean"))
         n = int(match.group("n"))
         if n <= 0:
+            skipped_matches.append(
+                Evidence(
+                    quote=match.group(0).strip(),
+                    location=_line_number(text, match.start()),
+                    data={"reason": "n_not_positive", "n": n},
+                )
+            )
             continue
         decimals = len(match.group("mean").split(".")[1]) if "." in match.group("mean") else 0
         if decimals == 0:
+            skipped_matches.append(
+                Evidence(
+                    quote=match.group(0).strip(),
+                    location=_line_number(text, match.start()),
+                    data={"reason": "mean_has_no_decimal_places", "mean": reported_mean, "n": n},
+                )
+            )
             continue
+        analyzed += 1
         total = reported_mean * n
         distance = abs(total - round(total))
-        tolerance = 0.5 * (10 ** -decimals) * n + 1e-9
+        tolerance = 0.5 * (10**-decimals) * n + 1e-9
         if distance > tolerance:
             implausible.append(
                 Evidence(
@@ -311,7 +325,7 @@ def check_summary_stat_plausibility(text: str, profile: dict) -> Finding:
                 )
             )
 
-    if checked == 0:
+    if detected == 0:
         return _finding(
             "summary_stat_plausibility",
             "Summary-stat plausibility",
@@ -324,6 +338,20 @@ def check_summary_stat_plausibility(text: str, profile: dict) -> Finding:
             tags=["grim", "summary-statistics"],
         )
 
+    if analyzed == 0:
+        return _finding(
+            "summary_stat_plausibility",
+            "Summary-stat plausibility",
+            "statistics",
+            Severity.INFO,
+            Status.SKIPPED,
+            60,
+            f"{detected}件の平均値/n表記を検出しましたが、n<=0または小数なしのためGRIM風の再計算対象は0件でした。",
+            "整数項目の平均値を検査するには、小数付きのM = ..., n = ...表記と有効なサンプルサイズを確認してください。",
+            skipped_matches[:8],
+            ["grim", "summary-statistics", "coverage-blocker"],
+        )
+
     if implausible:
         knobs = profile.get("strictness_knobs", {})
         if integer_context:
@@ -334,7 +362,7 @@ def check_summary_stat_plausibility(text: str, profile: dict) -> Finding:
                 Severity.MEDIUM,
                 Status.WARNING,
                 max(25, 90 - 15 * len(implausible)),
-                f"{checked}件の平均値/n表記を確認し、{len(implausible)}件で整数項目仮定のGRIM違反候補を検出しました。",
+                f"{detected}件の平均値/n表記を検出し、うち{analyzed}件をGRIM風に再計算して、{len(implausible)}件で整数項目仮定のGRIM違反候補を検出しました。",
                 "整数項目尺度が明示されているため、平均値、n、丸め規則、サブグループの定義を確認してください。",
                 implausible[:8],
                 ["grim", "summary-statistics", "integer-item"],
@@ -347,7 +375,7 @@ def check_summary_stat_plausibility(text: str, profile: dict) -> Finding:
                 Severity.INFO,
                 Status.PASSED,
                 90,
-                f"{checked}件の平均値/n表記を確認しましたが、整数項目ヒントが無いためambiguous-scaleの警告は抑制しました(lenient)。",
+                f"{detected}件の平均値/n表記を検出し、うち{analyzed}件をGRIM風に再計算しましたが、整数項目ヒントが無いためambiguous-scaleの警告は抑制しました(lenient)。",
                 "対象指標が整数項目か連続量かを明示すると、再度strict/standardで再確認しやすくなります。",
                 tags=["grim", "summary-statistics", "ambiguous-scale", "suppressed"],
             )
@@ -358,7 +386,7 @@ def check_summary_stat_plausibility(text: str, profile: dict) -> Finding:
             Severity.INFO,
             Status.WARNING,
             max(55, 90 - 5 * len(implausible)),
-            f"{checked}件の平均値/n表記のうち{len(implausible)}件は、整数項目仮定では不整合になります。"
+            f"{detected}件の平均値/n表記を検出し、うち{analyzed}件をGRIM風に再計算しました。{len(implausible)}件は、整数項目仮定では不整合になります。"
             "整数項目尺度を示すヒントが原稿中に見つからないため、連続量であれば問題ありません。",
             "対象指標が整数項目(リッカート、件数など)か連続量かを明示し、整数項目ならGRIM風の再確認を行ってください。",
             implausible[:8],
@@ -372,7 +400,7 @@ def check_summary_stat_plausibility(text: str, profile: dict) -> Finding:
         Severity.LOW,
         Status.PASSED,
         96,
-        f"{checked}件の平均値/n表記で、GRIM風の不自然さは見つかりませんでした。",
+        f"{detected}件の平均値/n表記を検出し、うち{analyzed}件をGRIM風に再計算しました。不自然さは見つかりませんでした。",
         "標準偏差、群別n、補足表に対する追加検査も検討してください。",
         tags=["grim", "summary-statistics"],
     )
@@ -583,7 +611,9 @@ def check_citation_integrity(text: str, profile: dict) -> Finding:
         Severity.LOW,
         Status.PASSED if dois or has_references or numeric_cite_groups else Status.SKIPPED,
         92 if dois or has_references or numeric_cite_groups else 70,
-        "引用の機械的な不整合は検出されませんでした。" if dois or has_references or numeric_cite_groups else "引用/参考文献セクションを検出できませんでした。",
+        "引用の機械的な不整合は検出されませんでした。"
+        if dois or has_references or numeric_cite_groups
+        else "引用/参考文献セクションを検出できませんでした。",
         "次段ではCrossref/OpenAlex/Semantic Scholar APIで全参考文献の実在性と引用文脈を検証してください。",
         [
             Evidence(
@@ -634,7 +664,9 @@ def _claim_alignment_flags(sentence: str, full_text: str) -> list[str]:
         flags.append("novelty_or_priority_claim_without_local_citation")
     if CLAIM_OVERGENERAL_CUE_RE.search(sentence):
         flags.append("overgeneralized_or_conclusive_language")
-    if not has_limitation and re.search(r"\b(robust|important|groundbreaking|definitive|conclusive|prove|重要|頑健|証明)\b", sentence, re.IGNORECASE):
+    if not has_limitation and re.search(
+        r"\b(robust|important|groundbreaking|definitive|conclusive|prove|重要|頑健|証明)\b", sentence, re.IGNORECASE
+    ):
         flags.append("strong_language_without_local_limitation")
     return flags
 
@@ -853,9 +885,12 @@ def check_prompt_injection(text: str, profile: dict) -> Finding:
 
     if evidence:
         severity = (
-            Severity.CRITICAL if max_rank >= 4
-            else Severity.HIGH if max_rank >= 3
-            else Severity.MEDIUM if max_rank >= 2
+            Severity.CRITICAL
+            if max_rank >= 4
+            else Severity.HIGH
+            if max_rank >= 3
+            else Severity.MEDIUM
+            if max_rank >= 2
             else Severity.LOW
         )
         status = Status.FAILED if max_rank >= 3 else Status.WARNING
@@ -1052,7 +1087,11 @@ def check_image_integrity(text: str, profile: dict) -> Finding:
             68,
             f"PDF内に{pdf_inspection.get('image_count')}件の画像候補がありますが、個別画像抽出検査は未完了です。",
             "PDFから図画像を抽出し、EXIF、重複領域、圧縮履歴、図本文参照との整合を確認してください。",
-            [Evidence(data={"pdf_image_count": pdf_inspection.get("image_count"), "implemented_for_pdf_images": False})],
+            [
+                Evidence(
+                    data={"pdf_image_count": pdf_inspection.get("image_count"), "implemented_for_pdf_images": False}
+                )
+            ],
             ["image-integrity", "pdf-image", "coverage-blocker"],
         )
 
@@ -1082,7 +1121,15 @@ def check_image_integrity(text: str, profile: dict) -> Finding:
         score,
         f"本文中に{figure_mentions}件の図参照を検出しましたが、画像ファイル自体は未提出です。",
         "画像ファイルまたはPDFをアップロードし、EXIF、圧縮アーティファクト、重複領域候補、図本文参照の整合を確認してください。",
-        [Evidence(data={"figure_mentions": figure_mentions, "implemented_for_direct_image_files": True, "severity_from_strictness": severity_name})],
+        [
+            Evidence(
+                data={
+                    "figure_mentions": figure_mentions,
+                    "implemented_for_direct_image_files": True,
+                    "severity_from_strictness": severity_name,
+                }
+            )
+        ],
         ["image-integrity", "roadmap"],
     )
 
@@ -1114,11 +1161,25 @@ def check_doi_existence(text: str, profile: dict) -> Finding:
             tags=["citation", "doi", "crossref"],
         )
     max_dois = 12
-    lookups = [lookup_doi(doi) for doi in dois[:max_dois]]
+    checked_dois = dois[:max_dois]
+    unchecked_dois = dois[max_dois:]
+    lookups = [lookup_doi(doi) for doi in checked_dois]
     missing = [r for r in lookups if r["status"] == "missing"]
     errors = [r for r in lookups if r["status"] in {"error", "http_error", "cache_miss"}]
     found = [r for r in lookups if r["status"] == "found"]
     evidence = [Evidence(quote=r["doi"], data=r) for r in (missing + errors + found)[:max_dois]]
+    if unchecked_dois:
+        evidence.append(
+            Evidence(
+                data={
+                    "reason": "doi_lookup_truncated",
+                    "checked_count": len(checked_dois),
+                    "total_count": len(dois),
+                    "unchecked_count": len(unchecked_dois),
+                    "unchecked_dois": unchecked_dois[:20],
+                }
+            )
+        )
 
     if missing:
         return _finding(
@@ -1128,10 +1189,10 @@ def check_doi_existence(text: str, profile: dict) -> Finding:
             Severity.HIGH,
             Status.FAILED,
             max(15, 80 - 15 * len(missing)),
-            f"{len(dois)}件のDOIのうち{len(missing)}件がCrossrefで未登録でした。",
+            f"{len(dois)}件のDOIのうち最初の{len(checked_dois)}件を確認し、{len(missing)}件がCrossrefで未登録でした。未確認DOIは{len(unchecked_dois)}件です。",
             "幻覚引用または誤記の可能性があります。DOIまたは引用先メタデータを確認してください。",
             evidence,
-            ["citation", "doi", "crossref"],
+            ["citation", "doi", "crossref"] + (["coverage-blocker"] if unchecked_dois else []),
         )
     if errors and not found:
         return _finding(
@@ -1141,10 +1202,23 @@ def check_doi_existence(text: str, profile: dict) -> Finding:
             Severity.MEDIUM,
             Status.WARNING,
             55,
-            f"{len(dois)}件のDOI問い合わせがすべてネットワークエラーで失敗しました。",
+            f"{len(dois)}件のDOIのうち最初の{len(checked_dois)}件を問い合わせましたが、すべてネットワークエラーで失敗しました。未確認DOIは{len(unchecked_dois)}件です。",
             "ネットワーク接続またはCrossref APIの可用性を確認してください。",
             evidence,
-            ["citation", "doi", "crossref", "network-error"],
+            ["citation", "doi", "crossref", "network-error"] + (["coverage-blocker"] if unchecked_dois else []),
+        )
+    if unchecked_dois:
+        return _finding(
+            "doi_existence",
+            "DOI existence (Crossref)",
+            "references",
+            Severity.INFO,
+            Status.WARNING,
+            70,
+            f"{len(dois)}件のDOIのうち最初の{len(checked_dois)}件をCrossrefで確認しました。残り{len(unchecked_dois)}件は未検証です。",
+            "長い参考文献リストは未検証DOIをcoverage blockerとして残し、追加バッチまたは外部DB照合で確認してください。",
+            evidence,
+            ["citation", "doi", "crossref", "coverage-blocker"],
         )
     return _finding(
         "doi_existence",
@@ -1169,7 +1243,7 @@ def _scan_keyword_ruleset(text: str, ruleset: KeywordRuleset, lowered: Optional[
         matched = next((kw for kw in item.keywords if kw and kw in lowered), None)
         if matched:
             idx = lowered.find(matched)
-            window = lowered[max(0, idx - 80):idx + len(matched) + 120]
+            window = lowered[max(0, idx - 80) : idx + len(matched) + 120]
             if re.search(r"\b(not applicable|n/?a|not relevant|該当なし|対象外)\b", window, re.IGNORECASE):
                 not_applicable.append(
                     {
@@ -1322,9 +1396,17 @@ def check_pdf_hidden_text(text: str, profile: dict) -> Finding:
             "スキャンPDFや画像内文字はOCRが必要なcoverage blockerとして別途確認してください。",
             tags=["pdf", "hidden-text"],
         )
-    severity_rank = {"low": Severity.LOW, "medium": Severity.MEDIUM, "high": Severity.HIGH}
+    severity_rank = {
+        "info": Severity.INFO,
+        "low": Severity.LOW,
+        "medium": Severity.MEDIUM,
+        "high": Severity.HIGH,
+        "critical": Severity.CRITICAL,
+    }
     combined = [*hits, *document_risks]
-    max_severity = max((severity_rank.get(h.get("severity", "high"), Severity.HIGH) for h in combined), default=Severity.HIGH)
+    max_severity = max(
+        (severity_rank.get(h.get("severity", "high"), Severity.HIGH) for h in combined), default=Severity.HIGH
+    )
     evidence = [
         Evidence(
             quote=(h.get("text") or "")[:200] or None,

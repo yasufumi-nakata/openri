@@ -268,10 +268,6 @@
               {
                 "quote": "The intervention significantly improves clinical outcomes.",
                 "reason": "claim lacks local citation/statistic marker"
-              },
-              {
-                "quote": "These definitive findings prove that the mechanism works for all users.",
-                "reason": "claim lacks local citation/statistic marker"
               }
             ]
           },
@@ -526,11 +522,15 @@
     },
     "score_explanation": {
       "failed_penalty": 0,
-      "final_score": 60,
-      "formula": "mean(finding.score) - strictness_penalty - 8*failed - 2*warnings, clamped to 0..100",
-      "mean_finding_score": 70.92,
+      "final_score": 44,
+      "formula": "mean(non-skipped finding.score) - strictness_penalty - 8*failed - 2*warnings - skipped_penalty, clamped to 0..100",
+      "mean_finding_score": 70.8,
+      "scored_finding_count": 5,
+      "skipped_count_excluded": 8,
+      "skipped_penalty": 16,
+      "skipped_score_cap": null,
       "strictness_penalty": 5,
-      "unclamped_score": 60,
+      "unclamped_score": 44,
       "warning_penalty": 6,
       "worst_findings": [
         {
@@ -675,10 +675,6 @@
                 },
                 {
                   "quote": "The intervention significantly improves clinical outcomes.",
-                  "reason": "claim lacks local citation/statistic marker"
-                },
-                {
-                  "quote": "These definitive findings prove that the mechanism works for all users.",
                   "reason": "claim lacks local citation/statistic marker"
                 }
               ]
@@ -1092,10 +1088,6 @@
           {
             "quote": "The intervention significantly improves clinical outcomes.",
             "reason": "claim lacks local citation/statistic marker"
-          },
-          {
-            "quote": "These definitive findings prove that the mechanism works for all users.",
-            "reason": "claim lacks local citation/statistic marker"
           }
         ]
       },
@@ -1276,7 +1268,7 @@
       "state": "ai_review_with_coverage_blockers",
       "summary": {
         "failed": 0,
-        "score": 60,
+        "score": 44,
         "skipped": 8,
         "warnings": 3
       }
@@ -1440,7 +1432,7 @@
       "category": "statistics",
       "check_id": "statistical_consistency",
       "evidence": [],
-      "id": "finding_d539b9085d",
+      "id": "finding_200f7d5455",
       "message": "検定統計量とp値の組を検出できませんでした。",
       "recommendation": "t(df), F(df1, df2), χ2(df), z(df) と p 値を標準形式で記載すると自動検査できます。",
       "score": 70,
@@ -1455,7 +1447,7 @@
       "category": "statistics",
       "check_id": "summary_stat_plausibility",
       "evidence": [],
-      "id": "finding_ab62cd60cb",
+      "id": "finding_b41f981443",
       "message": "平均値とサンプルサイズの組を検出できませんでした。",
       "recommendation": "整数項目の平均値を報告する場合は、M = ..., n = ... のように書くとGRIM系の検査を追加できます。",
       "score": 72,
@@ -1471,7 +1463,7 @@
       "category": "statistics",
       "check_id": "effect_size_ci_coverage",
       "evidence": [],
-      "id": "finding_5a21a7c1c5",
+      "id": "finding_5ce10bd8e3",
       "message": "効果量または信頼区間を検出できませんでした。",
       "recommendation": "査読前には、主要claimに対応する効果量と信頼区間の有無を確認してください。",
       "score": 72,
@@ -1508,7 +1500,7 @@
           "quote": null
         }
       ],
-      "id": "finding_06fcda85ed",
+      "id": "finding_36b68026f3",
       "message": "倫理、データ、コード、利益相反、資金の透明性項目に複数の不足があります。",
       "recommendation": "投稿前に、倫理審査/同意、data availability、code availability、COI、funding statementを明示してください。",
       "score": 45,
@@ -1537,7 +1529,7 @@
           "quote": null
         }
       ],
-      "id": "finding_d3737519e5",
+      "id": "finding_8d752bffad",
       "message": "引用/参考文献セクションを検出できませんでした。",
       "recommendation": "次段ではCrossref/OpenAlex/Semantic Scholar APIで全参考文献の実在性と引用文脈を検証してください。",
       "score": 70,
@@ -1574,10 +1566,6 @@
               {
                 "quote": "The intervention significantly improves clinical outcomes.",
                 "reason": "claim lacks local citation/statistic marker"
-              },
-              {
-                "quote": "These definitive findings prove that the mechanism works for all users.",
-                "reason": "claim lacks local citation/statistic marker"
               }
             ]
           },
@@ -1585,8 +1573,8 @@
           "quote": null
         }
       ],
-      "id": "finding_86f8d66bd5",
-      "message": "4件のclaimで、同一文内の引用・DOI・統計量マーカーが見つかりませんでした。",
+      "id": "finding_f42c3135d7",
+      "message": "3件のclaimで、同一文内の引用・DOI・統計量マーカーが見つかりませんでした。",
       "recommendation": "重要claimごとに、本文中引用・結果・図表・限界記述との対応をreview_packetで確認してください。",
       "score": 65,
       "severity": "medium",
@@ -1656,7 +1644,7 @@
           "quote": "The intervention significantly improves clinical outcomes."
         }
       ],
-      "id": "finding_284a38bda7",
+      "id": "finding_6395eea4c4",
       "message": "3件のclaim候補を確認し、3件で局所的な証拠・引用・限界との対応確認が必要です。",
       "recommendation": "AI reviewer/AI editorには、各claimについて支持する結果、図表、引用、限界、代替説明を1対1で確認させてください。",
       "score": 48,
@@ -1673,7 +1661,7 @@
       "category": "ai-safety",
       "check_id": "prompt_injection",
       "evidence": [],
-      "id": "finding_d6383d03bf",
+      "id": "finding_89ca4dd9f6",
       "message": "26件のrulesetパターンを走査しましたが、検出はありませんでした。",
       "recommendation": "PDFの座標・色・レイヤー情報に基づく不可視テキスト検査も併用してください(image_integrity_pdfで対応中)。",
       "score": 100,
@@ -1690,7 +1678,7 @@
       "category": "manuscript-quality",
       "check_id": "template_text",
       "evidence": [],
-      "id": "finding_3eaba2f10c",
+      "id": "finding_0e5d0c3dc6",
       "message": "明確な重複段落、近接重複、テンプレート表現の過剰反復は検出されませんでした。",
       "recommendation": "分野別の定型文を許容する場合はルールセットを調整してください。",
       "score": 96,
@@ -1705,7 +1693,7 @@
       "category": "image-integrity",
       "check_id": "image_integrity",
       "evidence": [],
-      "id": "finding_d829a0c7f1",
+      "id": "finding_ed19f75884",
       "message": "図表参照を検出できませんでした。",
       "recommendation": "画像ファイルを添付できるようにすると、複製・不自然な圧縮・メタデータ検査を追加できます。",
       "score": 70,
@@ -1720,7 +1708,7 @@
       "category": "references",
       "check_id": "doi_existence",
       "evidence": [],
-      "id": "finding_5f261e4085",
+      "id": "finding_cfdb08ca00",
       "message": "Crossref問い合わせはネットワーク不要モードで無効化されています(--network で有効化)。",
       "recommendation": "CIで参考文献の実在性を確認したい場合は OPENRI_NETWORK=1 を設定するか、CLIで --network を指定してください。",
       "score": 70,
@@ -1738,7 +1726,7 @@
       "category": "research-integrity",
       "check_id": "ruleset_coverage",
       "evidence": [],
-      "id": "finding_b0f90739c6",
+      "id": "finding_cd789003b8",
       "message": "分野別rulesetは指定されていません(--ruleset consort prisma など)。",
       "recommendation": "分野が決まっている原稿では、CONSORT/PRISMA/MDAR-strict などの ruleset を有効化してください。",
       "score": 72,
@@ -1754,7 +1742,7 @@
       "category": "ai-safety",
       "check_id": "pdf_hidden_text",
       "evidence": [],
-      "id": "finding_dc47ddf6f6",
+      "id": "finding_cc43ee3485",
       "message": "PDF不可視テキスト検査はCLIでPDFを直接渡したときのみ実行されます。",
       "recommendation": "openri check manuscript.pdf を使うと、白色文字・極小フォント・ページ外座標などを検査します。",
       "score": 72,
@@ -1868,7 +1856,7 @@
   "summary": {
     "failed": 0,
     "passed": 2,
-    "score": 60,
+    "score": 44,
     "severity_counts": {
       "critical": 0,
       "high": 1,

@@ -8,13 +8,12 @@ from pathlib import Path
 from . import __version__
 from .analyzer import analyze_manuscript
 from .image_inspect import inspect_image, is_supported_image
-from .models import RunRequest, Severity, Status
-from .pdf import extract_text_from_pdf
+from .models import RunRequest, Status
+from .pdf import PDFTextExtractionError, extract_text_from_pdf
 from .pdf_inspect import inspect_pdf
 from .reviewer_eval import write_eval_report
 from .sarif import report_to_sarif
 from .store import ReportStore
-
 
 _SEVERITY_RANK = {
     "info": 0,
@@ -63,8 +62,10 @@ def _print_human(report) -> None:
     print(f"OpenRI report {report.report_id}")
     print(f"title: {report.title}")
     print(f"strictness: {report.strictness}")
-    print(f"score: {summary.score}/100  passed={summary.passed} warnings={summary.warnings} "
-          f"failed={summary.failed} skipped={summary.skipped}")
+    print(
+        f"score: {summary.score}/100  passed={summary.passed} warnings={summary.warnings} "
+        f"failed={summary.failed} skipped={summary.skipped}"
+    )
     if readiness:
         print(f"ai_review_readiness: {readiness.get('state')} - {readiness.get('label')}")
     if handoff:
@@ -101,7 +102,7 @@ def _print_human(report) -> None:
 def cmd_check(args: argparse.Namespace) -> int:
     try:
         text, source_name, pdf_path, image_path = _read_manuscript(args.manuscript)
-    except FileNotFoundError as exc:
+    except (FileNotFoundError, PDFTextExtractionError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 
@@ -116,7 +117,13 @@ def cmd_check(args: argparse.Namespace) -> int:
             pdf_inspection = inspect_pdf(pdf_path)
         except Exception as exc:  # noqa: BLE001 - report and continue
             print(f"warning: PDF inspection failed: {exc}", file=sys.stderr)
-            pdf_inspection = {"available": False, "reason": str(exc), "hidden_text": [], "document_risks": [], "page_count": 0}
+            pdf_inspection = {
+                "available": False,
+                "reason": str(exc),
+                "hidden_text": [],
+                "document_risks": [],
+                "page_count": 0,
+            }
     if image_path is not None:
         image_inspection = inspect_image(image_path)
 
@@ -130,7 +137,10 @@ def cmd_check(args: argparse.Namespace) -> int:
         enable_network=args.network,
         pdf_inspection=pdf_inspection,
         image_inspection=image_inspection,
-        source_metadata={"source_name": source_name, "source_path": None if args.manuscript == "-" else str(Path(args.manuscript).expanduser())},
+        source_metadata={
+            "source_name": source_name,
+            "source_path": None if args.manuscript == "-" else str(Path(args.manuscript).expanduser()),
+        },
     )
     report = analyze_manuscript(request)
 
@@ -170,8 +180,10 @@ def cmd_list(args: argparse.Namespace) -> int:
         print("(no saved reports)")
         return 0
     for r in rows:
-        print(f"{r['created_at']}  {r['report_id']}  score={r['score']:3d}  "
-              f"failed={r['failed']}  warnings={r['warnings']}  {r['title']}")
+        print(
+            f"{r['created_at']}  {r['report_id']}  score={r['score']:3d}  "
+            f"failed={r['failed']}  warnings={r['warnings']}  {r['title']}"
+        )
     return 0
 
 
@@ -181,9 +193,7 @@ def cmd_show(args: argparse.Namespace) -> int:
         print(f"error: report not found: {args.report_id}", file=sys.stderr)
         return 2
     if args.sarif:
-        Path(args.sarif).expanduser().write_text(
-            json.dumps(report_to_sarif(report), indent=2, ensure_ascii=False)
-        )
+        Path(args.sarif).expanduser().write_text(json.dumps(report_to_sarif(report), indent=2, ensure_ascii=False))
     if args.json:
         sys.stdout.write(report.model_dump_json(indent=2))
         sys.stdout.write("\n")

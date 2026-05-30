@@ -8,6 +8,7 @@ coverage:
 
 lint:
 	python3 -m ruff check backend/openri backend/tests scripts
+	python3 -m ruff format --check backend/openri backend/tests scripts
 
 oss-health:
 	python3 scripts/oss_health_check.py

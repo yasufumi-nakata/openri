@@ -11,8 +11,7 @@ def _by_id(report, check_id):
 
 def _finding_contract(report):
     return {
-        finding.check_id: (finding.status.value, finding.severity.value, finding.score)
-        for finding in report.findings
+        finding.check_id: (finding.status.value, finding.severity.value, finding.score) for finding in report.findings
     }
 
 
@@ -84,9 +83,7 @@ Smith J. 2024. doi: 10.1234/fake-doi.
 
 def test_high_risk_sample_golden_contract():
     sample = Path(__file__).parents[2] / "samples" / "high_risk_manuscript.txt"
-    report = analyze_manuscript(
-        RunRequest(manuscript_text=sample.read_text(encoding="utf-8"), title=sample.name)
-    )
+    report = analyze_manuscript(RunRequest(manuscript_text=sample.read_text(encoding="utf-8"), title=sample.name))
 
     assert report.summary.total_checks == 13
     assert report.summary.passed == 1
@@ -118,13 +115,8 @@ def test_high_risk_sample_golden_contract():
     assert packet["editor_handoff"]["claim_count"] >= 5
     assert packet["editor_handoff"]["task_count"] >= 7
     assert packet["editor_handoff"]["challenge_count"] >= 10
-    assert "task_coverage_blocker_resolution" in {
-        task["id"] for task in packet["reviewer_tasks"]
-    }
-    assert any(
-        "novelty_claim_without_local_citation" in claim["risk_flags"]
-        for claim in packet["claim_inventory"]
-    )
+    assert "task_coverage_blocker_resolution" in {task["id"] for task in packet["reviewer_tasks"]}
+    assert any("novelty_claim_without_local_citation" in claim["risk_flags"] for claim in packet["claim_inventory"])
     accountability = report.accountability
     assert accountability["mode"] == "accountable_explainable_review_record"
     assert accountability["routing_explanation"]["recommended_route"] == "integrity_hold_before_peer_review"
@@ -339,18 +331,24 @@ The treatment effect was statistically significant, t(58) = 2.15, p = 0.003.
 Discussion
 These robust results prove that the intervention improves cognition for all users.
 """
-    unknown_author = """
+    unknown_author = (
+        """
 Author information
 Authors: A. Unknown and B. Local.
 Affiliation: Small College.
 Acknowledgements: We thank the local writing group.
-""" + body
-    prestigious_author = """
+"""
+        + body
+    )
+    prestigious_author = (
+        """
 Author information
 Authors: A. Famous and B. Laureate.
 Affiliation: Global Elite Institute and Nobel Laboratory.
 Acknowledgements: We thank a high-impact journal editor and a prestigious consortium.
-""" + body
+"""
+        + body
+    )
 
     unknown = analyze_manuscript(RunRequest(manuscript_text=unknown_author, title="unknown"))
     prestigious = analyze_manuscript(RunRequest(manuscript_text=prestigious_author, title="prestigious"))
@@ -358,8 +356,7 @@ Acknowledgements: We thank a high-impact journal editor and a prestigious consor
     assert _finding_contract(unknown) == _finding_contract(prestigious)
     assert unknown.submission_processing["recommended_route"] == prestigious.submission_processing["recommended_route"]
     assert (
-        unknown.ai_review_protocol["run_readiness"]["state"]
-        == prestigious.ai_review_protocol["run_readiness"]["state"]
+        unknown.ai_review_protocol["run_readiness"]["state"] == prestigious.ai_review_protocol["run_readiness"]["state"]
     )
     assert unknown.ai_review_protocol["required_ai_reviews"] == prestigious.ai_review_protocol["required_ai_reviews"]
     assert _claim_contract(unknown) == _claim_contract(prestigious)

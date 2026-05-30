@@ -7,7 +7,6 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-
 SCHEMA_VERSION = "openri-report-v1"
 
 
