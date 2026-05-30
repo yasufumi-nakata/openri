@@ -345,6 +345,8 @@ MODEL_AGNOSTIC_REVIEWER_CONTRACT = {
         "cross-model disagreement report when reviewer model changes",
     ],
 }
+
+
 def get_ai_review_protocol_blueprint() -> dict:
     return {
         "mode": "ai_reviewer_replication",
@@ -644,7 +646,12 @@ def build_ai_reviewer_tasks(findings: list, claim_inventory: list[dict], coverag
             "related_claim_ids": claim_ids,
             "related_finding_ids": finding_ids,
             "instruction": "著者に好意的な補完をせず、各claimについて反証、最弱の支持可能表現、著者照会、棄却すべき過剰表現を返してください。",
-            "output_schema": ["claim_id", "strongest_counterargument", "weakest_defensible_claim", "must_fix_before_ai_judgment"],
+            "output_schema": [
+                "claim_id",
+                "strongest_counterargument",
+                "weakest_defensible_claim",
+                "must_fix_before_ai_judgment",
+            ],
             "acceptance_gate": "重大findingまたはcoverage blockerを見落とした査読を採用しない。",
         },
     ]
@@ -749,11 +756,15 @@ def build_submission_processing(summary: RunSummary, findings: list, profile: di
     if any(f.check_id in {"prompt_injection", "pdf_hidden_text"} for f in [*failed, *critical_findings]):
         route = "integrity_hold_before_peer_review"
         route_label = "AI判断前にintegrity確認へ保留"
-        rationale = "LLM査読操作やPDF不可視テキストなど、AI reviewer/AI editorの判断前に隔離確認すべきfindingがあります。"
+        rationale = (
+            "LLM査読操作やPDF不可視テキストなど、AI reviewer/AI editorの判断前に隔離確認すべきfindingがあります。"
+        )
     elif any(f.check_id == "statistical_consistency" for f in failed):
         route = "statistics_editor_screen"
         route_label = "AI判断前の統計整合性確認"
-        rationale = "報告統計量とp値の不整合があり、AI reviewer/AI editorの判断前に数値・丸め・検定方向の確認が必要です。"
+        rationale = (
+            "報告統計量とp値の不整合があり、AI reviewer/AI editorの判断前に数値・丸め・検定方向の確認が必要です。"
+        )
     elif len(warnings) >= 3 or transparency_findings:
         route = "technical_check_then_peer_review"
         route_label = "技術チェック後にAI査読へ"

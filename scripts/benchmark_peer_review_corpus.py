@@ -140,17 +140,11 @@ def manuscript_from_reviewbench(row: dict, max_chars: int) -> str:
     markdown = (row.get("markdown") or "").strip()
     if markdown:
         return markdown[:max_chars]
-    return (
-        f"Title\n{row.get('title', '')}\n\n"
-        f"Abstract\n{row.get('abstract', '')}\n"
-    )[:max_chars]
+    return (f"Title\n{row.get('title', '')}\n\nAbstract\n{row.get('abstract', '')}\n")[:max_chars]
 
 
 def manuscript_from_peersum(row: dict, max_chars: int) -> str:
-    return (
-        f"Title\n{row.get('paper_title', '')}\n\n"
-        f"Abstract\n{row.get('paper_abstract', '')}\n"
-    )[:max_chars]
+    return (f"Title\n{row.get('paper_title', '')}\n\nAbstract\n{row.get('paper_abstract', '')}\n")[:max_chars]
 
 
 def review_text_from_reviewbench(row: dict) -> str:
@@ -200,9 +194,7 @@ def openri_dimension_flags(report) -> Set[str]:
     active = {finding.check_id for finding in report.findings if finding.status in {Status.WARNING, Status.FAILED}}
     packet = report.ai_review_protocol.get("review_packet", {})
     high_tasks = {
-        task.get("id")
-        for task in packet.get("reviewer_tasks", [])
-        if task.get("priority") in {"high", "critical"}
+        task.get("id") for task in packet.get("reviewer_tasks", []) if task.get("priority") in {"high", "critical"}
     }
     flags = set()
     if "claim_evidence_alignment" in active or packet.get("claim_inventory"):
@@ -277,11 +269,7 @@ def summarize_corpus(
         )
         review_concerns = detect_review_concerns(review_text)
         openri_flags = openri_dimension_flags(report)
-        overlap = (
-            len(review_concerns & openri_flags) / len(review_concerns)
-            if review_concerns
-            else None
-        )
+        overlap = len(review_concerns & openri_flags) / len(review_concerns) if review_concerns else None
 
         active = [finding.check_id for finding in report.findings if finding.status in {Status.WARNING, Status.FAILED}]
         scores.append(report.summary.score)

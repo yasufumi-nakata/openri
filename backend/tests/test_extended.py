@@ -725,7 +725,9 @@ def test_upload_limit_rejects_file_while_reading(monkeypatch):
 def test_cross_model_reviewer_eval_records_disagreement(tmp_path):
     gpt55 = tmp_path / "gpt-5.5.json"
     gpt67 = tmp_path / "gpt-6.7.json"
-    gpt55.write_text(json.dumps({"model": "gpt-5.5", "findings": [{"check_id": "citation_context", "severity": "high"}]}))
+    gpt55.write_text(
+        json.dumps({"model": "gpt-5.5", "findings": [{"check_id": "citation_context", "severity": "high"}]})
+    )
     gpt67.write_text(json.dumps({"model": "gpt-6.7", "findings": []}))
     report = compare_review_results([gpt55, gpt67])
     assert report["major_finding_recall"]["gpt-5.5"] == 1.0
@@ -943,7 +945,9 @@ def test_ai_review_protocol_endpoint_documents_test_design_without_auto_acceptan
     assert payload["strictness_policy"]["no_social_leniency"] is True
     assert payload["strictness_policy"]["external_llm_default"] == "disabled"
     assert "採否エンジン本体ではありません" in payload["strictness_policy"]["acceptance_boundary"]
-    assert payload["model_agnostic_reviewer_contract"]["model_identity_policy"]["no_branching_on_brand_or_version"] is True
+    assert (
+        payload["model_agnostic_reviewer_contract"]["model_identity_policy"]["no_branching_on_brand_or_version"] is True
+    )
     assert "gpt-6.7" in payload["model_agnostic_reviewer_contract"]["model_identity_policy"]["model_version_examples"]
     assert "metamorphic_tests" in payload["test_design"]
 
@@ -988,8 +992,7 @@ The method significantly improves performance in Figure 1.
         "row": {
             "paper_title": "Fixture abstract paper",
             "paper_abstract": (
-                "We show a novel result that significantly improves performance, "
-                "but the paper gives limited detail."
+                "We show a novel result that significantly improves performance, but the paper gives limited detail."
             ),
             "paper_acceptance": "accepted",
             "review_contents": [

@@ -832,7 +832,12 @@ def _scan_pattern(text: str, lowered: str, pattern: Pattern, profile: dict) -> l
                 Evidence(
                     quote=text[idx : idx + max(160, len(pattern.value) + 60)],
                     location=_line_number(text, idx, profile),
-                    data={"pattern_id": pattern.id, "type": "phrase", "value": pattern.value, "severity": pattern.severity},
+                    data={
+                        "pattern_id": pattern.id,
+                        "type": "phrase",
+                        "value": pattern.value,
+                        "severity": pattern.severity,
+                    },
                 )
             )
             start = idx + max(1, len(needle))
@@ -846,7 +851,12 @@ def _scan_pattern(text: str, lowered: str, pattern: Pattern, profile: dict) -> l
                 Evidence(
                     quote=match.group(0)[:200],
                     location=_line_number(text, match.start(), profile),
-                    data={"pattern_id": pattern.id, "type": "regex", "value": pattern.value, "severity": pattern.severity},
+                    data={
+                        "pattern_id": pattern.id,
+                        "type": "regex",
+                        "value": pattern.value,
+                        "severity": pattern.severity,
+                    },
                 )
             )
     elif pattern.type == "codepoint":
@@ -864,7 +874,12 @@ def _scan_pattern(text: str, lowered: str, pattern: Pattern, profile: dict) -> l
                 Evidence(
                     quote=None,
                     location=_line_number(text, idx, profile),
-                    data={"pattern_id": pattern.id, "type": "codepoint", "codepoint": hex(codepoint), "severity": pattern.severity},
+                    data={
+                        "pattern_id": pattern.id,
+                        "type": "codepoint",
+                        "codepoint": hex(codepoint),
+                        "severity": pattern.severity,
+                    },
                 )
             )
             start = idx + 1
