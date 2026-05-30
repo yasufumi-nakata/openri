@@ -183,7 +183,7 @@ function App() {
         <header className="topbar">
           <div>
             <h1>Open Research Integrity</h1>
-            <p>提出論文をCodex/Claude等のAI reviewerが厳格に査読できるよう、統計・透明性・引用・隠し指示・主張の証拠対応をテスト化します。</p>
+            <p>提出論文を将来モデルを含むAI reviewer / AI editorが厳格に判断できるよう、統計・透明性・引用・隠し指示・主張の証拠対応をテスト化します。</p>
           </div>
           <div className="topbar-actions">
             <select aria-label="Strictness" value={strictness} onChange={(event) => setStrictness(event.target.value)}>
@@ -200,10 +200,10 @@ function App() {
         <section className="purpose-band">
           <div>
             <span className="section-label">Purpose</span>
-            <h2>人間査読の論点を、分野非依存・証拠優先・忖度なしのAI査読プロトコルとして返します。</h2>
+            <h2>モデル名や世代に依存しない、分野非依存・証拠優先・忖度なしのAI査読ガードレールを返します。</h2>
           </div>
           <p>
-            受付後のPDF/本文抽出、機械検査、編集部トリアージ、AI reviewer assignment、テスト設計までを同じJSON reportにまとめます。
+            受付後のPDF/本文抽出、機械検査、AI判断トリアージ、AI reviewer assignment、テスト設計までを同じJSON reportにまとめます。
           </p>
         </section>
 
@@ -216,8 +216,8 @@ function App() {
             <span className="small-muted">{submissionProcessing?.route_label ?? "Run a manuscript to compute routing"}</span>
           </div>
           <div className="workflow-route">
-            <strong>{submissionProcessing?.route_label ?? "提出受付 → 本文抽出 → 機械検査 → 編集部トリアージ → 人間確認"}</strong>
-            <p>{submissionProcessing?.rationale ?? "この画面は著者の自己点検ではなく、投稿システムに提出された原稿を査読前にどう処理するかを主眼にしています。"}</p>
+            <strong>{submissionProcessing?.route_label ?? "提出受付 → 本文抽出 → 機械検査 → AI判断トリアージ → ガードレールパケット"}</strong>
+            <p>{submissionProcessing?.rationale ?? "この画面は著者の自己点検ではなく、投稿システムに提出された原稿をAI reviewer / AI editorへ渡す前のガードレール作成を主眼にしています。"}</p>
           </div>
           <div className="stage-grid">
             {(submissionProcessing?.stages ?? seedStages).map((stage, index) => (
@@ -230,7 +230,7 @@ function App() {
           </div>
           {submissionProcessing?.human_actions?.length ? (
             <div className="human-actions">
-              <strong>Human confirmation packet</strong>
+              <strong>AI guardrail packet</strong>
               {submissionProcessing.human_actions.slice(0, 3).map((action) => (
                 <div className="action-row" key={`${action.check_id}-${action.status}`}>
                   <span>{action.check_id}</span>
@@ -383,9 +383,16 @@ function App() {
               </div>
             </div>
             <div>
-              <div className="subheading">Human Accountability</div>
+              <div className="subheading">AI Accountability</div>
               <div className="responsibility-list">
-                {(accountability.human_accountability?.responsibility_matrix ?? []).map((item) => (
+                {(
+                  accountability.autonomous_ai_accountability?.required_decision_inputs?.map((item) => ({
+                    role: item,
+                    responsibility: "AI reviewer / AI editor の判断入力として監査対象にします。",
+                  })) ??
+                  accountability.human_accountability?.responsibility_matrix ??
+                  []
+                ).map((item) => (
                   <div className="responsibility-row" key={item.role}>
                     <strong>{item.role}</strong>
                     <span>{item.responsibility}</span>
@@ -710,11 +717,11 @@ function formatReviewKey(key) {
 
 const seedAccountability = {
   mode: "accountable_explainable_review_record",
-  non_autonomy_statement: "OpenRIは不正断定や採否自動決定ではなく、人間が確認すべき証拠付き検査結果を返します。",
+  non_autonomy_statement: "OpenRIは不正断定や採否自動決定ではなく、AI reviewer/AI editorが判断前に扱う証拠付き検査結果を返します。",
   routing_explanation: {
     recommended_route: "pending",
     route_label: "Run a manuscript to explain routing",
-    rationale: "検査後にroute driver、coverage blocker、人間の確認責任を表示します。",
+    rationale: "検査後にroute driver、coverage blocker、AI判断に必要な監査入力を表示します。",
     route_drivers: [
       {
         check_id: "pending",
@@ -742,6 +749,9 @@ const seedAccountability = {
     all_warnings_and_failures_have_evidence: true,
     skipped_checks_are_blockers_not_passes: [],
   },
+  autonomous_ai_accountability: {
+    required_decision_inputs: ["findings", "evidence_ledger", "coverage_blockers", "review_packet"],
+  },
   human_accountability: {
     responsibility_matrix: [
       {
@@ -757,7 +767,7 @@ const seedAccountability = {
 };
 
 const seedAiReviewProtocol = {
-  goal: "Codex/Claude等のAI reviewerが、人間査読で確認される論点を分野非依存・証拠優先・忖度なしで検査します。",
+  goal: "GPT-5.5やGPT-6.7など将来モデルを含むAI reviewerが、査読論点を分野非依存・証拠優先・忖度なしで検査します。",
   strictness_policy: {
     charity_rule: "著者の文章意図は公平に読みますが、証拠不足・数値不整合・未確認引用を好意的に補完しません。",
   },
@@ -914,15 +924,15 @@ const seedStages = [
   },
   {
     id: "triage",
-    label: "編集部トリアージ",
+    label: "AI判断トリアージ",
     status: "pending",
-    detail: "保留、統計確認、技術チェック、通常査読へ振り分けます。",
+    detail: "保留、統計確認、技術チェック、AI査読継続可否へ振り分けます。",
   },
   {
     id: "packet",
-    label: "人間確認",
+    label: "ガードレール",
     status: "pending",
-    detail: "evidenceとrecommendationをhandling editorへ渡します。",
+    detail: "evidence、coverage blocker、acceptance gateをAI editorへ渡します。",
   },
 ];
 

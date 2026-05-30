@@ -1,0 +1,707 @@
+{
+  "schema": "openri-peer-review-corpus-benchmark-v1",
+  "created_at": "2026-05-23T20:01:00.019086+00:00",
+  "policy": "This is an external-corpus smoke benchmark, not misconduct ground truth. Reviewer-text overlap is a heuristic proxy for whether OpenRI's review packet surfaces similar review dimensions.",
+  "corpora": [
+    {
+      "corpus": "reviewbench",
+      "dataset": "Samarth0710/reviewbench",
+      "split": "iclr",
+      "source_url": "https://datasets-server.huggingface.co/rows?dataset=Samarth0710%2Freviewbench&config=default&split=iclr&offset=0&length=10",
+      "rows_total": 22532,
+      "case_count": 10,
+      "input_mode": "fulltext-markdown",
+      "max_chars_per_case": 80000,
+      "score": {
+        "mean": 54.6,
+        "median": 54.0,
+        "min": 51,
+        "max": 57
+      },
+      "route_distribution": {
+        "technical_check_then_peer_review": 10
+      },
+      "readiness_distribution": {
+        "ai_review_with_coverage_blockers": 10
+      },
+      "active_finding_counts": {
+        "citation_context": 10,
+        "citation_integrity": 6,
+        "claim_evidence_alignment": 10,
+        "effect_size_ci_coverage": 1,
+        "image_integrity": 10,
+        "reporting_transparency": 10
+      },
+      "required_ai_review_counts": {
+        "adversarial_reviewer": 10,
+        "ethics_integrity_reviewer": 10,
+        "field_generalist": 10,
+        "methodology_reviewer": 10,
+        "reproducibility_reviewer": 10
+      },
+      "review_concern_counts": {
+        "citation_or_related_work": 7,
+        "claim_evidence_or_overclaim": 9,
+        "clarity_or_presentation": 9,
+        "method_or_experiment": 10,
+        "reproducibility_or_code": 7,
+        "statistics_or_results": 5
+      },
+      "openri_dimension_counts": {
+        "citation_or_related_work": 10,
+        "claim_evidence_or_overclaim": 10,
+        "method_or_experiment": 10,
+        "reproducibility_or_code": 10,
+        "statistics_or_results": 1
+      },
+      "review_concern_overlap_proxy_mean": 0.738,
+      "coverage_blocker_count_mean": 4.0,
+      "claim_count_mean": 7.9,
+      "cases": [
+        {
+          "row_idx": 0,
+          "title": "Preventing Imitation Learning with Adversarial Policy Ensembles",
+          "decision": "Reject",
+          "score": 57,
+          "route": "technical_check_then_peer_review",
+          "readiness": "ai_review_with_coverage_blockers",
+          "active_findings": [
+            "reporting_transparency",
+            "citation_context",
+            "claim_evidence_alignment",
+            "image_integrity"
+          ],
+          "coverage_blocker_count": 4,
+          "claim_count": 8,
+          "review_concern_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "clarity_or_presentation",
+            "method_or_experiment",
+            "reproducibility_or_code",
+            "statistics_or_results"
+          ],
+          "openri_dimension_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "review_concern_overlap_proxy": 0.667
+        },
+        {
+          "row_idx": 1,
+          "title": "Gaussian Conditional Random Fields for Classification",
+          "decision": "Reject",
+          "score": 53,
+          "route": "technical_check_then_peer_review",
+          "readiness": "ai_review_with_coverage_blockers",
+          "active_findings": [
+            "reporting_transparency",
+            "citation_integrity",
+            "citation_context",
+            "claim_evidence_alignment",
+            "image_integrity"
+          ],
+          "coverage_blocker_count": 4,
+          "claim_count": 8,
+          "review_concern_categories": [
+            "claim_evidence_or_overclaim",
+            "clarity_or_presentation",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "openri_dimension_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "review_concern_overlap_proxy": 0.75
+        },
+        {
+          "row_idx": 2,
+          "title": "SCELMo: Source Code Embeddings from Language Models",
+          "decision": "Reject",
+          "score": 57,
+          "route": "technical_check_then_peer_review",
+          "readiness": "ai_review_with_coverage_blockers",
+          "active_findings": [
+            "reporting_transparency",
+            "citation_context",
+            "claim_evidence_alignment",
+            "image_integrity"
+          ],
+          "coverage_blocker_count": 4,
+          "claim_count": 8,
+          "review_concern_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "clarity_or_presentation",
+            "method_or_experiment",
+            "reproducibility_or_code",
+            "statistics_or_results"
+          ],
+          "openri_dimension_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "review_concern_overlap_proxy": 0.667
+        },
+        {
+          "row_idx": 3,
+          "title": "Learning to Learn by Zeroth-Order Oracle",
+          "decision": "Accept (Poster)",
+          "score": 53,
+          "route": "technical_check_then_peer_review",
+          "readiness": "ai_review_with_coverage_blockers",
+          "active_findings": [
+            "reporting_transparency",
+            "citation_integrity",
+            "citation_context",
+            "claim_evidence_alignment",
+            "image_integrity"
+          ],
+          "coverage_blocker_count": 4,
+          "claim_count": 8,
+          "review_concern_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "clarity_or_presentation",
+            "method_or_experiment",
+            "statistics_or_results"
+          ],
+          "openri_dimension_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "review_concern_overlap_proxy": 0.6
+        },
+        {
+          "row_idx": 4,
+          "title": "Symplectic ODE-Net: Learning Hamiltonian Dynamics with Control",
+          "decision": "Accept (Poster)",
+          "score": 53,
+          "route": "technical_check_then_peer_review",
+          "readiness": "ai_review_with_coverage_blockers",
+          "active_findings": [
+            "reporting_transparency",
+            "citation_integrity",
+            "citation_context",
+            "claim_evidence_alignment",
+            "image_integrity"
+          ],
+          "coverage_blocker_count": 4,
+          "claim_count": 8,
+          "review_concern_categories": [
+            "citation_or_related_work",
+            "clarity_or_presentation",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "openri_dimension_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "review_concern_overlap_proxy": 0.75
+        },
+        {
+          "row_idx": 5,
+          "title": "Distributionally Robust Neural Networks",
+          "decision": "Accept (Poster)",
+          "score": 55,
+          "route": "technical_check_then_peer_review",
+          "readiness": "ai_review_with_coverage_blockers",
+          "active_findings": [
+            "reporting_transparency",
+            "citation_integrity",
+            "citation_context",
+            "claim_evidence_alignment",
+            "image_integrity"
+          ],
+          "coverage_blocker_count": 4,
+          "claim_count": 8,
+          "review_concern_categories": [
+            "claim_evidence_or_overclaim",
+            "clarity_or_presentation",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "openri_dimension_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "review_concern_overlap_proxy": 0.75
+        },
+        {
+          "row_idx": 6,
+          "title": "NeurQuRI: Neural Question Requirement Inspector for Answerability Prediction in Machine Reading Comprehension",
+          "decision": "Accept (Poster)",
+          "score": 57,
+          "route": "technical_check_then_peer_review",
+          "readiness": "ai_review_with_coverage_blockers",
+          "active_findings": [
+            "reporting_transparency",
+            "citation_context",
+            "claim_evidence_alignment",
+            "image_integrity"
+          ],
+          "coverage_blocker_count": 4,
+          "claim_count": 8,
+          "review_concern_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "method_or_experiment"
+          ],
+          "openri_dimension_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "review_concern_overlap_proxy": 1.0
+        },
+        {
+          "row_idx": 7,
+          "title": "DG-GAN: the GAN with the duality gap",
+          "decision": "Reject",
+          "score": 51,
+          "route": "technical_check_then_peer_review",
+          "readiness": "ai_review_with_coverage_blockers",
+          "active_findings": [
+            "effect_size_ci_coverage",
+            "reporting_transparency",
+            "citation_integrity",
+            "citation_context",
+            "claim_evidence_alignment",
+            "image_integrity"
+          ],
+          "coverage_blocker_count": 4,
+          "claim_count": 7,
+          "review_concern_categories": [
+            "claim_evidence_or_overclaim",
+            "clarity_or_presentation",
+            "method_or_experiment",
+            "reproducibility_or_code",
+            "statistics_or_results"
+          ],
+          "openri_dimension_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "method_or_experiment",
+            "reproducibility_or_code",
+            "statistics_or_results"
+          ],
+          "review_concern_overlap_proxy": 0.8
+        },
+        {
+          "row_idx": 8,
+          "title": "ADAPTING PRETRAINED LANGUAGE MODELS FOR LONG DOCUMENT CLASSIFICATION",
+          "decision": "Reject",
+          "score": 57,
+          "route": "technical_check_then_peer_review",
+          "readiness": "ai_review_with_coverage_blockers",
+          "active_findings": [
+            "reporting_transparency",
+            "citation_context",
+            "claim_evidence_alignment",
+            "image_integrity"
+          ],
+          "coverage_blocker_count": 4,
+          "claim_count": 8,
+          "review_concern_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "clarity_or_presentation",
+            "method_or_experiment",
+            "statistics_or_results"
+          ],
+          "openri_dimension_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "review_concern_overlap_proxy": 0.6
+        },
+        {
+          "row_idx": 9,
+          "title": "Robust training with ensemble consensus",
+          "decision": "Accept (Poster)",
+          "score": 53,
+          "route": "technical_check_then_peer_review",
+          "readiness": "ai_review_with_coverage_blockers",
+          "active_findings": [
+            "reporting_transparency",
+            "citation_integrity",
+            "citation_context",
+            "claim_evidence_alignment",
+            "image_integrity"
+          ],
+          "coverage_blocker_count": 4,
+          "claim_count": 8,
+          "review_concern_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "clarity_or_presentation",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "openri_dimension_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "review_concern_overlap_proxy": 0.8
+        }
+      ],
+      "fetch_cache": "enabled"
+    },
+    {
+      "corpus": "peersum",
+      "dataset": "oaimli/PeerSum",
+      "split": "train",
+      "source_url": "https://datasets-server.huggingface.co/rows?dataset=oaimli%2FPeerSum&config=default&split=train&offset=0&length=10",
+      "rows_total": 14993,
+      "case_count": 10,
+      "input_mode": "title-abstract-only",
+      "max_chars_per_case": 80000,
+      "score": {
+        "mean": 62.4,
+        "median": 61.5,
+        "min": 60,
+        "max": 65
+      },
+      "route_distribution": {
+        "technical_check_then_peer_review": 10
+      },
+      "readiness_distribution": {
+        "ai_review_with_coverage_blockers": 10
+      },
+      "active_finding_counts": {
+        "citation_context": 6,
+        "claim_evidence_alignment": 10,
+        "reporting_transparency": 10
+      },
+      "required_ai_review_counts": {
+        "adversarial_reviewer": 10,
+        "ethics_integrity_reviewer": 10,
+        "field_generalist": 10,
+        "methodology_reviewer": 10,
+        "reproducibility_reviewer": 10
+      },
+      "review_concern_counts": {
+        "citation_or_related_work": 8,
+        "claim_evidence_or_overclaim": 9,
+        "clarity_or_presentation": 10,
+        "method_or_experiment": 10,
+        "reproducibility_or_code": 8,
+        "statistics_or_results": 6
+      },
+      "openri_dimension_counts": {
+        "citation_or_related_work": 6,
+        "claim_evidence_or_overclaim": 10,
+        "method_or_experiment": 10,
+        "reproducibility_or_code": 10
+      },
+      "review_concern_overlap_proxy_mean": 0.62,
+      "coverage_blocker_count_mean": 4.0,
+      "claim_count_mean": 1.9,
+      "cases": [
+        {
+          "row_idx": 0,
+          "title": "On the Convergence of Adam and Beyond",
+          "decision": "accepted-oral-papers",
+          "score": 60,
+          "route": "technical_check_then_peer_review",
+          "readiness": "ai_review_with_coverage_blockers",
+          "active_findings": [
+            "reporting_transparency",
+            "citation_context",
+            "claim_evidence_alignment"
+          ],
+          "coverage_blocker_count": 4,
+          "claim_count": 3,
+          "review_concern_categories": [
+            "claim_evidence_or_overclaim",
+            "clarity_or_presentation",
+            "method_or_experiment",
+            "reproducibility_or_code",
+            "statistics_or_results"
+          ],
+          "openri_dimension_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "review_concern_overlap_proxy": 0.6
+        },
+        {
+          "row_idx": 1,
+          "title": "Synthetic and Natural Noise Both Break Neural Machine Translation",
+          "decision": "accepted-oral-papers",
+          "score": 61,
+          "route": "technical_check_then_peer_review",
+          "readiness": "ai_review_with_coverage_blockers",
+          "active_findings": [
+            "reporting_transparency",
+            "citation_context",
+            "claim_evidence_alignment"
+          ],
+          "coverage_blocker_count": 4,
+          "claim_count": 3,
+          "review_concern_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "clarity_or_presentation",
+            "method_or_experiment"
+          ],
+          "openri_dimension_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "review_concern_overlap_proxy": 0.75
+        },
+        {
+          "row_idx": 2,
+          "title": "Multi-Scale Dense Networks for Resource Efficient Image Classification",
+          "decision": "accepted-oral-papers",
+          "score": 62,
+          "route": "technical_check_then_peer_review",
+          "readiness": "ai_review_with_coverage_blockers",
+          "active_findings": [
+            "reporting_transparency",
+            "citation_context",
+            "claim_evidence_alignment"
+          ],
+          "coverage_blocker_count": 4,
+          "claim_count": 1,
+          "review_concern_categories": [
+            "claim_evidence_or_overclaim",
+            "clarity_or_presentation",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "openri_dimension_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "review_concern_overlap_proxy": 0.75
+        },
+        {
+          "row_idx": 3,
+          "title": "Training and Inference with Integers in Deep Neural Networks",
+          "decision": "accepted-oral-papers",
+          "score": 64,
+          "route": "technical_check_then_peer_review",
+          "readiness": "ai_review_with_coverage_blockers",
+          "active_findings": [
+            "reporting_transparency",
+            "claim_evidence_alignment"
+          ],
+          "coverage_blocker_count": 4,
+          "claim_count": 2,
+          "review_concern_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "clarity_or_presentation",
+            "method_or_experiment",
+            "reproducibility_or_code",
+            "statistics_or_results"
+          ],
+          "openri_dimension_categories": [
+            "claim_evidence_or_overclaim",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "review_concern_overlap_proxy": 0.5
+        },
+        {
+          "row_idx": 4,
+          "title": "Emergence of Linguistic Communication from  Referential Games with Symbolic and Pixel Input",
+          "decision": "accepted-oral-papers",
+          "score": 65,
+          "route": "technical_check_then_peer_review",
+          "readiness": "ai_review_with_coverage_blockers",
+          "active_findings": [
+            "reporting_transparency",
+            "claim_evidence_alignment"
+          ],
+          "coverage_blocker_count": 4,
+          "claim_count": 1,
+          "review_concern_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "clarity_or_presentation",
+            "method_or_experiment",
+            "reproducibility_or_code",
+            "statistics_or_results"
+          ],
+          "openri_dimension_categories": [
+            "claim_evidence_or_overclaim",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "review_concern_overlap_proxy": 0.5
+        },
+        {
+          "row_idx": 5,
+          "title": "Spherical CNNs",
+          "decision": "accepted-oral-papers",
+          "score": 65,
+          "route": "technical_check_then_peer_review",
+          "readiness": "ai_review_with_coverage_blockers",
+          "active_findings": [
+            "reporting_transparency",
+            "claim_evidence_alignment"
+          ],
+          "coverage_blocker_count": 4,
+          "claim_count": 1,
+          "review_concern_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "clarity_or_presentation",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "openri_dimension_categories": [
+            "claim_evidence_or_overclaim",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "review_concern_overlap_proxy": 0.6
+        },
+        {
+          "row_idx": 6,
+          "title": "Ask the Right Questions: Active Question Reformulation with Reinforcement Learning",
+          "decision": "accepted-oral-papers",
+          "score": 65,
+          "route": "technical_check_then_peer_review",
+          "readiness": "ai_review_with_coverage_blockers",
+          "active_findings": [
+            "reporting_transparency",
+            "claim_evidence_alignment"
+          ],
+          "coverage_blocker_count": 4,
+          "claim_count": 1,
+          "review_concern_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "clarity_or_presentation",
+            "method_or_experiment",
+            "reproducibility_or_code",
+            "statistics_or_results"
+          ],
+          "openri_dimension_categories": [
+            "claim_evidence_or_overclaim",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "review_concern_overlap_proxy": 0.5
+        },
+        {
+          "row_idx": 7,
+          "title": "On the insufficiency of existing momentum schemes for Stochastic Optimization",
+          "decision": "accepted-oral-papers",
+          "score": 60,
+          "route": "technical_check_then_peer_review",
+          "readiness": "ai_review_with_coverage_blockers",
+          "active_findings": [
+            "reporting_transparency",
+            "citation_context",
+            "claim_evidence_alignment"
+          ],
+          "coverage_blocker_count": 4,
+          "claim_count": 3,
+          "review_concern_categories": [
+            "citation_or_related_work",
+            "clarity_or_presentation",
+            "method_or_experiment"
+          ],
+          "openri_dimension_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "review_concern_overlap_proxy": 0.667
+        },
+        {
+          "row_idx": 8,
+          "title": "Certifying Some Distributional Robustness with Principled Adversarial Training",
+          "decision": "accepted-oral-papers",
+          "score": 61,
+          "route": "technical_check_then_peer_review",
+          "readiness": "ai_review_with_coverage_blockers",
+          "active_findings": [
+            "reporting_transparency",
+            "citation_context",
+            "claim_evidence_alignment"
+          ],
+          "coverage_blocker_count": 4,
+          "claim_count": 2,
+          "review_concern_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "clarity_or_presentation",
+            "method_or_experiment",
+            "reproducibility_or_code",
+            "statistics_or_results"
+          ],
+          "openri_dimension_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "review_concern_overlap_proxy": 0.667
+        },
+        {
+          "row_idx": 9,
+          "title": "Learning Deep Mean Field Games for Modeling Large Population Behavior",
+          "decision": "accepted-oral-papers",
+          "score": 61,
+          "route": "technical_check_then_peer_review",
+          "readiness": "ai_review_with_coverage_blockers",
+          "active_findings": [
+            "reporting_transparency",
+            "citation_context",
+            "claim_evidence_alignment"
+          ],
+          "coverage_blocker_count": 4,
+          "claim_count": 2,
+          "review_concern_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "clarity_or_presentation",
+            "method_or_experiment",
+            "reproducibility_or_code",
+            "statistics_or_results"
+          ],
+          "openri_dimension_categories": [
+            "citation_or_related_work",
+            "claim_evidence_or_overclaim",
+            "method_or_experiment",
+            "reproducibility_or_code"
+          ],
+          "review_concern_overlap_proxy": 0.667
+        }
+      ],
+      "fetch_cache": "enabled"
+    }
+  ]
+}

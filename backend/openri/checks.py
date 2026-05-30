@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from bisect import bisect_right
 import math
 import re
 from collections import Counter
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Optional
 
 from scipy import stats
 
@@ -114,7 +115,10 @@ def _finding(
     )
 
 
-def _line_number(text: str, start: int) -> str:
+def _line_number(text: str, start: int, profile: Optional[dict] = None) -> str:
+    line_starts = (profile or {}).get("_line_starts")
+    if isinstance(line_starts, list) and line_starts:
+        return f"line {bisect_right(line_starts, start)}"
     return f"line {text.count(chr(10), 0, start) + 1}"
 
 
@@ -175,7 +179,7 @@ def check_statistical_consistency(text: str, profile: dict) -> Finding:
             mismatches.append(
                 Evidence(
                     quote=match.group(0).strip(),
-                    location=_line_number(text, match.start()),
+                    location=_line_number(text, match.start(), profile),
                     data={
                         "test": test,
                         "statistic": value,
@@ -234,7 +238,7 @@ def check_effect_size_ci_coverage(text: str, profile: dict) -> Finding:
     effects = [
         Evidence(
             quote=match.group(0),
-            location=_line_number(text, match.start()),
+            location=_line_number(text, match.start(), profile),
             data={"kind": match.group("kind"), "value": float(match.group("value"))},
         )
         for match in EFFECT_RE.finditer(text)
@@ -242,7 +246,7 @@ def check_effect_size_ci_coverage(text: str, profile: dict) -> Finding:
     cis = [
         Evidence(
             quote=match.group(0),
-            location=_line_number(text, match.start()),
+            location=_line_number(text, match.start(), profile),
             data={"level": match.group("level"), "low": float(match.group("low")), "high": float(match.group("high"))},
         )
         for match in CI_RE.finditer(text)
@@ -294,7 +298,7 @@ def check_summary_stat_plausibility(text: str, profile: dict) -> Finding:
             implausible.append(
                 Evidence(
                     quote=match.group(0).strip(),
-                    location=_line_number(text, match.start()),
+                    location=_line_number(text, match.start(), profile),
                     data={
                         "mean": reported_mean,
                         "n": n,
@@ -375,7 +379,7 @@ def check_summary_stat_plausibility(text: str, profile: dict) -> Finding:
 
 
 def check_reporting_transparency(text: str, profile: dict) -> Finding:
-    lowered = text.lower()
+    lowered = profile.get("_lower_text") or text.lower()
     required = {
         "ethics": ["ethics", "irb", "institutional review board", "informed consent", "倫理", "同意"],
         "data": ["data availability", "available at", "repository", "osf", "zenodo", "figshare", "データ"],
@@ -597,7 +601,7 @@ def check_citation_integrity(text: str, profile: dict) -> Finding:
     )
 
 
-def _claim_sentences(text: str) -> list[dict]:
+def _claim_sentences(text: str, profile: dict) -> list[dict]:
     sentences: list[dict] = []
     for match in re.finditer(r"[^.!?\n。！？]+(?:[.!?。！？]+|\n|$)", text):
         sentence = " ".join(match.group(0).strip().split())
@@ -607,7 +611,7 @@ def _claim_sentences(text: str) -> list[dict]:
             {
                 "text": sentence,
                 "start": match.start(),
-                "location": _line_number(text, match.start()),
+                "location": _line_number(text, match.start(), profile),
             }
         )
     return sentences
@@ -644,7 +648,7 @@ def check_claim_evidence_alignment(text: str, profile: dict) -> Finding:
         "significance_claim_without_local_statistic",
     }
 
-    for item in _claim_sentences(text):
+    for item in _claim_sentences(text, profile):
         sentence = item["text"]
         if not CLAIM_CUE_RE.search(sentence):
             continue
@@ -694,7 +698,7 @@ def check_claim_evidence_alignment(text: str, profile: dict) -> Finding:
             Status.WARNING,
             max(20, 88 - 10 * len(evidence) - (10 if severity == Severity.HIGH else 0)),
             f"{checked}件のclaim候補を確認し、{len(evidence)}件で局所的な証拠・引用・限界との対応確認が必要です。",
-            "人間査読では、各claimについて支持する結果、図表、引用、限界、代替説明を1対1で確認してください。",
+            "AI reviewer/AI editorには、各claimについて支持する結果、図表、引用、限界、代替説明を1対1で確認させてください。",
             evidence[:10],
             ["claim-evidence", "overclaim", "explainability"],
         )
@@ -753,7 +757,7 @@ def check_citation_context(text: str, profile: dict) -> Finding:
             Status.PASSED,
             92,
             "参考文献リストと本文中引用の基本構造を抽出し、明確な番号不整合は見つかりませんでした。",
-            "引用がclaimを本当に支えているかは、review_packetのclaim inventoryを用いて人間またはAI reviewerが確認してください。",
+            "引用がclaimを本当に支えているかは、review_packetのclaim inventoryを用いてAI reviewer/AI editorが判断前に確認してください。",
             evidence,
             ["citation", "reference-list", "claim-support"],
         )
@@ -783,7 +787,7 @@ def _prompt_injection_patterns() -> list[Pattern]:
     return merge_patterns(rulesets)
 
 
-def _scan_pattern(text: str, lowered: str, pattern: Pattern) -> list[Evidence]:
+def _scan_pattern(text: str, lowered: str, pattern: Pattern, profile: dict) -> list[Evidence]:
     evidence: list[Evidence] = []
     if pattern.type == "phrase":
         needle = pattern.value.lower()
@@ -795,7 +799,7 @@ def _scan_pattern(text: str, lowered: str, pattern: Pattern) -> list[Evidence]:
             evidence.append(
                 Evidence(
                     quote=text[idx : idx + max(160, len(pattern.value) + 60)],
-                    location=_line_number(text, idx),
+                    location=_line_number(text, idx, profile),
                     data={"pattern_id": pattern.id, "type": "phrase", "value": pattern.value, "severity": pattern.severity},
                 )
             )
@@ -809,7 +813,7 @@ def _scan_pattern(text: str, lowered: str, pattern: Pattern) -> list[Evidence]:
             evidence.append(
                 Evidence(
                     quote=match.group(0)[:200],
-                    location=_line_number(text, match.start()),
+                    location=_line_number(text, match.start(), profile),
                     data={"pattern_id": pattern.id, "type": "regex", "value": pattern.value, "severity": pattern.severity},
                 )
             )
@@ -827,7 +831,7 @@ def _scan_pattern(text: str, lowered: str, pattern: Pattern) -> list[Evidence]:
             evidence.append(
                 Evidence(
                     quote=None,
-                    location=_line_number(text, idx),
+                    location=_line_number(text, idx, profile),
                     data={"pattern_id": pattern.id, "type": "codepoint", "codepoint": hex(codepoint), "severity": pattern.severity},
                 )
             )
@@ -837,12 +841,12 @@ def _scan_pattern(text: str, lowered: str, pattern: Pattern) -> list[Evidence]:
 
 def check_prompt_injection(text: str, profile: dict) -> Finding:
     patterns = _prompt_injection_patterns()
-    lowered = text.lower()
+    lowered = profile.get("_lower_text") or text.lower()
     evidence: list[Evidence] = []
     max_rank = 0
 
     for pattern in patterns:
-        hits = _scan_pattern(text, lowered, pattern)
+        hits = _scan_pattern(text, lowered, pattern, profile)
         if hits:
             max_rank = max(max_rank, _SEVERITY_RANK.get(pattern.severity, 2))
         evidence.extend(hits)
@@ -864,7 +868,7 @@ def check_prompt_injection(text: str, profile: dict) -> Finding:
             status,
             score,
             f"{len(patterns)}件のrule中、{len(evidence)}件の検出があり、最も重いseverityは{severity.value}でした。",
-            "PDF/HTML抽出テキスト、不可視テキスト、白色文字、ゼロ幅文字を除去し、人間が確認できる原稿だけを検査対象にしてください。",
+            "PDF/HTML抽出テキスト、不可視テキスト、白色文字、ゼロ幅文字を除去し、AI reviewer/AI editorが安全に処理できる原稿だけを検査対象にしてください。",
             evidence[:12],
             ["prompt-injection", "hidden-text", "yaml-ruleset"],
         )
@@ -1156,8 +1160,8 @@ def check_doi_existence(text: str, profile: dict) -> Finding:
     )
 
 
-def _scan_keyword_ruleset(text: str, ruleset: KeywordRuleset) -> dict:
-    lowered = text.lower()
+def _scan_keyword_ruleset(text: str, ruleset: KeywordRuleset, lowered: Optional[str] = None) -> dict:
+    lowered = lowered or text.lower()
     detected: list[dict] = []
     missing: list[dict] = []
     not_applicable: list[dict] = []
@@ -1237,7 +1241,7 @@ def check_ruleset_coverage(text: str, profile: dict) -> Finding:
         except RuntimeError as exc:
             unknown.append(f"{ruleset_id} ({exc})")
             continue
-        summary = _scan_keyword_ruleset(text, ruleset)
+        summary = _scan_keyword_ruleset(text, ruleset, profile.get("_lower_text"))
         summaries.append(summary)
         total_items += summary["total"]
         total_missing += len(summary["missing"])
@@ -1269,7 +1273,7 @@ def check_ruleset_coverage(text: str, profile: dict) -> Finding:
             Status.PASSED,
             min(100, 80 + int(coverage_ratio * 20)),
             f"{len(summaries)}件のrulesetで、合計{total_items}項目すべてに対応キーワードを検出しました。",
-            "キーワードの存在=記載完備ではないため、各項目の内容を人間が確認してください。",
+            "キーワードの存在=記載完備ではないため、各項目の内容をAI reviewer/AI editorの判断入力として確認してください。",
             evidence,
             ["ruleset", "field-specific"],
         )

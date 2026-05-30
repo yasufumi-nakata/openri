@@ -2,10 +2,10 @@
   "schema": "openri-public-benchmark-v1",
   "case_count": 8,
   "recall_proxy": 1.0,
-  "precision_proxy": 0.583,
+  "precision_proxy": 0.467,
   "route_distribution": {
-    "route_to_peer_review": 3,
-    "technical_check_then_peer_review": 3,
+    "route_to_peer_review": 2,
+    "technical_check_then_peer_review": 4,
     "statistics_editor_screen": 1,
     "integrity_hold_before_peer_review": 1
   },
@@ -13,7 +13,7 @@
   "cases": [
     {
       "case": "borderline_rounding",
-      "score": 74,
+      "score": 73,
       "route": "route_to_peer_review",
       "expected_checks": [],
       "hit_expected_checks": [],
@@ -24,18 +24,19 @@
     },
     {
       "case": "clean_transparent",
-      "score": 77,
+      "score": 75,
       "route": "route_to_peer_review",
       "expected_checks": [],
       "hit_expected_checks": [],
       "warning_or_failed_checks": [
+        "claim_evidence_alignment",
         "effect_size_ci_coverage"
       ],
       "coverage_blocker_count": 4
     },
     {
       "case": "missing_transparency",
-      "score": 69,
+      "score": 70,
       "route": "technical_check_then_peer_review",
       "expected_checks": [
         "reporting_transparency"
@@ -50,7 +51,7 @@
     },
     {
       "case": "p_value_mismatch",
-      "score": 68,
+      "score": 69,
       "route": "statistics_editor_screen",
       "expected_checks": [
         "statistical_consistency"
@@ -65,8 +66,8 @@
     },
     {
       "case": "placeholder_citation",
-      "score": 66,
-      "route": "route_to_peer_review",
+      "score": 62,
+      "route": "technical_check_then_peer_review",
       "expected_checks": [
         "citation_context",
         "citation_integrity"
@@ -77,7 +78,8 @@
       ],
       "warning_or_failed_checks": [
         "citation_context",
-        "citation_integrity"
+        "citation_integrity",
+        "claim_evidence_alignment"
       ],
       "coverage_blocker_count": 4
     },
@@ -115,7 +117,7 @@
     },
     {
       "case": "unsupported_causal_claim",
-      "score": 64,
+      "score": 60,
       "route": "technical_check_then_peer_review",
       "expected_checks": [
         "citation_context"
@@ -125,6 +127,7 @@
       ],
       "warning_or_failed_checks": [
         "citation_context",
+        "claim_evidence_alignment",
         "reporting_transparency"
       ],
       "coverage_blocker_count": 4

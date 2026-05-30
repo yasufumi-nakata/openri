@@ -211,6 +211,38 @@ def build_pages() -> None:
         target_dir = DOCS / slug
         target_dir.mkdir(parents=True, exist_ok=True)
         (target_dir / "index.html").write_text(render_markdown_page(source, slug), encoding="utf-8")
+    package_dir = DOCS / "packages"
+    package_dir.mkdir(parents=True, exist_ok=True)
+    package_index = package_dir / "index.html"
+    if not package_index.exists():
+        package_index.write_text(
+            """<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="refresh" content="0; url=../distributions/">
+    <title>OpenRI Packages | OpenRI Tutorial</title>
+    <meta name="description" content="OpenRI の package registry 互換ページです。">
+    <link rel="canonical" href="../distributions/">
+    <link rel="stylesheet" href="../assets/openri-pages.css">
+  </head>
+  <body>
+    <div class="site-shell">
+      <main>
+        <article class="article section">
+          <p class="breadcrumb"><a href="../">OpenRI Tutorial</a> / Packages</p>
+          <h1>OpenRI Packages</h1>
+          <p>OpenRI package registry は <a href="../distributions/">Packages and distributions</a> に移動しました。</p>
+          <p>OpenRI は evidence-backed findings を返す査読前テストランナーです。不正認定や採否自動決定は行いません。</p>
+        </article>
+      </main>
+    </div>
+  </body>
+</html>
+""",
+            encoding="utf-8",
+        )
 
 
 def main() -> int:

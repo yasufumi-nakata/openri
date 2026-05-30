@@ -33,32 +33,33 @@
         <article class="article section">
           <p class="breadcrumb"><a href="../">OpenRI Tutorial</a> / Submitted manuscript workflow</p>
           <h1>提出された論文の処理フロー</h1>
-<p>OpenRIの主眼は、著者が自分の原稿を軽く点検することではなく、投稿システムに提出された論文を編集部側でどのように扱い、Codex/Claude等のAI reviewerにどの論点を厳格に査読させるかです。</p>
+<p>OpenRIの主眼は、著者が自分の原稿を軽く点検することではなく、投稿システムに提出された論文を、GPT-5.5、GPT-6.7、Claude、ローカルモデルなど将来変わり得るAI reviewer/AI editorへ渡す前に、どの証拠・制約・coverage blockerで縛るかです。</p>
 <h2>基本方針</h2>
-<ul><li>OpenRIは採否を自動決定しません。</li><li>OpenRIは研究不正を自動断定しません。</li><li>OpenRIは採否を自動決定する査読者ではありませんが、人間査読で本来確認される論点をAI reviewerが分野非依存に再現できるプロトコルを作ります。</li><li>OpenRIは、通常査読またはAI査読へ回す前に編集部が確認すべき機械的findingとcoverage blockerを作ります。</li><li>分野、著者属性、所属、評判、流行テーマではなく、検査可能な記述、証拠、欠落に対して同じ基準を適用します。</li><li>好意的解釈や有名著者への忖度を入れず、findingはevidenceとrecommendationで返します。</li></ul>
+<ul><li>OpenRI自体は採否を自動決定しません。</li><li>OpenRIは研究不正を自動断定しません。</li><li>OpenRIは採否判定エンジン本体ではありませんが、AI reviewer/AI editorが自律判断する運用で、査読論点を分野非依存に再現できるプロトコルを作ります。</li><li>OpenRIは、AI reviewer/AI editorが判断する前に必ず扱うべき機械的findingとcoverage blockerを作ります。</li><li>分野、著者属性、所属、評判、流行テーマではなく、検査可能な記述、証拠、欠落に対して同じ基準を適用します。</li><li>好意的解釈や有名著者への忖度を入れず、findingはevidenceとrecommendationで返します。</li></ul>
 <h2>処理ステージ</h2>
 <ol><li><strong>提出受付</strong></li></ol>
 <p>- 投稿システムからPDF、本文、補足資料、メタデータを受け取ります。 - 元ファイルは証跡として保持し、検査はコピーに対して行います。</p>
 <ol><li><strong>本文/PDF抽出</strong></li></ol>
 <p>- PDF/TXT/TeX/Markdownから検査用テキストを作ります。 - PDFでは白色文字、極小フォント、ページ外配置など、LLM査読操作に使われ得る不可視テキストも見ます。</p>
 <ol><li><strong>機械検査</strong></li></ol>
-<p>- p値再計算、GRIM風の平均値/n整合性、透明性項目、引用/DOI、prompt injection、ruleset coverageを走らせます。 - ネットワーク検査は明示的に有効化された場合だけ行います。</p>
+<p>- p値再計算、GRIM風の平均値/n整合性、透明性項目、引用/参考文献対応、claim-evidence対応、prompt injection、ruleset coverageを走らせます。 - ネットワーク検査は明示的に有効化された場合だけ行います。</p>
 <ol><li><strong>AI査読プロトコル化</strong></li></ol>
-<p>- <code>ai_review_protocol</code> を作り、Codex/Claude等へ渡す reviewer role、universal review dimensions、no-social-leniency policy、coverage blocker、テスト設計を固定します。 - <code>skipped</code>、<code>unknown</code>、<code>unsupported</code> は安全扱いにせず、blockedまたは未検査として残します。 - 未公開原稿を外部LLM/APIへ送ることは既定にしません。</p>
-<ol><li><strong>編集部トリアージ</strong></li></ol>
-<p>- <code>integrity_hold_before_peer_review</code>: 通常査読前にresearch integrity担当へ保留。 - <code>statistics_editor_screen</code>: 統計担当またはhandling editorが先に確認。 - <code>technical_check_then_peer_review</code>: 事務局/編集部の技術チェック後に通常査読。 - <code>route_to_peer_review</code>: 重大findingなしとしてAI査読/通常査読へ回付可能。</p>
-<ol><li><strong>確認パケット</strong></li></ol>
-<p>- check ID、severity、status、該当行/ページ、再計算値、recommendation、required AI reviewerをまとめてhandling editorに渡します。 - 著者照会、統計確認、integrity確認、AI査読/通常査読への回付を決めます。</p>
+<p>- <code>ai_review_protocol</code> を作り、モデル名や世代に依存しない reviewer role、universal review dimensions、no-social-leniency policy、coverage blocker、テスト設計、model-agnostic contractを固定します。 - <code>skipped</code>、<code>unknown</code>、<code>unsupported</code> は安全扱いにせず、blockedまたは未検査として残します。 - 未公開原稿を外部LLM/APIへ送ることは既定にしません。</p>
+<ol><li><strong>AI判断トリアージ</strong></li></ol>
+<p>- <code>integrity_hold_before_peer_review</code>: AI判断前にresearch integrity確認へ保留。 - <code>statistics_editor_screen</code>: AI判断前に統計整合性を確認。 - <code>technical_check_then_peer_review</code>: 技術チェック後にAI査読へ回付。 - <code>route_to_peer_review</code>: 重大findingなしとしてAI査読へ回付可能。</p>
+<ol><li><strong>AI判断ガードレールパケット</strong></li></ol>
+<p>- check ID、severity、status、該当行/ページ、再計算値、recommendation、required AI reviewerをまとめてAI reviewer/AI editorに渡します。 - <code>accountability</code> にroute driver、score算定、evidence ledger、AI判断に必要な実行メタデータ、fail-closed条件、著者照会キューを残します。 - 著者照会、統計確認、integrity確認、AI査読継続可否をAI判断の前提条件として固定します。</p>
 <h2>APIで見るべきフィールド</h2>
-<p><code>POST /api/runs</code> または <code>POST /api/runs/upload</code> のレスポンスには、通常の <code>summary</code> と <code>findings</code> に加えて <code>submission_processing</code> と <code>ai_review_protocol</code> が入ります。</p>
+<p><code>POST /api/runs</code> または <code>POST /api/runs/upload</code> のレスポンスには、通常の <code>summary</code> と <code>findings</code> に加えて <code>submission_processing</code>、<code>ai_review_protocol</code>、<code>accountability</code> が入ります。</p>
 <pre class="terminal"><code>{
   &quot;submission_processing&quot;: {
     &quot;mode&quot;: &quot;submitted_manuscript_triage&quot;,
     &quot;recommended_route&quot;: &quot;statistics_editor_screen&quot;,
-    &quot;route_label&quot;: &quot;統計担当/handling editorの事前確認&quot;,
+    &quot;route_label&quot;: &quot;AI判断前の統計整合性確認&quot;,
     &quot;rationale&quot;: &quot;報告統計量とp値の不整合があります。&quot;,
     &quot;stages&quot;: [],
-    &quot;human_actions&quot;: []
+    &quot;human_actions&quot;: [],
+    &quot;review_actions&quot;: []
   }
 }</code></pre>
 <p><code>ai_review_protocol</code> は次の形で、AI reviewerが査読を再現するためのrubricとテスト設計を返します。</p>
@@ -71,13 +72,30 @@
     },
     &quot;required_ai_reviews&quot;: [&quot;field_generalist&quot;, &quot;methodology_reviewer&quot;, &quot;adversarial_reviewer&quot;],
     &quot;coverage_blockers&quot;: [],
+    &quot;model_agnostic_reviewer_contract&quot;: {},
     &quot;test_design&quot;: {}
   }
 }</code></pre>
+<p><code>accountability</code> は、AI reviewer/AI editorが判断根拠を追跡できるようにする監査用フィールドです。</p>
+<pre class="terminal"><code>{
+  &quot;accountability&quot;: {
+    &quot;mode&quot;: &quot;accountable_explainable_review_record&quot;,
+    &quot;routing_explanation&quot;: {
+      &quot;recommended_route&quot;: &quot;integrity_hold_before_peer_review&quot;,
+      &quot;route_drivers&quot;: []
+    },
+    &quot;score_explanation&quot;: {
+      &quot;formula&quot;: &quot;mean(finding.score) - strictness_penalty - 8*failed - 2*warnings&quot;
+    },
+    &quot;evidence_ledger&quot;: [],
+    &quot;autonomous_ai_accountability&quot;: {},
+    &quot;human_accountability&quot;: {}
+  }
+}</code></pre>
 <h2>実運用での扱い</h2>
-<ul><li><code>prompt_injection</code> または <code>pdf_hidden_text</code> のfailedは、通常査読前の保留対象にします。</li><li><code>statistical_consistency</code> のfailedは、統計担当またはhandling editorの事前確認対象にします。</li><li><code>reporting_transparency</code> や <code>ruleset_coverage</code> のwarningは、著者照会や事務局チェックで解消できる可能性があります。</li><li><code>skipped</code> は「安全」ではありません。ネットワーク未使用、PDFでない、ruleset未指定など、検査条件が足りないことを示します。</li><li>AI reviewerには、著者や研究室への遠慮ではなく、同じ入力なら同じfindingを出すという基準を守らせます。</li></ul>
+<ul><li><code>prompt_injection</code> または <code>pdf_hidden_text</code> のfailedは、AI判断前の保留対象にします。</li><li><code>statistical_consistency</code> のfailedは、AI判断前の統計整合性確認対象にします。</li><li><code>reporting_transparency</code> や <code>ruleset_coverage</code> のwarningは、著者照会や事務局チェックで解消できる可能性があります。</li><li><code>claim_evidence_alignment</code> のwarningは、claimを支える結果、図表、引用、限界、代替説明を1対1で確認する対象にします。</li><li><code>citation_integrity</code> のwarningは、placeholder DOI、参考文献entry、本文中引用番号との対応を確認する対象にします。</li><li><code>skipped</code> は「安全」ではありません。ネットワーク未使用、PDFでない、ruleset未指定など、検査条件が足りないことを示します。</li><li>AI reviewer/AI editorには、著者や研究室への遠慮ではなく、同じ入力なら同じfindingとcoverage blockerを扱うという基準を守らせます。</li></ul>
 <h2>今後の拡張</h2>
-<ul><li>投稿システムからのwebhook intake。</li><li>補足資料・画像ファイルの同時アップロード。</li><li>画像のEXIF、重複領域、切り貼り、圧縮アーティファクト検査。</li><li>editor dashboardでのqueue管理。</li><li>著者照会テンプレートの生成。</li><li>Codex/Claude等の複数AI reviewerによるcross-model disagreement tracking。</li><li>分野別rulesetを増やしても、分野非依存core reviewの閾値が崩れないregression test。</li></ul>
+<ul><li>投稿システムからのwebhook intake。</li><li>補足資料・画像ファイルの同時アップロード。</li><li>画像のEXIF、重複領域、切り貼り、圧縮アーティファクト検査。</li><li>editor dashboardでのqueue管理。</li><li>著者照会テンプレートの生成。</li><li>GPT-5.5、GPT-6.7、Claude、ローカルモデルなど複数AI reviewerによるcross-model disagreement tracking。</li><li>分野別rulesetを増やしても、分野非依存core reviewの閾値が崩れないregression test。</li></ul>
         </article>
       </main>
 

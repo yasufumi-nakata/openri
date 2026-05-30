@@ -34,7 +34,7 @@
             <p class="eyebrow">Tutorial</p>
             <h1>1本のサンプル原稿で、OpenRI の report を最後まで読む。</h1>
             <p class="hero-copy">
-              このページでは、ローカルインストール、CLI、Web UI、API、GitHub Actions 連携を順に確認します。結果は「不正の断定」ではなく、人間が確認すべき証拠付き finding として扱います。
+              このページでは、ローカルインストール、CLI、Web UI、API、GitHub Actions 連携を順に確認します。結果は「不正の断定」ではなく、AI reviewer / AI editor が判断前に扱う証拠付き finding として扱います。
             </p>
             <div class="hero-actions">
               <a class="button primary" href="#local">ローカル実行へ</a>
@@ -70,7 +70,8 @@ pip install -e ".[pdf,image,network,server,dev]"</code></pre>
                 <p>高リスクサンプルには、p 値不整合、透明性項目不足、placeholder DOI、LLM 査読操作指示が入っています。</p>
                 <pre class="terminal"><code>openri check samples/high_risk_manuscript.txt --strictness strict
 openri list --limit 5
-openri show &lt;report_id&gt; --json</code></pre>
+openri show &lt;report_id&gt; --json
+openri check samples/high_risk_manuscript.txt --out report.json</code></pre>
               </div>
             </article>
 
@@ -78,7 +79,7 @@ openri show &lt;report_id&gt; --json</code></pre>
               <div class="step-number">3</div>
               <div>
                 <h2>finding の status を読み分けます</h2>
-                <p>OpenRI では、`skipped` や coverage blocker を合格扱いにしません。どの evidence を人間が確認すべきかを見ます。</p>
+                <p>OpenRI では、`skipped` や coverage blocker を合格扱いにしません。どの evidence をAI判断の入力にすべきかを見ます。</p>
                 <div class="status-list">
                   <div class="status"><strong>passed</strong><span>既知の検査で問題が見つからない状態です。</span></div>
                   <div class="status"><strong>warning</strong><span>不足、矛盾、未確認領域がある状態です。</span></div>

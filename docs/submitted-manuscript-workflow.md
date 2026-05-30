@@ -1,13 +1,13 @@
 # 提出された論文の処理フロー
 
-OpenRIの主眼は、著者が自分の原稿を軽く点検することではなく、投稿システムに提出された論文を編集部側でどのように扱い、Codex/Claude等のAI reviewerにどの論点を厳格に査読させるかです。
+OpenRIの主眼は、著者が自分の原稿を軽く点検することではなく、投稿システムに提出された論文を、GPT-5.5、GPT-6.7、Claude、ローカルモデルなど将来変わり得るAI reviewer/AI editorへ渡す前に、どの証拠・制約・coverage blockerで縛るかです。
 
 ## 基本方針
 
-- OpenRIは採否を自動決定しません。
+- OpenRI自体は採否を自動決定しません。
 - OpenRIは研究不正を自動断定しません。
-- OpenRIは採否を自動決定する査読者ではありませんが、人間査読で本来確認される論点をAI reviewerが分野非依存に再現できるプロトコルを作ります。
-- OpenRIは、通常査読またはAI査読へ回す前に編集部が確認すべき機械的findingとcoverage blockerを作ります。
+- OpenRIは採否判定エンジン本体ではありませんが、AI reviewer/AI editorが自律判断する運用で、査読論点を分野非依存に再現できるプロトコルを作ります。
+- OpenRIは、AI reviewer/AI editorが判断する前に必ず扱うべき機械的findingとcoverage blockerを作ります。
 - 分野、著者属性、所属、評判、流行テーマではなく、検査可能な記述、証拠、欠落に対して同じ基準を適用します。
 - 好意的解釈や有名著者への忖度を入れず、findingはevidenceとrecommendationで返します。
 
@@ -26,20 +26,20 @@ OpenRIの主眼は、著者が自分の原稿を軽く点検することでは�
    - ネットワーク検査は明示的に有効化された場合だけ行います。
 
 4. **AI査読プロトコル化**
-   - `ai_review_protocol` を作り、Codex/Claude等へ渡す reviewer role、universal review dimensions、no-social-leniency policy、coverage blocker、テスト設計を固定します。
+   - `ai_review_protocol` を作り、モデル名や世代に依存しない reviewer role、universal review dimensions、no-social-leniency policy、coverage blocker、テスト設計、model-agnostic contractを固定します。
    - `skipped`、`unknown`、`unsupported` は安全扱いにせず、blockedまたは未検査として残します。
    - 未公開原稿を外部LLM/APIへ送ることは既定にしません。
 
-5. **編集部トリアージ**
-   - `integrity_hold_before_peer_review`: 通常査読前にresearch integrity担当へ保留。
-   - `statistics_editor_screen`: 統計担当またはhandling editorが先に確認。
-   - `technical_check_then_peer_review`: 事務局/編集部の技術チェック後に通常査読。
-   - `route_to_peer_review`: 重大findingなしとしてAI査読/通常査読へ回付可能。
+5. **AI判断トリアージ**
+   - `integrity_hold_before_peer_review`: AI判断前にresearch integrity確認へ保留。
+   - `statistics_editor_screen`: AI判断前に統計整合性を確認。
+   - `technical_check_then_peer_review`: 技術チェック後にAI査読へ回付。
+   - `route_to_peer_review`: 重大findingなしとしてAI査読へ回付可能。
 
-6. **確認パケット**
-   - check ID、severity、status、該当行/ページ、再計算値、recommendation、required AI reviewerをまとめてhandling editorに渡します。
-   - `accountability` にroute driver、score算定、evidence ledger、責任分担、著者照会キューを残します。
-   - 著者照会、統計確認、integrity確認、AI査読/通常査読への回付を決めます。
+6. **AI判断ガードレールパケット**
+   - check ID、severity、status、該当行/ページ、再計算値、recommendation、required AI reviewerをまとめてAI reviewer/AI editorに渡します。
+   - `accountability` にroute driver、score算定、evidence ledger、AI判断に必要な実行メタデータ、fail-closed条件、著者照会キューを残します。
+   - 著者照会、統計確認、integrity確認、AI査読継続可否をAI判断の前提条件として固定します。
 
 ## APIで見るべきフィールド
 
@@ -50,10 +50,11 @@ OpenRIの主眼は、著者が自分の原稿を軽く点検することでは�
   "submission_processing": {
     "mode": "submitted_manuscript_triage",
     "recommended_route": "statistics_editor_screen",
-    "route_label": "統計担当/handling editorの事前確認",
+    "route_label": "AI判断前の統計整合性確認",
     "rationale": "報告統計量とp値の不整合があります。",
     "stages": [],
-    "human_actions": []
+    "human_actions": [],
+    "review_actions": []
   }
 }
 ```
@@ -70,12 +71,13 @@ OpenRIの主眼は、著者が自分の原稿を軽く点検することでは�
     },
     "required_ai_reviews": ["field_generalist", "methodology_reviewer", "adversarial_reviewer"],
     "coverage_blockers": [],
+    "model_agnostic_reviewer_contract": {},
     "test_design": {}
   }
 }
 ```
 
-`accountability` は、編集部が説明責任を果たすための監査用フィールドです。
+`accountability` は、AI reviewer/AI editorが判断根拠を追跡できるようにする監査用フィールドです。
 
 ```json
 {
@@ -89,6 +91,7 @@ OpenRIの主眼は、著者が自分の原稿を軽く点検することでは�
       "formula": "mean(finding.score) - strictness_penalty - 8*failed - 2*warnings"
     },
     "evidence_ledger": [],
+    "autonomous_ai_accountability": {},
     "human_accountability": {}
   }
 }
@@ -96,13 +99,13 @@ OpenRIの主眼は、著者が自分の原稿を軽く点検することでは�
 
 ## 実運用での扱い
 
-- `prompt_injection` または `pdf_hidden_text` のfailedは、通常査読前の保留対象にします。
-- `statistical_consistency` のfailedは、統計担当またはhandling editorの事前確認対象にします。
+- `prompt_injection` または `pdf_hidden_text` のfailedは、AI判断前の保留対象にします。
+- `statistical_consistency` のfailedは、AI判断前の統計整合性確認対象にします。
 - `reporting_transparency` や `ruleset_coverage` のwarningは、著者照会や事務局チェックで解消できる可能性があります。
 - `claim_evidence_alignment` のwarningは、claimを支える結果、図表、引用、限界、代替説明を1対1で確認する対象にします。
 - `citation_integrity` のwarningは、placeholder DOI、参考文献entry、本文中引用番号との対応を確認する対象にします。
 - `skipped` は「安全」ではありません。ネットワーク未使用、PDFでない、ruleset未指定など、検査条件が足りないことを示します。
-- AI reviewerには、著者や研究室への遠慮ではなく、同じ入力なら同じfindingを出すという基準を守らせます。
+- AI reviewer/AI editorには、著者や研究室への遠慮ではなく、同じ入力なら同じfindingとcoverage blockerを扱うという基準を守らせます。
 
 ## 今後の拡張
 
@@ -111,5 +114,5 @@ OpenRIの主眼は、著者が自分の原稿を軽く点検することでは�
 - 画像のEXIF、重複領域、切り貼り、圧縮アーティファクト検査。
 - editor dashboardでのqueue管理。
 - 著者照会テンプレートの生成。
-- Codex/Claude等の複数AI reviewerによるcross-model disagreement tracking。
+- GPT-5.5、GPT-6.7、Claude、ローカルモデルなど複数AI reviewerによるcross-model disagreement tracking。
 - 分野別rulesetを増やしても、分野非依存core reviewの閾値が崩れないregression test。

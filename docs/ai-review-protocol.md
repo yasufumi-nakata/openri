@@ -1,6 +1,6 @@
 # AI査読プロトコル
 
-OpenRIの `ai_review_protocol` は、Codex、Claude、その他のAI reviewerに、人間査読で本来確認される論点を厳格に実行させるためのrubricです。目的は採否の自動決定ではなく、分野非依存に確認できる論点を証拠付きで潰し、著者名・所属・評判・人間関係による閾値変更を排除することです。
+OpenRIの `ai_review_protocol` は、GPT-5.5、GPT-6.7、Claude、ローカルモデルなど将来変わり得るAI reviewer/AI editorに、査読で確認される論点を厳格に実行させるためのrubricです。OpenRI自体は採否判定エンジン本体ではなく、AIが自律判断する運用の前段で、分野非依存に確認できる論点、証拠、coverage blocker、監査ログ要件を固定します。
 
 ## 基本原則
 
@@ -9,6 +9,7 @@ OpenRIの `ai_review_protocol` は、Codex、Claude、その他のAI reviewerに
 - **Blocked is not passed**: `skipped`、未検査、PDF抽出不能、ruleset未指定、network無効は安全扱いにしません。
 - **External LLM off by default**: 未公開原稿を外部LLM/APIへ送ることを既定にしません。
 - **Field-neutral core first**: 分野別rulesetの前に、どの研究にも共通するcore review axisを通します。
+- **Model-agnostic execution**: モデル名や世代を品質の根拠にせず、同じ `review_packet`、acceptance gate、evidence ledgerで比較します。
 
 ## 初回公開時の限界
 
@@ -47,15 +48,17 @@ OpenRIの `ai_review_protocol` は、Codex、Claude、その他のAI reviewerに
 - `finding_review_instructions`: findingごとにAI reviewerへ渡す確認指示。
 - `test_design`: AIが開発・査読する前提のunit、fixture、golden、adversarial、metamorphic、cross-model、regression gate。
 - `review_packet`: この原稿固有のclaim inventory、reviewer tasks、adversarial challenges、editor handoff。
+- `model_agnostic_reviewer_contract`: AI reviewer/AI editorが満たすべき構造化出力、証拠紐づけ、coverage blocker尊重、監査ログのcapability contract。
 
-`accountability` は、AI reviewerや編集部が「なぜこのroute/scoreになったか」を追跡する説明責任レコードです。
+`accountability` は、AI reviewer/AI editorが「なぜこのroute/scoreになったか」を追跡する説明責任レコードです。
 
 - `decision_provenance`: strictness、network有無、ruleset、外部LLM不要、入力サイズ。
 - `routing_explanation`: recommended route、rationale、route driver finding、coverage blocker。
 - `score_explanation`: score算定式、平均finding score、strictness/failed/warning penalty、worst findings。
 - `evidence_ledger`: findingごとのevidence品質、quote/location/data、primary evidence、recommendation。
 - `claim_explainability`: claim数、support_status分布、risk_flag分布、support不足claim。
-- `human_accountability`: handling editor、統計担当、research integrity担当、著者への確認責任と照会キュー。
+- `autonomous_ai_accountability`: AIが最終判断する運用で必要な判断入力、モデル実行メタデータ、fail-closed条件。
+- `human_accountability`: 既存UI/API互換のため残すlegacy accountability block。主経路は `autonomous_ai_accountability` です。
 - `explainability_gates`: warning/failed findingにevidenceがあるか、skippedを安全扱いしていないか。
 
 ## Review packet
@@ -65,11 +68,11 @@ OpenRIの `ai_review_protocol` は、Codex、Claude、その他のAI reviewerに
 - `claim_inventory`: 強いclaim候補を `id`, `quote`, `location`, `section`, `claim_type`, `support_status`, `linked_findings`, `risk_flags` で固定します。
 - `reviewer_tasks`: AI reviewer roleごとに、確認すべきclaim、finding、coverage blocker、出力schema、acceptance gateを渡します。
 - `adversarial_challenges`: claimやfindingに対し、反証、代替説明、著者照会、最弱の支持可能表現を強制的に返させる課題です。
-- `editor_handoff`: claim数、task数、challenge数をまとめ、編集部がどこまでAI査読に回せるかを確認します。
+- `editor_handoff`: claim数、task数、challenge数をまとめ、AI reviewer/AI editorがどこまで判断可能かを確認します。
 
-claim抽出は不正断定ではありません。最初は保守的なheuristicで主要claim候補を出し、`support_status: needs_review` を基本にします。抽出漏れや誤検出は、人間またはAI reviewerが補正する対象です。
+claim抽出は不正断定ではありません。最初は保守的なheuristicで主要claim候補を出し、`support_status: needs_review` を基本にします。抽出漏れや誤検出は、AI reviewer/AI editorまたは任意の監査担当が補正する対象です。
 
-## Codex/Claudeに渡すときの最小入力
+## モデル非依存の最小入力
 
 AI reviewerには、少なくとも次を渡してください。
 
@@ -78,6 +81,8 @@ AI reviewerには、少なくとも次を渡してください。
 3. `ai_review_protocol.universal_review_dimensions`。
 4. `coverage_blockers`。
 5. `review_packet.claim_inventory` と `review_packet.reviewer_tasks`。
-6. 「採否ではなく、証拠付きの査読論点、重大欠落、著者照会案を返す」という制約。
+6. `model_agnostic_reviewer_contract`。
+7. `provider`, `model_name`, `model_version_or_snapshot`, `prompt_or_policy_version`, `run_id`, `timestamp`。
+8. 「証拠なしにpassedへ進めない、coverage blockerを無視しない、fail-closed条件に該当したら判断を止める」という制約。
 
 未公開原稿を外部サービスへ送る場合は、送信範囲、送信先、保存期間、削除方針、許可ログを明示してください。

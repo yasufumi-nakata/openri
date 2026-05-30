@@ -11,7 +11,7 @@
 
 OpenRIは、投稿システムに提出された論文に対する「査読前テストシステム」です。プログラミングでCIがテスト失敗を返すように、原稿に対して統計不整合、研究透明性の不足、引用・参考文献の不整合、LLM査読を操作する隠し指示、画像検査の未実施リスクなどを、証拠付きfindingとして返します。
 
-このプロトタイプの目的は、人間査読で本来確認される論点を、Codex/Claude等のAI reviewerが分野非依存・証拠優先・忖度なしで実行できるテスト設計に落とし込むことです。不正を断定したり採否を自動決定したりするのではなく、通常査読またはAI査読へ回す前に潰すべき論点、coverage blocker、reviewer assignment、再現可能な検査結果をAPIレスポンスとして返します。処理フローの詳細は [`docs/submitted-manuscript-workflow.md`](docs/submitted-manuscript-workflow.md) と [`docs/ai-review-protocol.md`](docs/ai-review-protocol.md) を参照してください。
+このプロトタイプの目的は、査読で本来確認されてきた論点を、GPT-5.5、GPT-6.7、Claude、ローカルモデルなど将来変わり得るAI reviewer/AI editorが、分野非依存・証拠優先・忖度なしで実行できるテスト設計に落とし込むことです。OpenRI自体は不正断定や採否判定の本体にはならず、AIが自律判断する運用の前段で潰すべき論点、coverage blocker、reviewer assignment、再現可能な検査結果、監査可能な判断材料をAPIレスポンスとして返します。処理フローの詳細は [`docs/submitted-manuscript-workflow.md`](docs/submitted-manuscript-workflow.md) と [`docs/ai-review-protocol.md`](docs/ai-review-protocol.md) を参照してください。
 
 ## 初期スコープ
 
@@ -34,7 +34,7 @@ OpenRIは、投稿システムに提出された論文に対する「査読前�
 - `frontend`: Web UI。原稿テキストを貼り付けて検査を実行し、findings/evidence/API例を確認できます。
 - `samples`: 動作確認用サンプル原稿。
 - `docs/`: GitHub Action / Buffy 連携サンプル、check 開発ガイド。
-- `docs/ai-review-protocol.md`: Codex/Claude等のAI reviewerで人間査読の論点を再現するためのプロトコル。
+- `docs/ai-review-protocol.md`: モデル名や世代に依存しないAI reviewer/AI editorで査読論点を再現するためのプロトコル。
 - `docs/testing-strategy.md`: AIが開発する前提でのfixture、golden report、adversarial/metamorphic test設計。
 
 ## インストール
@@ -73,7 +73,7 @@ pip install -e ".[pdf,image,network,server,dev]"
 openri check samples/high_risk_manuscript.txt
 openri check manuscript.pdf --strictness strict --ruleset consort --ruleset mdar_strict
 openri check figure.png --strictness strict
-openri check paper.tex --sarif out.sarif.json --fail-on high
+openri check paper.tex --out report.json --sarif out.sarif.json --fail-on high
 openri check paper.md --network          # Crossref DOI lookup
 openri eval-reviewers codex-review.json claude-review.json --out reviewer-eval.json
 openri list --limit 10
@@ -111,6 +111,7 @@ Web UIでは、本文貼り付けに加えてPDF/TXT/MD/TeXのアップロード
 実行後のreportには `ai_review_protocol` と `accountability` が入り、次を確認できます。
 
 - `reviewer_pool`: field-generalist、methodology、statistics、reproducibility、ethics/integrity、adversarial reviewerの役割。
+- `model_agnostic_reviewer_contract`: GPT-5.5からGPT-6.7のようにモデル世代が変わっても同じ入力・証拠・acceptance gateで扱うためのcapability contract。
 - `universal_review_dimensions`: claim-evidence、method validity、statistics、reproducibility、citation support、ethics、limitations、adversarial failure modes。
 - `strictness_policy`: 著者名・所属・評判で閾値を変えない、skippedをpassedにしない、未公開原稿を外部LLM/APIへ送らない既定。
 - `test_design`: AIが実装する前提でのunit/fixture/golden/adversarial/metamorphic/cross-model/regression gate。
@@ -118,7 +119,8 @@ Web UIでは、本文貼り付けに加えてPDF/TXT/MD/TeXのアップロード
 - `accountability.routing_explanation`: recommended routeの理由、route driverになったfinding、coverage blocker。
 - `accountability.score_explanation`: score算定式、平均finding score、strictness/failed/warning penalty。
 - `accountability.evidence_ledger`: findingごとのevidence数、quote/location/dataの有無、primary evidence。
-- `accountability.human_accountability`: handling editor、統計担当、research integrity担当、著者が確認すべき責任分担。
+- `accountability.autonomous_ai_accountability`: AI reviewer/AI editorが最終判断する運用で必要な入力、モデル実行メタデータ、fail-closed条件。
+- `accountability.human_accountability`: 既存UI/API互換のため残すlegacy accountability block。主経路は `autonomous_ai_accountability` です。
 
 ## ロードマップ
 
@@ -141,6 +143,15 @@ PYTHONPATH=backend python scripts/benchmark_openri.py
 
 出力は `benchmark/openri-benchmark.json` と `benchmark/openri-benchmark.md` です。CIではrecall proxy、precision proxy、route distribution、coverage blocker countをartifactとして保存します。
 
+公開査読コーパスに対する smoke benchmark は次で生成できます。これは不正検出の正解率ではなく、OpenRIが実際の投稿原稿/査読ログに対して、claim inventory、reviewer tasks、coverage blocker、AI判断トリアージを作れるかを見る外部コーパス検証です。
+
+```bash
+PYTHONPATH=backend python scripts/benchmark_peer_review_corpus.py --corpus all --limit 10
+```
+
+出力は `benchmark/peer-review-corpus-benchmark.json` と `benchmark/peer-review-corpus-benchmark.md` です。既定では Hugging Face の ReviewBench と PeerSum から少数行だけ取得し、OpenRI finding と実査読コメント中の論点カテゴリの重なりを heuristic proxy として記録します。
+取得行は `.openri/benchmark-cache/` にキャッシュされるため、同じ条件の再実行ではネットワーク取得を省略できます。最新行を取り直す場合は `--refresh-cache` を指定してください。
+
 ## OSS運用
 
 - 参加方法: [`CONTRIBUTING.md`](CONTRIBUTING.md)
@@ -154,9 +165,9 @@ GitHub上では、CI、Repository Health、CodeQL、Dependency Review、OpenSSF 
 ## 既知の限界
 
 - 画像検査はEXIF、形式、単純な重複ブロック候補の初期検査です。専門的なELA、raw履歴、顕微鏡画像固有の検査はreviewer taskとして残ります。
-- ruleset coverageはevidence-awareなキーワード照合です。否定文やnot applicable方針は記録しますが、記載の品質判定は人間確認が必要です。
+- ruleset coverageはevidence-awareなキーワード照合です。否定文やnot applicable方針は記録しますが、記載の品質判定はAI reviewer/AI editor側の文脈確認が必要です。
 - 引用文脈の意味的検証はclaim-support markerの構造化までです。Crossref DOI照合は `--network` またはAPIの `enable_network` 明示時だけ実行します。
-- OpenRIは不正認定や採否自動決定を行いません。重大findingは、編集部・統計担当・research integrity担当・AI reviewerが確認すべき証拠付き論点として扱います。
+- OpenRIは不正認定や採否判定エンジン本体にはなりません。重大findingは、AI reviewer/AI editorが自律判断する前に必ず処理すべき証拠付きガードレールとして扱います。
 
 ## AI coding agent向け
 

@@ -18,6 +18,8 @@ from openri.ruleset_loader import discover_keyword_rulesets, load_default_rulese
 from openri.sarif import report_to_sarif
 from openri.store import ReportStore
 from openri.text_windows import iter_sentence_spans
+from scripts import benchmark_peer_review_corpus as peer_benchmark
+from scripts import build_pages as pages_builder
 
 
 def _by_id(report, check_id):
@@ -196,6 +198,22 @@ def test_cli_json_output(tmp_path, capsys):
     assert payload["title"] == "high_risk_manuscript.txt"
     assert isinstance(payload["findings"], list)
     assert code == 0
+
+
+def test_cli_out_writes_report_without_hiding_human_summary(tmp_path, capsys):
+    sample = Path(__file__).parent.parent.parent / "samples" / "high_risk_manuscript.txt"
+    report_path = tmp_path / "openri-report.json"
+    parser = build_parser()
+    args = parser.parse_args(["check", str(sample), "--out", str(report_path)])
+    code = cmd_check(args)
+    captured = capsys.readouterr()
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+
+    assert code == 0
+    assert "accountability_route:" in captured.out
+    assert "blockers=" in captured.out
+    assert payload["schema_version"] == "openri-report-v1"
+    assert not any(key.startswith("_") for key in payload["manuscript_profile"])
 
 
 def test_doi_check_skipped_without_network():
@@ -442,13 +460,13 @@ def test_security_policy_delete_and_rate_limit(monkeypatch, tmp_path):
 
 
 def test_cross_model_reviewer_eval_records_disagreement(tmp_path):
-    codex = tmp_path / "codex.json"
-    claude = tmp_path / "claude.json"
-    codex.write_text(json.dumps({"model": "codex", "findings": [{"check_id": "citation_context", "severity": "high"}]}))
-    claude.write_text(json.dumps({"model": "claude", "findings": []}))
-    report = compare_review_results([codex, claude])
-    assert report["major_finding_recall"]["codex"] == 1.0
-    assert report["major_finding_recall"]["claude"] == 0.0
+    gpt55 = tmp_path / "gpt-5.5.json"
+    gpt67 = tmp_path / "gpt-6.7.json"
+    gpt55.write_text(json.dumps({"model": "gpt-5.5", "findings": [{"check_id": "citation_context", "severity": "high"}]}))
+    gpt67.write_text(json.dumps({"model": "gpt-6.7", "findings": []}))
+    report = compare_review_results([gpt55, gpt67])
+    assert report["major_finding_recall"]["gpt-5.5"] == 1.0
+    assert report["major_finding_recall"]["gpt-6.7"] == 0.0
     assert report["disagreements"][0]["finding_key"] == "citation_context"
 
 
@@ -490,7 +508,7 @@ def test_submission_workflow_endpoint_documents_editorial_flow():
     assert response.status_code == 200
     payload = response.json()
     assert payload["purpose"].startswith("提出済み論文")
-    assert any("編集部トリアージ" in stage for stage in payload["stages"])
+    assert any("AI判断トリアージ" in stage for stage in payload["stages"])
 
 
 def test_ai_review_protocol_endpoint_documents_test_design_without_auto_acceptance():
@@ -501,5 +519,193 @@ def test_ai_review_protocol_endpoint_documents_test_design_without_auto_acceptan
     assert payload["mode"] == "ai_reviewer_replication"
     assert payload["strictness_policy"]["no_social_leniency"] is True
     assert payload["strictness_policy"]["external_llm_default"] == "disabled"
-    assert "採否を自動決定しません" in payload["strictness_policy"]["acceptance_boundary"]
+    assert "採否エンジン本体ではありません" in payload["strictness_policy"]["acceptance_boundary"]
+    assert payload["model_agnostic_reviewer_contract"]["model_identity_policy"]["no_branching_on_brand_or_version"] is True
+    assert "gpt-6.7" in payload["model_agnostic_reviewer_contract"]["model_identity_policy"]["model_version_examples"]
     assert "metamorphic_tests" in payload["test_design"]
+
+
+def test_peer_review_corpus_benchmark_updates_from_fixture_rows(monkeypatch, tmp_path):
+    reviewbench_row = {
+        "row_idx": 0,
+        "row": {
+            "title": "Fixture full text paper",
+            "abstract": "We present a novel method.",
+            "decision": "Reject",
+            "markdown": """
+Title
+Fixture full text paper
+
+Abstract
+We present a novel causal method that improves all benchmark tasks.
+
+Methods
+We evaluate on a small dataset and report limited implementation details.
+
+Results
+The method significantly improves performance in Figure 1.
+""",
+            "reviews_json": json.dumps(
+                [
+                    {
+                        "review_id": "r1",
+                        "reviewer": "Anon",
+                        "rating": 3,
+                        "review_text": (
+                            "The claim is not supported by enough evidence. "
+                            "The experiments need stronger baselines, code release, and clearer writing."
+                        ),
+                    }
+                ]
+            ),
+        },
+    }
+    peersum_row = {
+        "row_idx": 0,
+        "row": {
+            "paper_title": "Fixture abstract paper",
+            "paper_abstract": (
+                "We show a novel result that significantly improves performance, "
+                "but the paper gives limited detail."
+            ),
+            "paper_acceptance": "accepted",
+            "review_contents": [
+                "The method and evaluation are interesting, but references and reproducibility details are missing."
+            ],
+        },
+    }
+
+    def fake_fetch(dataset, split, offset, length, config, timeout):
+        assert offset == 0
+        assert length == 1
+        if dataset == "Samarth0710/reviewbench":
+            return {"rows": [reviewbench_row], "num_rows_total": 1, "source_url": "fixture://reviewbench"}
+        if dataset == "oaimli/PeerSum":
+            return {"rows": [peersum_row], "num_rows_total": 1, "source_url": "fixture://peersum"}
+        raise AssertionError(dataset)
+
+    monkeypatch.setattr(peer_benchmark, "fetch_hf_rows", fake_fetch)
+    args = peer_benchmark.argparse.Namespace(
+        corpus="all",
+        reviewbench_split="iclr",
+        limit=1,
+        offset=0,
+        max_chars=4000,
+        timeout=1.0,
+    )
+    report = peer_benchmark.run_peer_review_corpus_benchmark(args)
+
+    assert report["schema"] == "openri-peer-review-corpus-benchmark-v1"
+    assert {corpus["corpus"] for corpus in report["corpora"]} == {"reviewbench", "peersum"}
+    reviewbench = next(corpus for corpus in report["corpora"] if corpus["corpus"] == "reviewbench")
+    assert reviewbench["input_mode"] == "fulltext-markdown"
+    assert reviewbench["case_count"] == 1
+    assert reviewbench["cases"][0]["route"] in {
+        "technical_check_then_peer_review",
+        "integrity_hold_before_peer_review",
+        "statistics_editor_screen",
+        "route_to_peer_review",
+    }
+    assert "claim_evidence_or_overclaim" in reviewbench["cases"][0]["review_concern_categories"]
+    assert "claim_evidence_or_overclaim" in reviewbench["cases"][0]["openri_dimension_categories"]
+    assert reviewbench["review_concern_overlap_proxy_mean"] > 0
+
+    out = tmp_path / "peer-review-corpus-benchmark.md"
+    peer_benchmark.write_markdown(report, out)
+    rendered = out.read_text(encoding="utf-8")
+    assert "OpenRI peer-review corpus benchmark" in rendered
+    assert "Fixture full text paper" not in rendered
+    assert "reviewbench" in rendered
+
+
+def test_reviewbench_payload_shapes_and_empty_reviews_do_not_inflate_overlap():
+    assert (
+        peer_benchmark.review_text_from_reviewbench(
+            {"reviews_json": [{"summary": "The evidence and reproducibility details are incomplete."}]}
+        )
+        == "The evidence and reproducibility details are incomplete."
+    )
+    assert (
+        peer_benchmark.review_text_from_reviewbench({"reviews_json": {"summary": "A single review object."}})
+        == "A single review object."
+    )
+    assert peer_benchmark.review_text_from_reviewbench({"reviews_json": 123}) == "123"
+
+    corpus = peer_benchmark.summarize_corpus(
+        name="reviewbench",
+        dataset="fixture/reviewbench",
+        split="test",
+        rows=[
+            {
+                "row_idx": 0,
+                "row": {
+                    "title": "No review text",
+                    "abstract": "A short manuscript without reviewer text.",
+                    "reviews_json": [],
+                },
+            }
+        ],
+        rows_total=1,
+        source_url="fixture://reviewbench",
+        max_chars=1000,
+    )
+
+    assert corpus["cases"][0]["review_concern_categories"] == []
+    assert corpus["cases"][0]["review_concern_overlap_proxy"] is None
+    assert corpus["review_concern_overlap_proxy_mean"] == 0.0
+
+
+def test_peer_review_corpus_fetch_uses_cache(monkeypatch, tmp_path):
+    calls = {"count": 0}
+
+    def fake_fetch(dataset, split, offset, length, config, timeout):
+        calls["count"] += 1
+        return {
+            "rows": [{"row_idx": 0, "row": {"title": "Cached", "markdown": "Abstract\nCached."}}],
+            "num_rows_total": 1,
+            "source_url": "fixture://cached",
+        }
+
+    monkeypatch.setattr(peer_benchmark, "fetch_hf_rows", fake_fetch)
+    first = peer_benchmark.fetch_hf_rows_cached(
+        "fixture/dataset",
+        "train",
+        0,
+        1,
+        "default",
+        1.0,
+        tmp_path,
+        False,
+    )
+    second = peer_benchmark.fetch_hf_rows_cached(
+        "fixture/dataset",
+        "train",
+        0,
+        1,
+        "default",
+        1.0,
+        tmp_path,
+        False,
+    )
+
+    assert calls["count"] == 1
+    assert first["cache_status"] == "miss"
+    assert second["cache_status"] == "hit"
+
+
+def test_build_pages_preserves_existing_package_registry(monkeypatch, tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "source.md").write_text("# Source\n\nSee [distribution](distributions.md).", encoding="utf-8")
+    package_dir = docs / "packages"
+    package_dir.mkdir()
+    package_index = package_dir / "index.html"
+    package_index.write_text("<html>registry</html>", encoding="utf-8")
+
+    monkeypatch.setattr(pages_builder, "DOCS", docs)
+    monkeypatch.setattr(pages_builder, "PUBLIC_DOCS", {"source.md": ("source", "Source")})
+
+    pages_builder.build_pages()
+
+    assert (docs / "source" / "index.html").exists()
+    assert package_index.read_text(encoding="utf-8") == "<html>registry</html>"

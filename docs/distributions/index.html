@@ -55,7 +55,7 @@ OPENRI_API_BASE=http://127.0.0.1:8008 npx openri-mcp</code></pre>
 <p>Codex skill は、原稿検査、finding の証拠確認、AI reviewer protocol の読み取りを OpenRI の安全方針に沿って実行するための入口です。</p>
 <pre class="terminal"><code>curl -LO https://www.yasufumi.net/openri/packages/skill/openri-codex-skill-0.3.2.tar.gz</code></pre>
 <h2>Safety defaults</h2>
-<p>OpenRI は採否判定や研究不正認定を自動化しません。配布パッケージでも、finding は人間が確認すべき証拠付き検査結果として扱います。ネットワーク照合は opt-in とし、未公開原稿を外部 LLM や外部 API に送る既定値は追加しません。</p>
+<p>OpenRI は採否判定や研究不正認定を自動化しません。配布パッケージでも、finding は AI reviewer/AI editor が判断前に扱う証拠付き検査結果として扱います。ネットワーク照合は opt-in とし、未公開原稿を外部 LLM や外部 API に送る既定値は追加しません。</p>
         </article>
       </main>
 
