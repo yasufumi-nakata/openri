@@ -57,7 +57,7 @@ def _load_manifest(path: Path) -> list[PluginCheckSpec]:
             title=str(raw.get("title", check_id)),
             category=str(raw.get("category", "plugin")),
             description=str(raw.get("description", "Declarative OpenRI plugin check.")),
-            maturity=str(raw.get("maturity", "experimental")),
+            maturity=_maturity(str(raw.get("maturity", "experimental"))),
             run=_keyword_plugin_runner(
                 check_id=f"plugin:{check_id}" if not check_id.startswith("plugin:") else check_id,
                 title=str(raw.get("title", check_id)),
@@ -70,6 +70,11 @@ def _load_manifest(path: Path) -> list[PluginCheckSpec]:
         )
         specs.append(spec)
     return specs
+
+
+def _maturity(value: str) -> str:
+    lowered = value.strip().lower()
+    return lowered if lowered in {"stable", "beta", "experimental"} else "experimental"
 
 
 def _severity(value: str) -> Severity:

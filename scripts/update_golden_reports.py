@@ -24,6 +24,8 @@ def main() -> int:
         payload = json.loads(report.model_dump_json())
         payload["report_id"] = "golden-stable-id"
         payload["created_at"] = "2026-01-01T00:00:00Z"
+        for index, finding in enumerate(payload["findings"], start=1):
+            finding["id"] = f"finding-{index:02d}-{finding['check_id']}"
         out = REPORT_DIR / f"{sample.stem}.json"
         out.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return 0

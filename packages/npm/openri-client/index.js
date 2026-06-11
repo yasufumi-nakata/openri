@@ -18,7 +18,15 @@ function trimBaseUrl(baseUrl) {
 
 async function parseResponse(response) {
   const text = await response.text();
-  const body = text ? JSON.parse(text) : null;
+  let body = null;
+  if (text) {
+    try {
+      body = JSON.parse(text);
+    } catch {
+      // Keep the raw body so gateway/proxy error pages still surface status context.
+      body = text;
+    }
+  }
   if (!response.ok) {
     throw new OpenRIClientError(`OpenRI API request failed with HTTP ${response.status}`, {
       status: response.status,
