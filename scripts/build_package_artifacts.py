@@ -25,7 +25,10 @@ def read_version() -> str:
 
 
 def run(command: list[str], cwd: Path = ROOT) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(command, cwd=cwd, text=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # Windows resolves npm/node to npm.cmd/node.exe only through a PATH lookup.
+    executable = shutil.which(command[0]) if sys.platform == "win32" else None
+    resolved = [executable or command[0], *command[1:]]
+    return subprocess.run(resolved, cwd=cwd, text=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 
 def sha256(path: Path) -> str:

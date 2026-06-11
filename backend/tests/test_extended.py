@@ -546,6 +546,49 @@ def test_bmp_upload_matches_supported_image_suffixes(tmp_path):
     assert response.json()["manuscript_profile"]["source_metadata"]["suffix"] == ".bmp"
 
 
+def test_upload_temp_files_are_closed_before_inspection_and_removed(monkeypatch, tmp_path):
+    # Windows では開いたままの NamedTemporaryFile を再オープンできないため、
+    # 検査前にハンドルを閉じ、検査後にファイルを確実に削除する契約を固定する。
+    _require_multipart()
+    Image = pytest.importorskip("PIL.Image")
+    pytest.importorskip("pdfplumber")
+    canvas = pytest.importorskip("reportlab.pdfgen.canvas")
+
+    created: list[Path] = []
+    real_named_temporary_file = api_module.tempfile.NamedTemporaryFile
+
+    def tracking_named_temporary_file(*args, **kwargs):
+        handle = real_named_temporary_file(*args, **kwargs)
+        created.append(Path(handle.name))
+        return handle
+
+    monkeypatch.setattr(api_module.tempfile, "NamedTemporaryFile", tracking_named_temporary_file)
+    client = TestClient(app)
+
+    image_path = tmp_path / "figure.png"
+    Image.new("RGB", (24, 24), "white").save(image_path)
+    image_response = client.post(
+        "/api/runs/upload",
+        files={"file": ("figure.png", image_path.read_bytes(), "image/png")},
+        data={"strictness": "standard"},
+    )
+    assert image_response.status_code == 200
+
+    pdf_path = tmp_path / "paper.pdf"
+    c = canvas.Canvas(str(pdf_path))
+    c.drawString(72, 720, "Results")
+    c.save()
+    pdf_response = client.post(
+        "/api/runs/upload",
+        files={"file": ("paper.pdf", pdf_path.read_bytes(), "application/pdf")},
+        data={"strictness": "standard"},
+    )
+    assert pdf_response.status_code == 200
+
+    assert len(created) == 2
+    assert all(not path.exists() for path in created)
+
+
 def test_bmp_upload_still_rejects_bad_magic():
     _require_multipart()
     client = TestClient(app)
