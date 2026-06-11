@@ -4,6 +4,7 @@ All notable changes to OpenRI are documented here.
 
 ## Unreleased
 
+- Fixed Windows uploads: temporary PDF/image files are now closed before pdfplumber/Pillow read them and are always removed afterwards, and the package artifact builder resolves `npm.cmd`/`node.exe` through PATH lookup (salvaged from PR #60).
 - Fixed `pdf_hidden_text` severity aggregation that compared severity labels alphabetically, which could downgrade mixed critical/high PDF risks to a lower severity and bypass the failed status.
 - Fixed `pdf_hidden_text` treating unavailable PDF inspections (missing pdfplumber or inspection errors) as passed; they are now skipped coverage blockers.
 - Fixed Japanese keyword cues (claim, limitation, causal, novelty, overgeneralization, figure references, and ruleset "該当なし" detection) that never matched inside Japanese sentences because ASCII word boundaries do not exist between kana/kanji characters.

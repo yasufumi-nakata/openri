@@ -372,10 +372,12 @@ async def run_uploaded_file(request: Request) -> RunReport:
         "suffix": suffix,
     }
     if suffix == ".pdf":
-        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=True) as handle:
+        # Windows cannot reopen a NamedTemporaryFile while it is still open,
+        # so close the handle before passing the path to pdfplumber/pypdf.
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as handle:
             handle.write(payload)
-            handle.flush()
             pdf_path = Path(handle.name)
+        try:
             try:
                 text = await run_in_threadpool(extract_text_from_pdf, pdf_path)
                 source_metadata["text_extraction"] = {"available": True, "method": "pdf"}
@@ -410,11 +412,16 @@ async def run_uploaded_file(request: Request) -> RunReport:
                     "document_risks": [],
                     "page_count": 0,
                 }
+        finally:
+            pdf_path.unlink(missing_ok=True)
     elif is_supported_image(Path(filename)):
-        with tempfile.NamedTemporaryFile(suffix=suffix, delete=True) as handle:
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as handle:
             handle.write(payload)
-            handle.flush()
-            image_inspection = await run_in_threadpool(inspect_image, Path(handle.name))
+            image_path = Path(handle.name)
+        try:
+            image_inspection = await run_in_threadpool(inspect_image, image_path)
+        finally:
+            image_path.unlink(missing_ok=True)
         text = (
             f"Image-only submission: {filename}\n\n"
             "The uploaded figure file was inspected for image-integrity metadata, compression, and repeated pixel-region candidates."
