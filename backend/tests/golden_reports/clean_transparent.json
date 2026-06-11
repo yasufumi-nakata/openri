@@ -1262,7 +1262,7 @@
       "category": "statistics",
       "check_id": "statistical_consistency",
       "evidence": [],
-      "id": "finding_e70b458979",
+      "id": "finding-01-statistical_consistency",
       "message": "1件の検定表記を再計算し、重大な不整合は見つかりませんでした。",
       "recommendation": "表内・複数行・片側検定の代表的なAPA表記も確認しました。効果量/CIは別findingでcoverage blockerとして扱います。",
       "score": 100,
@@ -1278,7 +1278,7 @@
       "category": "statistics",
       "check_id": "summary_stat_plausibility",
       "evidence": [],
-      "id": "finding_89e5465945",
+      "id": "finding-02-summary_stat_plausibility",
       "message": "平均値とサンプルサイズの組を検出できませんでした。",
       "recommendation": "整数項目の平均値を報告する場合は、M = ..., n = ... のように書くとGRIM系の検査を追加できます。",
       "score": 72,
@@ -1312,7 +1312,7 @@
           "quote": "95% CI [-0.20, 0.20]"
         }
       ],
-      "id": "finding_a6aa344b69",
+      "id": "finding-03-effect_size_ci_coverage",
       "message": "1件の効果量と1件の信頼区間を抽出しましたが、整合性再計算は未対応です。",
       "recommendation": "効果量、信頼区間、p値、サンプルサイズの相互整合は統計担当または次段checkで確認してください。",
       "score": 76,
@@ -1349,7 +1349,7 @@
           "quote": null
         }
       ],
-      "id": "finding_b91ce634f5",
+      "id": "finding-04-reporting_transparency",
       "message": "主要な透明性項目が原稿中に検出されました。",
       "recommendation": "項目の存在だけでなく、リンク先の到達性と再現可能性を次段で確認してください。",
       "score": 100,
@@ -1380,7 +1380,7 @@
           "quote": null
         }
       ],
-      "id": "finding_435e16b6f5",
+      "id": "finding-05-citation_integrity",
       "message": "引用の機械的な不整合は検出されませんでした。",
       "recommendation": "次段ではCrossref/OpenAlex/Semantic Scholar APIで全参考文献の実在性と引用文脈を検証してください。",
       "score": 92,
@@ -1432,7 +1432,7 @@
           "quote": null
         }
       ],
-      "id": "finding_038f0973f1",
+      "id": "finding-06-citation_context",
       "message": "1件のclaimで、同一文内の引用・DOI・統計量マーカーが見つかりませんでした。",
       "recommendation": "重要claimごとに、本文中引用・結果・図表・限界記述との対応をreview_packetで確認してください。",
       "score": 65,
@@ -1466,7 +1466,7 @@
           "quote": "We report a transparent descriptive analysis with modest claims."
         }
       ],
-      "id": "finding_c226acda8f",
+      "id": "finding-07-claim_evidence_alignment",
       "message": "1件のclaim候補を確認し、1件で局所的な証拠・引用・限界との対応確認が必要です。",
       "recommendation": "AI reviewer/AI editorには、各claimについて支持する結果、図表、引用、限界、代替説明を1対1で確認させてください。",
       "score": 78,
@@ -1483,7 +1483,7 @@
       "category": "ai-safety",
       "check_id": "prompt_injection",
       "evidence": [],
-      "id": "finding_177049a28b",
+      "id": "finding-08-prompt_injection",
       "message": "26件のrulesetパターンを走査しましたが、検出はありませんでした。",
       "recommendation": "PDFの座標・色・レイヤー情報に基づく不可視テキスト検査も併用してください(image_integrity_pdfで対応中)。",
       "score": 100,
@@ -1500,7 +1500,7 @@
       "category": "manuscript-quality",
       "check_id": "template_text",
       "evidence": [],
-      "id": "finding_d0b0fd970e",
+      "id": "finding-09-template_text",
       "message": "明確な重複段落、近接重複、テンプレート表現の過剰反復は検出されませんでした。",
       "recommendation": "分野別の定型文を許容する場合はルールセットを調整してください。",
       "score": 96,
@@ -1515,7 +1515,7 @@
       "category": "image-integrity",
       "check_id": "image_integrity",
       "evidence": [],
-      "id": "finding_34176f4516",
+      "id": "finding-10-image_integrity",
       "message": "図表参照を検出できませんでした。",
       "recommendation": "画像ファイルを添付できるようにすると、複製・不自然な圧縮・メタデータ検査を追加できます。",
       "score": 70,
@@ -1530,7 +1530,7 @@
       "category": "references",
       "check_id": "doi_existence",
       "evidence": [],
-      "id": "finding_a48ff3502e",
+      "id": "finding-11-doi_existence",
       "message": "Crossref問い合わせはネットワーク不要モードで無効化されています(--network で有効化)。",
       "recommendation": "CIで参考文献の実在性を確認したい場合は OPENRI_NETWORK=1 を設定するか、CLIで --network を指定してください。",
       "score": 70,
@@ -1548,7 +1548,7 @@
       "category": "research-integrity",
       "check_id": "ruleset_coverage",
       "evidence": [],
-      "id": "finding_a7fbad83b5",
+      "id": "finding-12-ruleset_coverage",
       "message": "分野別rulesetは指定されていません(--ruleset consort prisma など)。",
       "recommendation": "分野が決まっている原稿では、CONSORT/PRISMA/MDAR-strict などの ruleset を有効化してください。",
       "score": 72,
@@ -1564,7 +1564,7 @@
       "category": "ai-safety",
       "check_id": "pdf_hidden_text",
       "evidence": [],
-      "id": "finding_5fea9e32dd",
+      "id": "finding-13-pdf_hidden_text",
       "message": "PDF不可視テキスト検査はCLIでPDFを直接渡したときのみ実行されます。",
       "recommendation": "openri check manuscript.pdf を使うと、白色文字・極小フォント・ページ外座標などを検査します。",
       "score": 72,

@@ -8,6 +8,7 @@ import openri.api as api_module
 import openri.checks as checks_module
 import openri.config as config_module
 import openri.crossref as crossref_module
+import openri.cues as cues_module
 import openri.pdf as pdf_module
 import openri.pdf_inspect as pdf_inspect_module
 import openri.references as references_module
@@ -21,7 +22,7 @@ from openri.models import Finding, RunRequest, RunSummary, Severity, Status
 from openri.pdf_inspect import inspect_pdf
 from openri.references import citation_context_audit
 from openri.reviewer_eval import compare_review_results
-from openri.ruleset_loader import discover_keyword_rulesets, load_default_ruleset
+from openri.ruleset_loader import KeywordItem, KeywordRuleset, discover_keyword_rulesets, load_default_ruleset
 from openri.sarif import report_to_sarif
 from openri.store import ReportStore
 from openri.text_windows import iter_sentence_spans
@@ -157,6 +158,47 @@ def test_claim_cue_regexes_are_shared_across_modules():
     assert checks_module.CLAIM_CUE_RE is analyzer_module.CLAIM_CUE_RE
     assert checks_module.CLAIM_LIMITATION_CUE_RE is analyzer_module.LIMITATION_CUE_RE
     assert references_module.CLAIM_RE is analyzer_module.CLAIM_CUE_RE
+
+
+def test_japanese_cue_keywords_match_without_word_boundaries():
+    # かな・漢字は \w に含まれるため、\b で囲むと和文の文中キーワードに一致しない。
+    assert cues_module.CLAIM_CUE_RE.search("主効果は有意であった")
+    assert cues_module.LIMITATION_CUE_RE.search("ただし本研究には限界がある")
+    assert cues_module.CAUSAL_CUE_RE.search("介入が改善の原因であると考えられる")
+    assert cues_module.NOVELTY_CUE_RE.search("本研究は初めての試みである")
+    assert cues_module.OVERGENERAL_CUE_RE.search("全ての患者に有効であることを証明した")
+    assert cues_module.FIGURE_CUE_RE.search("結果を図1に示す")
+    assert cues_module.CAUSAL_DESIGN_RE.search("本研究はランダム化比較試験である")
+
+
+def test_japanese_manuscript_extracts_claims_and_risk_flags():
+    text = """要旨
+本研究は、新規に開発した介入プログラムが高齢者の記憶成績を改善する重要な因果効果を初めて示した。
+
+方法
+参加者は観察研究として質問紙に回答し、追跡調査によって記憶成績の変化を記録した。
+
+結果
+介入群の主効果は統計的に有意であり、すべての参加者で改善が確認された重要な結果である。
+"""
+    report = analyze_manuscript(RunRequest(manuscript_text=text, title="日本語原稿"))
+    claims = report.ai_review_protocol["review_packet"]["claim_inventory"]
+    assert claims
+    all_flags = {flag for claim in claims for flag in claim["risk_flags"]}
+    assert "causal_language_without_explicit_causal_design" in all_flags
+    assert "significance_claim_without_local_statistic" in all_flags
+    assert _by_id(report, "claim_evidence_alignment").status == Status.WARNING
+
+
+def test_ruleset_not_applicable_detected_in_japanese_text():
+    ruleset = KeywordRuleset(
+        id="demo",
+        name="demo",
+        description="",
+        items=(KeywordItem(id="registration", label="試験登録", keywords=("臨床試験登録",)),),
+    )
+    summary = checks_module._scan_keyword_ruleset("本研究の臨床試験登録は該当なしである。", ruleset)
+    assert [item["id"] for item in summary["not_applicable"]] == ["registration"]
 
 
 def test_one_tailed_context_only_halves_t_and_z_tests():
@@ -560,6 +602,29 @@ def test_declarative_plugin_check(monkeypatch):
     assert report.ai_review_protocol["plugin_security_boundary"]["executes_arbitrary_code"] is False
 
 
+def test_plugin_with_unknown_maturity_does_not_break_check_definitions(monkeypatch, tmp_path):
+    manifest = tmp_path / "plugin.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "checks": [
+                    {
+                        "id": "custom_check",
+                        "title": "Custom check",
+                        "keywords": ["custom keyword"],
+                        "maturity": "bogus-maturity",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("OPENRI_CHECK_PLUGIN_PATHS", str(manifest))
+    definitions = analyzer_module.get_check_definitions()
+    plugin_definition = next(item for item in definitions if item.id == "plugin:custom_check")
+    assert plugin_definition.maturity == "experimental"
+
+
 def test_submission_queue_roundtrip(monkeypatch, tmp_path):
     monkeypatch.setattr(api_module, "STORE", ReportStore(tmp_path / "reports.sqlite3"))
     client = TestClient(app)
@@ -822,6 +887,40 @@ def test_pdf_hidden_text_preserves_critical_severity():
     )
     assert finding.severity == Severity.CRITICAL
     assert finding.status == Status.FAILED
+
+
+def test_pdf_hidden_text_mixed_severities_keep_worst_severity():
+    finding = checks_module.check_pdf_hidden_text(
+        "",
+        {
+            "pdf_inspection": {
+                "page_count": 2,
+                "hidden_text": [{"kind": "off-page", "severity": "low", "page": 1, "text": "margin note"}],
+                "document_risks": [{"kind": "javascript", "severity": "critical", "page": 2}],
+            }
+        },
+    )
+    assert finding.severity == Severity.CRITICAL
+    assert finding.status == Status.FAILED
+
+
+def test_pdf_hidden_text_unavailable_inspection_is_skipped_not_passed():
+    finding = checks_module.check_pdf_hidden_text(
+        "",
+        {
+            "pdf_inspection": {
+                "available": False,
+                "reason": "pdfplumber-not-installed",
+                "hidden_text": [],
+                "document_risks": [],
+                "page_count": 0,
+            }
+        },
+    )
+    assert finding.status == Status.SKIPPED
+    assert finding.severity == Severity.INFO
+    assert "coverage-blocker" in finding.tags
+    assert finding.evidence[0].data["reason"] == "pdfplumber-not-installed"
 
 
 def test_critical_warning_routes_to_integrity_hold():

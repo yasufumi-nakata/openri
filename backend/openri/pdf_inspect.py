@@ -86,7 +86,15 @@ def inspect_pdf(path: Path) -> dict:
     try:
         import pdfplumber  # type: ignore
     except ImportError:
-        return {"available": False, "reason": "pdfplumber-not-installed", "hidden_text": [], "page_count": 0}
+        return {
+            "available": False,
+            "reason": "pdfplumber-not-installed",
+            "hidden_text": [],
+            "document_risks": [],
+            "page_count": 0,
+            "image_count": 0,
+            "text_char_count": 0,
+        }
 
     hidden_chars: list[dict] = []
     document_risks: list[dict] = []

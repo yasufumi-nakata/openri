@@ -656,7 +656,7 @@ def _claim_alignment_flags(sentence: str, full_text: str) -> list[str]:
 
     if not has_statistic and not has_citation and not has_figure:
         flags.append("claim_without_local_support_marker")
-    if re.search(r"\b(significant|significantly|有意)\b", sentence, re.IGNORECASE) and not has_statistic:
+    if re.search(r"\b(?:significant|significantly)\b|有意", sentence, re.IGNORECASE) and not has_statistic:
         flags.append("significance_claim_without_local_statistic")
     if CLAIM_CAUSAL_CUE_RE.search(sentence) and not CLAIM_CAUSAL_DESIGN_RE.search(full_text):
         flags.append("causal_claim_without_explicit_causal_design")
@@ -665,7 +665,9 @@ def _claim_alignment_flags(sentence: str, full_text: str) -> list[str]:
     if CLAIM_OVERGENERAL_CUE_RE.search(sentence):
         flags.append("overgeneralized_or_conclusive_language")
     if not has_limitation and re.search(
-        r"\b(robust|important|groundbreaking|definitive|conclusive|prove|重要|頑健|証明)\b", sentence, re.IGNORECASE
+        r"\b(?:robust|important|groundbreaking|definitive|conclusive|prove)\b|重要|頑健|証明",
+        sentence,
+        re.IGNORECASE,
     ):
         flags.append("strong_language_without_local_limitation")
     return flags
@@ -1110,7 +1112,7 @@ def check_image_integrity(text: str, profile: dict) -> Finding:
             ["image-integrity", "pdf-image", "coverage-blocker"],
         )
 
-    figure_mentions = len(re.findall(r"\b(fig\.?|figure|図)\s*\d+", text, re.IGNORECASE))
+    figure_mentions = len(re.findall(r"(?:\b(?:fig\.?|figure)|図)\s*\d+", text, re.IGNORECASE))
     if figure_mentions == 0:
         return _finding(
             "image_integrity",
@@ -1259,7 +1261,7 @@ def _scan_keyword_ruleset(text: str, ruleset: KeywordRuleset, lowered: Optional[
         if matched:
             idx = lowered.find(matched)
             window = lowered[max(0, idx - 80) : idx + len(matched) + 120]
-            if re.search(r"\b(not applicable|n/?a|not relevant|該当なし|対象外)\b", window, re.IGNORECASE):
+            if re.search(r"\b(?:not applicable|n/?a|not relevant)\b|該当なし|対象外", window, re.IGNORECASE):
                 not_applicable.append(
                     {
                         "id": item.id,
@@ -1397,6 +1399,19 @@ def check_pdf_hidden_text(text: str, profile: dict) -> Finding:
             "openri check manuscript.pdf を使うと、白色文字・極小フォント・ページ外座標などを検査します。",
             tags=["pdf", "hidden-text"],
         )
+    if not inspection.get("available", True):
+        return _finding(
+            "pdf_hidden_text",
+            "PDF hidden text and active content",
+            "ai-safety",
+            Severity.INFO,
+            Status.SKIPPED,
+            55,
+            f"PDF不可視テキスト検査を実行できませんでした: {inspection.get('reason', 'unknown')}",
+            "pdfplumberを含む環境(pip install 'openri[pdf]')で再実行してください。未実行の不可視テキスト検査はpassedではなくcoverage blockerとして扱います。",
+            [Evidence(data=inspection)],
+            ["pdf", "hidden-text", "coverage-blocker"],
+        )
     hits = inspection.get("hidden_text", []) or []
     document_risks = inspection.get("document_risks", []) or []
     if not hits and not document_risks:
@@ -1411,17 +1426,13 @@ def check_pdf_hidden_text(text: str, profile: dict) -> Finding:
             "スキャンPDFや画像内文字はOCRが必要なcoverage blockerとして別途確認してください。",
             tags=["pdf", "hidden-text"],
         )
-    severity_rank = {
-        "info": Severity.INFO,
-        "low": Severity.LOW,
-        "medium": Severity.MEDIUM,
-        "high": Severity.HIGH,
-        "critical": Severity.CRITICAL,
-    }
     combined = [*hits, *document_risks]
-    max_severity = max(
-        (severity_rank.get(h.get("severity", "high"), Severity.HIGH) for h in combined), default=Severity.HIGH
+    worst_name = max(
+        (str(item.get("severity", "high")).lower() for item in combined),
+        key=lambda name: _SEVERITY_RANK.get(name, _SEVERITY_RANK["high"]),
+        default="high",
     )
+    max_severity = _SEVERITY_BY_NAME.get(worst_name, Severity.HIGH)
     evidence = [
         Evidence(
             quote=(h.get("text") or "")[:200] or None,

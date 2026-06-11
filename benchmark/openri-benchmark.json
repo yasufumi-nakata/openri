@@ -2,10 +2,10 @@
   "schema": "openri-public-benchmark-v1",
   "case_count": 8,
   "recall_proxy": 1.0,
-  "precision_proxy": 0.467,
+  "precision_proxy": 0.438,
   "route_distribution": {
-    "route_to_peer_review": 2,
-    "technical_check_then_peer_review": 4,
+    "route_to_peer_review": 1,
+    "technical_check_then_peer_review": 5,
     "statistics_editor_screen": 1,
     "integrity_hold_before_peer_review": 1
   },
@@ -13,7 +13,7 @@
   "cases": [
     {
       "case": "borderline_rounding",
-      "score": 73,
+      "score": 71,
       "route": "route_to_peer_review",
       "expected_checks": [],
       "hit_expected_checks": [],
@@ -24,11 +24,12 @@
     },
     {
       "case": "clean_transparent",
-      "score": 75,
-      "route": "route_to_peer_review",
+      "score": 67,
+      "route": "technical_check_then_peer_review",
       "expected_checks": [],
       "hit_expected_checks": [],
       "warning_or_failed_checks": [
+        "citation_context",
         "claim_evidence_alignment",
         "effect_size_ci_coverage"
       ],
@@ -36,7 +37,7 @@
     },
     {
       "case": "missing_transparency",
-      "score": 70,
+      "score": 64,
       "route": "technical_check_then_peer_review",
       "expected_checks": [
         "reporting_transparency"
@@ -51,7 +52,7 @@
     },
     {
       "case": "p_value_mismatch",
-      "score": 69,
+      "score": 66,
       "route": "statistics_editor_screen",
       "expected_checks": [
         "statistical_consistency"
@@ -66,7 +67,7 @@
     },
     {
       "case": "placeholder_citation",
-      "score": 62,
+      "score": 50,
       "route": "technical_check_then_peer_review",
       "expected_checks": [
         "citation_context",
@@ -85,7 +86,7 @@
     },
     {
       "case": "prompt_injection",
-      "score": 57,
+      "score": 40,
       "route": "integrity_hold_before_peer_review",
       "expected_checks": [
         "prompt_injection"
@@ -101,7 +102,7 @@
     },
     {
       "case": "ruleset_omission",
-      "score": 60,
+      "score": 39,
       "route": "technical_check_then_peer_review",
       "expected_checks": [
         "ruleset_coverage"
@@ -117,7 +118,7 @@
     },
     {
       "case": "unsupported_causal_claim",
-      "score": 60,
+      "score": 44,
       "route": "technical_check_then_peer_review",
       "expected_checks": [
         "citation_context"

@@ -435,7 +435,7 @@ def _claim_risk_flags(sentence: str, full_text: str) -> list[str]:
     has_stat = bool(STATISTIC_CUE_RE.search(sentence))
     has_citation = bool(CITATION_CUE_RE.search(sentence))
     has_limitation = bool(LIMITATION_CUE_RE.search(sentence))
-    if re.search(r"\b(significant|significantly|有意)\b", sentence, re.IGNORECASE) and not has_stat:
+    if re.search(r"\b(?:significant|significantly)\b|有意", sentence, re.IGNORECASE) and not has_stat:
         flags.append("significance_claim_without_local_statistic")
     if CAUSAL_CUE_RE.search(sentence) and not CAUSAL_DESIGN_RE.search(full_text):
         flags.append("causal_language_without_explicit_causal_design")
@@ -446,7 +446,7 @@ def _claim_risk_flags(sentence: str, full_text: str) -> list[str]:
     if not has_stat and not has_citation and not FIGURE_CUE_RE.search(sentence):
         flags.append("no_local_support_marker")
     if not has_limitation and re.search(
-        r"\b(robust|important|groundbreaking|definitive|conclusive|重要|頑健)\b", sentence, re.IGNORECASE
+        r"\b(?:robust|important|groundbreaking|definitive|conclusive)\b|重要|頑健", sentence, re.IGNORECASE
     ):
         flags.append("strong_language_without_local_limitation")
     return flags
@@ -455,11 +455,11 @@ def _claim_risk_flags(sentence: str, full_text: str) -> list[str]:
 def _claim_type(sentence: str) -> str:
     if CAUSAL_CUE_RE.search(sentence):
         return "causal_or_mechanistic"
-    if re.search(r"\b(significant|significantly|p\s*[<=>]|有意)\b", sentence, re.IGNORECASE):
+    if re.search(r"\b(?:significant|significantly)\b|\bp\s*[<=>]|有意", sentence, re.IGNORECASE):
         return "statistical_result"
     if NOVELTY_CUE_RE.search(sentence):
         return "novelty_or_priority"
-    if re.search(r"\b(robust|prove|definitive|conclusive|all|always|頑健|証明|全て)\b", sentence, re.IGNORECASE):
+    if re.search(r"\b(?:robust|prove|definitive|conclusive|all|always)\b|頑健|証明|全て", sentence, re.IGNORECASE):
         return "scope_or_strength"
     return "general_claim"
 
@@ -999,6 +999,16 @@ def build_ai_review_protocol(summary: RunSummary, findings: list, profile: dict,
     return protocol
 
 
+# 深刻な順。Severity は str Enum のため、value の辞書順では並べ替えない。
+_SEVERITY_WORST_FIRST = {
+    Severity.CRITICAL: 0,
+    Severity.HIGH: 1,
+    Severity.MEDIUM: 2,
+    Severity.LOW: 3,
+    Severity.INFO: 4,
+}
+
+
 def _evidence_quality_label(finding) -> str:
     if not finding.evidence:
         return "no_evidence_attached"
@@ -1147,7 +1157,7 @@ def build_accountability_record(
                     "severity": finding.severity.value,
                     "score": finding.score,
                 }
-                for finding in sorted(findings, key=lambda item: (item.score, item.severity.value))[:5]
+                for finding in sorted(findings, key=lambda item: (item.score, _SEVERITY_WORST_FIRST[item.severity]))[:5]
             ],
         },
         "evidence_ledger": evidence_ledger,

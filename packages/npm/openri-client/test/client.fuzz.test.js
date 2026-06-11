@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import fc from "fast-check";
-import { createOpenRIClient } from "../index.js";
+import { createOpenRIClient, OpenRIClientError } from "../index.js";
 
 test("runText serializes arbitrary manuscript text without mutation", async () => {
   await fc.assert(
@@ -27,6 +27,20 @@ test("runText serializes arbitrary manuscript text without mutation", async () =
     }),
     { numRuns: 100 },
   );
+});
+
+test("non-JSON error bodies keep the HTTP status instead of throwing SyntaxError", async () => {
+  const client = createOpenRIClient({
+    baseUrl: "http://openri.test",
+    fetchImpl: async () => new Response("<html>Bad Gateway</html>", { status: 502 }),
+  });
+
+  await assert.rejects(client.health(), (error) => {
+    assert.ok(error instanceof OpenRIClientError);
+    assert.equal(error.status, 502);
+    assert.equal(error.responseBody, "<html>Bad Gateway</html>");
+    return true;
+  });
 });
 
 test("baseUrl trimming handles repeated slashes without regular expressions", async () => {

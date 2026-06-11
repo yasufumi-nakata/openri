@@ -8,11 +8,17 @@ const apiBase = (process.env.OPENRI_API_BASE || "http://127.0.0.1:8008").replace
 async function requestJson(path, options = {}) {
   const response = await fetch(`${apiBase}${path}`, options);
   const text = await response.text();
-  const body = text ? JSON.parse(text) : null;
   if (!response.ok) {
     throw new Error(`OpenRI API ${path} failed with HTTP ${response.status}: ${text}`);
   }
-  return body;
+  if (!text) {
+    return null;
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`OpenRI API ${path} returned HTTP ${response.status} with a non-JSON body.`);
+  }
 }
 
 function asText(payload) {
