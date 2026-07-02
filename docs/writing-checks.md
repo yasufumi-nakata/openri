@@ -24,8 +24,11 @@ def check_my_thing(text: str, profile: dict) -> Finding:
 ```
 
 `profile` は `analyzer.manuscript_profile()` が作る dict で、`strictness_knobs`、
-`activated_rulesets`、`enable_network`、`pdf_inspection` を含む。strictness や
+`activated_rulesets`、`enable_network`、`pdf_inspection`、`image_inspection` を含む。strictness や
 ネットワーク有無を見て挙動を変えるときはここを参照する。
+
+claim・引用・限界などの共有cue正規表現は `backend/openri/cues.py` にまとまっている。
+新しいcheckで同種のcueを使う場合は、独自定義せずここから import する。
 
 ## 2. 登録
 
@@ -83,3 +86,15 @@ AI coding agentが追加したcheckは、説明文だけで正しい扱いにし
 `Evidence.location` は `"line 12"` のように行番号を含む文字列にすると、
 `sarif.py` がそれを `startLine` として GitHub Code Scanning に橋渡しする。
 PDF の場合は `"page 3"` でも問題ないが、Code Scanning は行番号のみ拾う。
+
+## 6. 生成物の再生成
+
+checkの出力(message、evidence、status等)を変えた場合は、コミット前に固定成果物を再生成する。
+
+```bash
+PYTHONPATH=backend python scripts/update_golden_reports.py   # golden report
+PYTHONPATH=backend python scripts/benchmark_openri.py        # 公開benchmark
+PYTHONPATH=backend python scripts/export_schema.py           # RunReport JSON schema(モデル変更時)
+```
+
+golden reportの差分は意図した変更だけかを必ず確認する。status/severity/scoreが意図せず変わっている場合は、checkの実装を見直す。既存検出が弱くなる差分(failed→warning、warning→passedなど)は原則入れない。

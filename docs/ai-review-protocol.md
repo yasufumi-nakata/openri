@@ -11,11 +11,12 @@ OpenRIの `ai_review_protocol` は、GPT-5.5、GPT-6.7、Claude、ローカル�
 - **Field-neutral core first**: 分野別rulesetの前に、どの研究にも共通するcore review axisを通します。
 - **Model-agnostic execution**: モデル名や世代を品質の根拠にせず、同じ `review_packet`、acceptance gate、evidence ledgerで比較します。
 
-## 初回公開時の限界
+## 現時点の限界(v0.4.0)
 
-- 画像改ざん検査は未実装です。図表参照がある場合は `image_integrity_placeholder` として、未検査領域をcoverage blockerに残します。
-- rulesetはキーワード照合です。CONSORT/PRISMA/MDAR-strict等の完全な専門査読ではなく、記載漏れ候補の検出として扱います。
-- 引用文脈がclaimを本当に支えるかの意味的検証はまだ行いません。DOI実在性照合も、未公開原稿の外部送信を避けるため既定では無効です。
+- 画像検査(`image_integrity`)はEXIFメタデータ(編集ソフト痕跡を含む)、圧縮形式、単純な重複領域候補の初期検査です。切り貼り境界、圧縮アーティファクト、ELA相当の深い検査はreviewer taskとして残ります。画像未提出でPDF内画像や図参照だけがある場合はcoverage blockerになります。
+- rulesetはキーワード照合です。CONSORT/PRISMA/MDAR-strict/STROBE/ARRIVE等の完全な専門査読ではなく、記載漏れ候補の検出として扱います。
+- 引用対応は、本文中引用(番号/著者-年)と参考文献entryの機械的照合までです。引用文脈がclaimを本当に支えるかの意味的検証はまだ行いません。DOI実在性照合も、未公開原稿の外部送信を避けるため既定では無効です。
+- 効果量と信頼区間は抽出のみで、p値・サンプルサイズとの相互整合再計算は未対応です(coverage blockerとして残ります)。
 - AI reviewerへの外部LLM送信は既定で不要です。送信する場合は、許可、送信範囲、送信先、保存期間、削除方針を別途固定してください。
 
 ## AI reviewer roles

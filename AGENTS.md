@@ -76,11 +76,13 @@ PYTHONPATH=backend python3 -m openri.cli check samples/high_risk_manuscript.txt
 
 ## 追加開発の優先順位
 
-1. 画像ファイルのEXIF、重複領域、切り貼り、圧縮アーティファクト検査。
-2. APA統計表記の検出範囲拡張。
-3. STROBE/ARRIVEなどの追加ruleset。
-4. OpenAlex / Semantic Scholarによる引用文脈検証。
-5. 参考文献リスト抽出と本文中引用の対応検査。
+v0.4.0までに、画像のEXIF・編集ソフト痕跡・重複領域の初期検査、APA統計表記の拡張(χ²/r/自由度なしz)、STROBE/ARRIVE/CARE/CHEERS/TRIPOD ruleset、番号・著者-年両形式の引用対応検査を実装済みです。残りの優先順位:
+
+1. APA統計カバレッジの続き(複数行表記、表内統計量)。
+2. 画像検査の深化(切り貼り境界、圧縮アーティファクト、ELA相当)。
+3. 効果量・信頼区間・p値の相互整合再計算(現状はcoverage blocker)。
+4. OpenAlex / Semantic Scholarによる引用文脈検証(opt-in)。
+5. 参考文献リストのメタデータ抽出と引用整合クロスチェックの強化。
 
 ## 作業完了前の確認
 
