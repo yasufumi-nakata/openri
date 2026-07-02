@@ -32,7 +32,7 @@ jobs:
       - name: Install OpenRI
         run: |
           python -m pip install --upgrade pip
-          pip install "openri[pdf,image] @ git+https://github.com/your-org/openri@main"
+          pip install "openri[pdf,image] @ git+https://github.com/yasufumi-nakata/openri@main"
 
       - name: Run OpenRI
         id: openri

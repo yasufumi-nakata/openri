@@ -13,24 +13,56 @@ OpenRIは、投稿システムに提出された論文に対する「査読前�
 
 このプロトタイプの目的は、査読で本来確認されてきた論点を、GPT-5.5、GPT-6.7、Claude、ローカルモデルなど将来変わり得るAI reviewer/AI editorが、分野非依存・証拠優先・忖度なしで実行できるテスト設計に落とし込むことです。OpenRI自体は不正断定や採否判定の本体にはならず、AIが自律判断する運用の前段で潰すべき論点、coverage blocker、reviewer assignment、再現可能な検査結果、監査可能な判断材料をAPIレスポンスとして返します。処理フローの詳細は [`docs/submitted-manuscript-workflow.md`](docs/submitted-manuscript-workflow.md) と [`docs/ai-review-protocol.md`](docs/ai-review-protocol.md) を参照してください。
 
-## 初期スコープ
+## クイックスタート
 
-- `statistical_consistency`: t/F/χ2/r/z検定表記(上付き `χ²`、相関 `r(df)`、自由度なしの `z = value` 形式も対応)からp値を再計算し、報告p値とのズレや有意性判定の反転を検出します。strictness で許容ズレを切り替えます。
-- `summary_stat_plausibility`: 平均値とnから、整数項目の平均として不自然な値をGRIM風に検出します。整数項目ヒントの有無で severity を切り替えます。
-- `reporting_transparency`: ethics, data availability, code availability, conflicts, funding の存在を確認します。
-- `citation_integrity`: DOI、本文中引用、参考文献セクションの機械的不整合を確認します。
-- `prompt_injection`: LLM査読を操作する隠し指示、不可視文字、隠しCSSを YAML ruleset から検出します。`OPENRI_PROMPT_INJECTION_RULES` で追加ruleset可。
-- `template_text`: 重複段落、近接重複(shingle-Jaccard)、テンプレ表現の過剰反復を検出します。
-- `image_integrity`: 画像アップロード時にEXIF、画像形式、重複領域候補を確認し、PDF内画像や本文図参照はcoverage blockerとして残します。
+```bash
+git clone https://github.com/yasufumi-nakata/openri.git
+cd openri
+pip install -e ".[pdf,image,server,dev]"
+openri check samples/high_risk_manuscript.txt
+```
+
+高リスクサンプルに対して、p値不整合(failed)、prompt injection(failed)、透明性不足(warning)などが証拠付きで表示されれば動作しています。Web UIとAPIの起動は後述の各セクションを参照してください。
+
+## 検査一覧(v0.4.0、全13 check)
+
+### statistics
+
+- `statistical_consistency` (stable): t/F/χ2/r/z検定表記(上付き `χ²`、相関 `r(df)`、自由度なしの `z = value` 形式も対応)からp値を再計算し、報告p値とのズレや有意性判定の反転を検出します。strictness で許容ズレを切り替えます。
+- `summary_stat_plausibility` (beta): 平均値とnから、整数項目の平均として不自然な値をGRIM風に検出します。整数項目ヒントの有無で severity を切り替えます。
+- `effect_size_ci_coverage` (beta): 効果量と信頼区間を抽出します。相互整合の再計算は未対応のため、coverage blockerとして残します。
+
+### references
+
+- `citation_integrity` (beta): DOI、本文中引用番号、参考文献セクションの機械的不整合を確認します。
+- `citation_context` (beta): 参考文献リスト、本文中引用(番号/著者-年)と参考文献entryの対応、claim-support markerを構造化し、AI review packetへ渡します。
 - `doi_existence` (experimental, network): Crossref で本文中のDOIが実在するか確認します。`--network` で有効化。
-- `ruleset_coverage` (beta): CONSORT/PRISMA/MDAR-strict など分野別 YAML ruleset の項目キーワードを照合します。`--ruleset` で指定。
-- `pdf_hidden_text` (experimental): CLIでPDFを直接渡したとき、白色文字・極小フォント・ページ外配置を検出します。
-- `citation_context`: 参考文献リスト、本文中引用(番号/著者-年)と参考文献の対応、claim-support markerを構造化し、AI review packetへ渡します。
+
+### research-integrity
+
+- `reporting_transparency` (stable): ethics, data availability, code availability, conflicts, funding の存在を確認します。
+- `ruleset_coverage` (beta): CONSORT/PRISMA/MDAR-strict/STROBE/ARRIVE/CARE/CHEERS/TRIPOD の分野別 YAML ruleset の項目キーワードを照合します。`--ruleset` で指定。
+
+### manuscript-quality
+
+- `claim_evidence_alignment` (beta): 主要claim候補が局所的な統計・引用・図表・限界記述で支えられているかを検査し、causal/novelty/overgeneralizationのrisk flagを付けます。
+- `template_text` (beta): 重複段落、近接重複(shingle-Jaccard)、テンプレ表現の過剰反復を検出します。
+
+### ai-safety
+
+- `prompt_injection` (stable): LLM査読を操作する隠し指示、不可視文字、隠しCSSを YAML ruleset から検出します。`OPENRI_PROMPT_INJECTION_RULES` で追加ruleset可。
+- `pdf_hidden_text` (experimental): PDFを直接渡したとき、白色文字・極小フォント・ページ外配置に加え、注釈・埋め込みファイル・JavaScript・OCR必要性などのPDF構造リスクを検出します。
+
+### image-integrity
+
+- `image_integrity` (experimental): 画像アップロード時にEXIF(編集ソフト痕跡・撮影日時を含む)、画像形式、重複領域候補を確認し、PDF内画像や本文図参照はcoverage blockerとして残します。
+
+`experimental` の check は `--no-experimental`(CLI)または `include_experimental_checks: false`(API)で除外できます。
 
 ## 構成
 
 - `backend/openri`: FastAPI API、CLI、検査エンジン、SARIF/Crossref/PDF-inspection、SQLite store。
-- `backend/openri/rulesets/`: YAML 駆動のruleset (prompt_injection, consort, prisma, mdar_strict)。
+- `backend/openri/rulesets/`: YAML 駆動のruleset(prompt_injection と、consort / prisma / mdar_strict / strobe / arrive / care / cheers / tripod の分野別ruleset)。
 - `frontend`: Web UI。原稿テキストを貼り付けて検査を実行し、findings/evidence/API例を確認できます。
 - `samples`: 動作確認用サンプル原稿。
 - `docs/`: GitHub Action / Buffy 連携サンプル、check 開発ガイド。
@@ -124,12 +156,13 @@ Web UIでは、本文貼り付けに加えてPDF/TXT/MD/TeXのアップロード
 
 ## ロードマップ
 
-1. 画像ファイルのEXIF、重複領域、切り貼り、圧縮アーティファクト検査。
-2. statcheck相当のAPA統計表記カバレッジ拡張(複数行表記、表内統計量)。
-3. STROBE/ARRIVE など追加 ruleset。
-4. 分野非依存 core review と分野別 ruleset review の分離を強化。
-5. OpenAlex / Semantic Scholar 連携(引用文脈の検証)。
-6. 参考文献本体(reference list)のメタデータ抽出と引用整合のクロスチェック。
+v0.4.0までに、画像のEXIF/重複領域/編集ソフト痕跡の初期検査、APA統計表記の拡張(χ²/r/z)、STROBE/ARRIVE/CARE/CHEERS/TRIPOD ruleset、番号・著者-年両形式の引用対応検査までを実装済みです。残る主要項目:
+
+1. statcheck相当のAPA統計カバレッジ拡張の続き(複数行表記、表内統計量)。
+2. 画像検査の深化(切り貼り境界、圧縮アーティファクト、ELA相当)。
+3. OpenAlex / Semantic Scholar 連携(引用文脈の意味的検証、opt-in)。
+4. 参考文献本体(reference list)のメタデータ抽出と引用整合のクロスチェック強化。
+5. 分野非依存 core review と分野別 ruleset review の分離強化。
 
 詳細は [`ROADMAP.md`](ROADMAP.md) と [`docs/`](docs/) を参照(GitHub Actionsへの組み込み、Buffyボット連携、checkの書き方)。
 

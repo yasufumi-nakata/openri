@@ -95,7 +95,7 @@
 <h2>実運用での扱い</h2>
 <ul><li><code>prompt_injection</code> または <code>pdf_hidden_text</code> のfailedは、AI判断前の保留対象にします。</li><li><code>statistical_consistency</code> のfailedは、AI判断前の統計整合性確認対象にします。</li><li><code>reporting_transparency</code> や <code>ruleset_coverage</code> のwarningは、著者照会や事務局チェックで解消できる可能性があります。</li><li><code>claim_evidence_alignment</code> のwarningは、claimを支える結果、図表、引用、限界、代替説明を1対1で確認する対象にします。</li><li><code>citation_integrity</code> のwarningは、placeholder DOI、参考文献entry、本文中引用番号との対応を確認する対象にします。</li><li><code>skipped</code> は「安全」ではありません。ネットワーク未使用、PDFでない、ruleset未指定など、検査条件が足りないことを示します。</li><li>AI reviewer/AI editorには、著者や研究室への遠慮ではなく、同じ入力なら同じfindingとcoverage blockerを扱うという基準を守らせます。</li></ul>
 <h2>今後の拡張</h2>
-<ul><li>投稿システムからのwebhook intake。</li><li>補足資料・画像ファイルの同時アップロード。</li><li>画像のEXIF、重複領域、切り貼り、圧縮アーティファクト検査。</li><li>editor dashboardでのqueue管理。</li><li>著者照会テンプレートの生成。</li><li>GPT-5.5、GPT-6.7、Claude、ローカルモデルなど複数AI reviewerによるcross-model disagreement tracking。</li><li>分野別rulesetを増やしても、分野非依存core reviewの閾値が崩れないregression test。</li></ul>
+<ul><li>投稿システムからのwebhook intake。</li><li>補足資料・複数画像ファイルの同時アップロード(単一画像のEXIF・編集ソフト痕跡・重複領域検査はv0.4.0で対応済み)。</li><li>画像検査の深化(切り貼り境界、圧縮アーティファクト、ELA相当)。</li><li>editor dashboardでのqueue管理。</li><li>著者照会テンプレートの生成。</li><li>GPT-5.5、GPT-6.7、Claude、ローカルモデルなど複数AI reviewerによるcross-model disagreement tracking。</li><li>分野別rulesetを増やしても、分野非依存core reviewの閾値が崩れないregression test。</li></ul>
         </article>
       </main>
 

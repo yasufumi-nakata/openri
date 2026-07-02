@@ -36,11 +36,11 @@
 <p>OpenRIにPDFまたはテキスト原稿を渡すと、採否判定や不正断定ではなく、機械的に再確認できるfindingを返します。 同時に、GPT-5.5、GPT-6.7、Claude、ローカルモデルなど将来変わり得るAI reviewer/AI editorが、査読論点を分野非依存・証拠優先・忖度なしで見るための <code>ai_review_protocol</code> も返します。</p>
 <h2>PDFの場合</h2>
 <ol><li>サーバー側でPDF本文を抽出します。</li><li>抽出テキストに対して、p値再計算、GRIM風の平均値/n整合性、透明性項目、引用/DOI、prompt injection、重複表現、rulesetなどを検査します。</li><li>PDFそのものに対して、白色文字、極小フォント、ページ外配置などの不可視/隠しテキスト候補を検査します。</li><li>結果はWeb UIとAPIの同じJSON reportで確認できます。</li></ol>
-<p>スキャン画像だけのPDFや、本文抽出できないPDFは現時点では検査できません。その場合はOCRを先に通すか、本文テキストも併せて入力してください。</p>
+<p>スキャン画像だけのPDFや本文抽出できないPDFは、本文系の検査は走らず、<code>pdf_hidden_text</code> が「OCRが必要」というPDF構造リスク(coverage blocker)として報告します。OCRを先に通すか、本文テキストも併せて入力してください。</p>
 <h2>出る結果</h2>
 <ul><li><code>score</code>: 0-100の目安です。低いほどAI判断前の追加検査やcoverage blocker解消が必要です。</li><li><code>passed</code>: 既知の機械検査で問題が見つからなかった項目です。</li><li><code>warning</code>: 不足・不整合・未実装範囲など、確認すべき項目です。</li><li><code>failed</code>: p値不整合や隠し指示など、重大な再確認対象です。</li><li><code>skipped</code>: ネットワーク検査やPDF専用検査など、条件不足で走らなかった項目です。</li><li><code>evidence</code>: 原稿中の該当引用、行番号、再計算値、検出パターンなどです。</li><li><code>ai_review_protocol</code>: AI reviewer role、universal review dimensions、coverage blocker、model-agnostic contract、AI開発前提のテスト設計です。</li></ul>
 <h2>現時点で検出できる代表例</h2>
-<ul><li><code>t(58) = 2.15, p = 0.003</code> のような報告p値を再計算し、実際のp値との差を示します。</li><li><code>M = 2.34, n = 17</code> のような平均値/n表記が、整数項目の平均としてあり得るかを確認します。</li><li>ethics、data availability、code availability、conflict of interest、fundingの記載漏れ候補を出します。</li><li>placeholder DOIや参考文献セクション不足を検出します。</li><li><code>Ignore previous instructions</code> のようなLLM査読操作の隠し指示を検出します。</li><li>PDF内の白色文字・極小フォント・ページ外テキストを検出します。</li></ul>
+<ul><li><code>t(58) = 2.15, p = 0.003</code>、<code>χ²(2) = 1.00, p &lt; .001</code>、<code>r(58) = .10, p &lt; .05</code>、<code>z = 1.00, p &lt; .001</code> のような報告p値を再計算し、実際のp値との差や有意性判定の反転を示します。</li><li><code>M = 2.34, n = 17</code> のような平均値/n表記が、整数項目の平均としてあり得るかを確認します。</li><li>ethics、data availability、code availability、conflict of interest、fundingの記載漏れ候補を出します。</li><li>placeholder DOIや参考文献セクション不足、本文中引用番号と参考文献番号の対応漏れを検出します。</li><li><code>(Smith, 2020)</code> のような著者-年引用に対応する参考文献entryがない場合を検出します。</li><li>主要claimが局所的な統計・引用・図表・限界記述で支えられていない場合にrisk flagを付けます。</li><li><code>Ignore previous instructions</code> のようなLLM査読操作の隠し指示を検出します。</li><li>PDF内の白色文字・極小フォント・ページ外テキストに加え、注釈・埋め込みファイル・JavaScript・OCR必要性などのPDF構造リスクを検出します。</li><li>画像ファイルではEXIFの編集ソフト痕跡(Photoshop等)と重複領域候補をreviewer taskとして出します。</li></ul>
 <h2>Web UIでの使い方</h2>
 <ol><li>http://127.0.0.1:5173/ を開きます。</li><li><code>PDF / text upload</code> でPDFを選択します。</li><li><code>Run PDF/File</code> を押します。</li><li>Findings Summary、Review Checks、Evidenceを確認します。</li></ol>
 <h2>APIでの使い方</h2>

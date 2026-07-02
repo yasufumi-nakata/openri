@@ -15,9 +15,13 @@ OpenRI has one canonical report object: `RunReport`.
 
 ## Extension points
 
-- `backend/openri/checks.py`: deterministic checks.
+- `backend/openri/checks.py`: deterministic checks (register in `CHECKS`).
+- `backend/openri/cues.py`: shared claim/citation/limitation cue regexes reused across checks.
+- `backend/openri/references.py`: reference-list extraction and numeric/author-year citation linkage.
 - `backend/openri/rulesets/*.yaml`: keyword/ruleset coverage checks.
-- `backend/openri/pdf_inspect.py`: PDF layout and hidden text checks.
+- `backend/openri/pdf_inspect.py`: PDF layout, hidden text, and document-structure risk checks.
+- `backend/openri/image_inspect.py`: image EXIF provenance and duplicate-region candidates.
+- `backend/openri/plugin_loader.py`: declarative JSON check plugins via `OPENRI_CHECK_PLUGIN_PATHS`.
 - `backend/openri/analyzer.py`: AI review packet and routing logic.
 - `backend/openri/sarif.py`: GitHub Code Scanning bridge.
 
