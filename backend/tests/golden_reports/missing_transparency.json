@@ -199,6 +199,7 @@
             "placeholder_references": [],
             "reference_count": 0,
             "references": [],
+            "unresolved_author_year_citations": [],
             "unresolved_numeric_citations": [],
             "unsupported_claims": []
           },
@@ -754,6 +755,7 @@
         "placeholder_references": [],
         "reference_count": 0,
         "references": [],
+        "unresolved_author_year_citations": [],
         "unresolved_numeric_citations": [],
         "unsupported_claims": []
       },
@@ -1206,6 +1208,7 @@
             "placeholder_references": [],
             "reference_count": 0,
             "references": [],
+            "unresolved_author_year_citations": [],
             "unresolved_numeric_citations": [],
             "unsupported_claims": []
           },

@@ -31,7 +31,7 @@ Then update `CHANGELOG.md`.
 ## Release tag
 
 ```bash
-git tag -a v0.3.2 -m "OpenRI v0.3.2"
+git tag -a v0.4.0 -m "OpenRI v0.4.0"
 git push origin main --tags
 ```
 

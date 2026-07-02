@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "openri"
-version = "0.3.2"
+version = "0.4.0"
 description = "Open Research Integrity: a test runner for manuscripts. Evidence-backed findings, not a verdict."
 readme = "README.md"
 requires-python = ">=3.9"

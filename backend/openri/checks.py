@@ -47,9 +47,16 @@ class CheckSpec:
 
 
 STAT_RE = re.compile(
-    r"(?P<test>t|z|F|χ2|χ\^2|chi-?square|chi2)\s*"
+    r"(?<![A-Za-z0-9_])(?P<test>t|z|F|r|χ2|χ²|χ\^2|chi-?squared?|chi2)\s*"
     r"\(\s*(?P<df1>\d+(?:\.\d+)?)\s*(?:,\s*(?P<df2>\d+(?:\.\d+)?))?\s*\)\s*"
-    r"=?\s*(?P<value>-?\d+(?:\.\d+)?)"
+    r"=?\s*(?P<value>-?(?:\d+(?:\.\d+)?|\.\d+))"
+    r"(?P<trailer>[\s\S]{0,220}?)(?:p\s*(?P<op><=|>=|<|>|=)\s*(?P<p>0?\.\d+|1(?:\.0+)?|0(?:\.0+)?))",
+    re.IGNORECASE,
+)
+
+# APA-style z tests are usually reported without degrees of freedom (z = 3.21, p < .001).
+Z_STAT_RE = re.compile(
+    r"(?<![A-Za-z0-9_])(?P<test>z)\s*=\s*(?P<value>-?(?:\d+(?:\.\d+)?|\.\d+))"
     r"(?P<trailer>[\s\S]{0,220}?)(?:p\s*(?P<op><=|>=|<|>|=)\s*(?P<p>0?\.\d+|1(?:\.0+)?|0(?:\.0+)?))",
     re.IGNORECASE,
 )
@@ -119,15 +126,22 @@ def _line_number(text: str, start: int, profile: Optional[dict] = None) -> str:
     return f"line {text.count(chr(10), 0, start) + 1}"
 
 
-def _p_value(test: str, value: float, df1: float, df2: float | None) -> float | None:
-    test_l = test.lower().replace("^", "")
-    if test_l == "t":
+def _p_value(test: str, value: float, df1: float | None, df2: float | None) -> float | None:
+    test_l = test.lower().replace("^", "").replace("²", "2")
+    if test_l == "t" and df1 is not None:
         return float(2 * stats.t.sf(abs(value), df1))
     if test_l == "z":
         return float(2 * stats.norm.sf(abs(value)))
+    if test_l == "r" and df1 is not None:
+        if df1 <= 0:
+            return None
+        if abs(value) >= 1:
+            return 0.0
+        t_stat = value * math.sqrt(df1 / (1 - value * value))
+        return float(2 * stats.t.sf(abs(t_stat), df1))
     if test_l == "f" and df2 is not None:
         return float(stats.f.sf(value, df1, df2))
-    if test_l in {"χ2", "chi-square", "chisquare", "chi2"}:
+    if test_l in {"χ2", "chi-square", "chi-squared", "chisquare", "chisquared", "chi2"}:
         return float(stats.chi2.sf(value, df1))
     return None
 
@@ -152,23 +166,42 @@ def _one_tailed_context(snippet: str) -> bool:
     return bool(re.search(r"one[-\s]?tailed|one[-\s]?sided|片側", snippet, re.IGNORECASE))
 
 
+def _stat_matches(text: str) -> list[tuple[re.Match, float | None]]:
+    """Collect APA-style test statistics with and without degrees of freedom.
+
+    Standalone z reports (no parentheses) are skipped when their reported p was
+    already consumed by a df-style match, so the same p is not checked twice.
+    """
+    matches: list[tuple[re.Match, float | None]] = []
+    consumed_p_spans: set[tuple[int, int]] = set()
+    for match in STAT_RE.finditer(text):
+        matches.append((match, float(match.group("df1"))))
+        consumed_p_spans.add(match.span("p"))
+    for match in Z_STAT_RE.finditer(text):
+        if match.span("p") in consumed_p_spans:
+            continue
+        matches.append((match, None))
+    matches.sort(key=lambda item: item[0].start())
+    return matches
+
+
 def check_statistical_consistency(text: str, profile: dict) -> Finding:
     mismatches: list[Evidence] = []
     checked = 0
     p_tolerance = float(profile.get("strictness_knobs", {}).get("p_tolerance", 0.02))
 
-    for match in STAT_RE.finditer(text):
+    for match, df1 in _stat_matches(text):
         checked += 1
         test = match.group("test")
         reported = float(match.group("p"))
         op = match.group("op")
         value = float(match.group("value"))
-        df1 = float(match.group("df1"))
-        df2 = float(match.group("df2")) if match.group("df2") else None
+        groups = match.groupdict()
+        df2 = float(groups["df2"]) if groups.get("df2") else None
         calculated = _p_value(test, value, df1, df2)
         if calculated is None or math.isnan(calculated):
             continue
-        if _one_tailed_context(match.group(0)) and test.lower() in {"t", "z"}:
+        if _one_tailed_context(match.group(0)) and test.lower() in {"t", "z", "r"}:
             calculated = calculated / 2
 
         consistent, threshold_flip, materially_different = _reported_p_consistent(calculated, reported, op, p_tolerance)
@@ -200,7 +233,7 @@ def check_statistical_consistency(text: str, profile: dict) -> Finding:
             Status.SKIPPED,
             70,
             "検定統計量とp値の組を検出できませんでした。",
-            "t(df), F(df1, df2), χ2(df), z(df) と p 値を標準形式で記載すると自動検査できます。",
+            "t(df), F(df1, df2), χ2(df), r(df), z = value と p 値を標準形式で記載すると自動検査できます。",
             tags=["statcheck"],
         )
 
@@ -754,9 +787,10 @@ def check_citation_context(text: str, profile: dict) -> Finding:
     audit = citation_context_audit(text)
     evidence = [Evidence(data=audit)]
     unresolved = audit["unresolved_numeric_citations"]
+    unresolved_author_year = audit["unresolved_author_year_citations"]
     placeholders = audit["placeholder_references"]
     unsupported = audit["unsupported_claims"]
-    if unresolved or placeholders:
+    if unresolved or unresolved_author_year or placeholders:
         return _finding(
             "citation_context",
             "Structured reference and citation-context audit",
@@ -764,8 +798,8 @@ def check_citation_context(text: str, profile: dict) -> Finding:
             Severity.HIGH,
             Status.WARNING,
             45,
-            "参考文献リスト、本文中引用、placeholder DOIの対応に確認が必要な箇所があります。",
-            "本文中引用番号と参考文献番号を照合し、placeholder DOIや支えの弱いclaimは著者照会または外部DB照合へ回してください。",
+            "参考文献リスト、本文中引用(番号/著者-年)、placeholder DOIの対応に確認が必要な箇所があります。",
+            "本文中引用番号・著者-年引用と参考文献リストを照合し、placeholder DOIや支えの弱いclaimは著者照会または外部DB照合へ回してください。",
             evidence,
             ["citation", "reference-list", "claim-support"],
         )
@@ -1460,7 +1494,7 @@ CHECKS: list[CheckSpec] = [
         "statistical_consistency",
         "Statistical consistency",
         "statistics",
-        "t/F/χ2/z検定表記からp値を再計算し、有意性判定の反転や大きなズレを検出します。",
+        "t/F/χ2/r/z検定表記(z は自由度なしの z = value 形式も対応)からp値を再計算し、有意性判定の反転や大きなズレを検出します。",
         "stable",
         check_statistical_consistency,
     ),

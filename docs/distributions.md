@@ -20,7 +20,7 @@ https://www.yasufumi.net/openri/packages/
 Python 版は CLI、FastAPI API、ruleset、PDF 検査と Python 3.10 以上向けの PDF 不可視テキスト・画像検査 extra を含みます。
 
 ```bash
-pip install https://www.yasufumi.net/openri/packages/python/openri-0.3.2-py3-none-any.whl
+pip install https://www.yasufumi.net/openri/packages/python/openri-0.4.0-py3-none-any.whl
 openri --version
 ```
 
@@ -31,7 +31,7 @@ checksum と SPDX metadata は `SHA256SUMS` と `openri-release.spdx.json` で�
 `@openri/client` は OpenRI API を呼ぶ軽量 ESM client です。Web UI や外部 dashboard から `/api/health` と `/api/runs` を同じ型で扱うために使います。
 
 ```bash
-npm install https://www.yasufumi.net/openri/packages/npm/openri-client-0.3.2.tgz
+npm install https://www.yasufumi.net/openri/packages/npm/openri-client-0.4.0.tgz
 ```
 
 ## MCP server package
@@ -39,7 +39,7 @@ npm install https://www.yasufumi.net/openri/packages/npm/openri-client-0.3.2.tgz
 `@openri/mcp` はローカル OpenRI API を MCP tool として公開します。既定では `http://127.0.0.1:8008` だけを呼び、未公開原稿を外部 API に送る挙動は追加しません。
 
 ```bash
-npm install https://www.yasufumi.net/openri/packages/mcp/openri-mcp-0.3.2.tgz
+npm install https://www.yasufumi.net/openri/packages/mcp/openri-mcp-0.4.0.tgz
 OPENRI_API_BASE=http://127.0.0.1:8008 npx openri-mcp
 ```
 
@@ -48,7 +48,7 @@ OPENRI_API_BASE=http://127.0.0.1:8008 npx openri-mcp
 Codex skill は、原稿検査、finding の証拠確認、AI reviewer protocol の読み取りを OpenRI の安全方針に沿って実行するための入口です。
 
 ```bash
-curl -LO https://www.yasufumi.net/openri/packages/skill/openri-codex-skill-0.3.2.tar.gz
+curl -LO https://www.yasufumi.net/openri/packages/skill/openri-codex-skill-0.4.0.tar.gz
 ```
 
 ## Safety defaults

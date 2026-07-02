@@ -225,6 +225,11 @@
       "additionalProperties": true,
       "title": "Ai Review Protocol",
       "type": "object"
+    },
+    "accountability": {
+      "additionalProperties": true,
+      "title": "Accountability",
+      "type": "object"
     }
   },
   "required": [

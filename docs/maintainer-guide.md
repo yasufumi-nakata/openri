@@ -33,8 +33,8 @@ Update these files together:
 Then tag and push:
 
 ```bash
-git tag -a v0.3.2 -m "OpenRI v0.3.2"
-git push origin main v0.3.2
+git tag -a v0.4.0 -m "OpenRI v0.4.0"
+git push origin main v0.4.0
 ```
 
 The release workflow builds artifacts, checks metadata, uploads `dist/*` to the workflow run, and optionally publishes to PyPI when `PUBLISH_TO_PYPI=true` and PyPI Trusted Publishing is configured. GitHub Releases are created manually from the checked workflow artifact when needed, keeping the release workflow token read-only for repository contents.

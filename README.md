@@ -15,7 +15,7 @@ OpenRIは、投稿システムに提出された論文に対する「査読前�
 
 ## 初期スコープ
 
-- `statistical_consistency`: t/F/χ2/z検定表記からp値を再計算し、報告p値とのズレや有意性判定の反転を検出します。strictness で許容ズレを切り替えます。
+- `statistical_consistency`: t/F/χ2/r/z検定表記(上付き `χ²`、相関 `r(df)`、自由度なしの `z = value` 形式も対応)からp値を再計算し、報告p値とのズレや有意性判定の反転を検出します。strictness で許容ズレを切り替えます。
 - `summary_stat_plausibility`: 平均値とnから、整数項目の平均として不自然な値をGRIM風に検出します。整数項目ヒントの有無で severity を切り替えます。
 - `reporting_transparency`: ethics, data availability, code availability, conflicts, funding の存在を確認します。
 - `citation_integrity`: DOI、本文中引用、参考文献セクションの機械的不整合を確認します。
@@ -25,7 +25,7 @@ OpenRIは、投稿システムに提出された論文に対する「査読前�
 - `doi_existence` (experimental, network): Crossref で本文中のDOIが実在するか確認します。`--network` で有効化。
 - `ruleset_coverage` (beta): CONSORT/PRISMA/MDAR-strict など分野別 YAML ruleset の項目キーワードを照合します。`--ruleset` で指定。
 - `pdf_hidden_text` (experimental): CLIでPDFを直接渡したとき、白色文字・極小フォント・ページ外配置を検出します。
-- `citation_context`: 参考文献リスト、本文中引用、claim-support markerを構造化し、AI review packetへ渡します。
+- `citation_context`: 参考文献リスト、本文中引用(番号/著者-年)と参考文献の対応、claim-support markerを構造化し、AI review packetへ渡します。
 
 ## 構成
 
@@ -42,13 +42,13 @@ OpenRIは、投稿システムに提出された論文に対する「査読前�
 GitHub Pages の wheel を使う場合:
 
 ```bash
-pip install openri-0.3.2-py3-none-any.whl
+pip install openri-0.4.0-py3-none-any.whl
 ```
 
 GitHub Pages の配布目録 URL を直接指定する場合:
 
 ```bash
-pip install https://www.yasufumi.net/openri/packages/python/openri-0.3.2-py3-none-any.whl
+pip install https://www.yasufumi.net/openri/packages/python/openri-0.4.0-py3-none-any.whl
 ```
 
 npm client、MCP server、Codex skill archive は [`Packages and distributions`](https://www.yasufumi.net/openri/distributions/) にまとめています。
