@@ -108,6 +108,15 @@ def _expand_numeric_items(raw: str) -> List[int]:
     return values
 
 
+def _author_year_has_reference(author: str, year: int, refs: List[Dict[str, object]]) -> bool:
+    surname = author.split()[0].lower()
+    for ref in refs:
+        ref_text = str(ref.get("text", "")).lower()
+        if surname in ref_text and str(year) in ref_text:
+            return True
+    return False
+
+
 def citation_context_audit(text: str) -> Dict[str, object]:
     refs = extract_reference_items(text)
     cites = extract_inline_citations(text)
@@ -119,6 +128,25 @@ def citation_context_audit(text: str) -> Dict[str, object]:
         missing = [item for item in cite["items"] if item > ref_count]
         if missing:
             unresolved.append({"quote": cite["quote"], "missing_reference_numbers": missing})
+
+    unresolved_author_year = []
+    if refs:
+        seen_quotes = set()
+        for cite in cites:
+            if cite["style"] != "author-year" or cite["quote"] in seen_quotes:
+                continue
+            seen_quotes.add(cite["quote"])
+            if not _author_year_has_reference(str(cite["author"]), int(cite["year"]), refs):
+                unresolved_author_year.append(
+                    {
+                        "quote": cite["quote"],
+                        "author": cite["author"],
+                        "year": cite["year"],
+                        "reason": "no reference entry matches this surname and year",
+                    }
+                )
+            if len(unresolved_author_year) >= 12:
+                break
 
     unsupported_claims = []
     for _, sentence in iter_sentence_spans(text):
@@ -140,6 +168,7 @@ def citation_context_audit(text: str) -> Dict[str, object]:
         "references": refs[:30],
         "inline_citations": [{k: v for k, v in item.items() if k != "start"} for item in cites[:50]],
         "unresolved_numeric_citations": unresolved,
+        "unresolved_author_year_citations": unresolved_author_year,
         "placeholder_references": [item for item in refs if item.get("has_placeholder_doi")],
         "unsupported_claims": unsupported_claims,
         "external_lookup_policy": "Crossref/OpenAlex/Semantic Scholar checks require explicit network opt-in.",

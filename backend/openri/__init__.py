@@ -1,6 +1,6 @@
 """Open Research Integrity test runner."""
 
-__version__ = "0.3.2"
+__version__ = "0.4.0"
 __homepage__ = "https://github.com/yasufumi-nakata/openri"
 
 from .analyzer import analyze_manuscript

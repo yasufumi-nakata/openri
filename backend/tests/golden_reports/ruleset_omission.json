@@ -92,7 +92,7 @@
           "location": null,
           "quote": null
         },
-        "recommendation": "t(df), F(df1, df2), χ2(df), z(df) と p 値を標準形式で記載すると自動検査できます。",
+        "recommendation": "t(df), F(df1, df2), χ2(df), r(df), z = value と p 値を標準形式で記載すると自動検査できます。",
         "score": 70,
         "severity": "info",
         "status": "skipped"
@@ -199,6 +199,7 @@
             "placeholder_references": [],
             "reference_count": 0,
             "references": [],
+            "unresolved_author_year_citations": [],
             "unresolved_numeric_citations": [],
             "unsupported_claims": []
           },
@@ -951,6 +952,7 @@
         "placeholder_references": [],
         "reference_count": 0,
         "references": [],
+        "unresolved_author_year_citations": [],
         "unresolved_numeric_citations": [],
         "unsupported_claims": []
       },
@@ -1277,7 +1279,7 @@
       "evidence": [],
       "id": "finding-01-statistical_consistency",
       "message": "検定統計量とp値の組を検出できませんでした。",
-      "recommendation": "t(df), F(df1, df2), χ2(df), z(df) と p 値を標準形式で記載すると自動検査できます。",
+      "recommendation": "t(df), F(df1, df2), χ2(df), r(df), z = value と p 値を標準形式で記載すると自動検査できます。",
       "score": 70,
       "severity": "info",
       "status": "skipped",
@@ -1396,6 +1398,7 @@
             "placeholder_references": [],
             "reference_count": 0,
             "references": [],
+            "unresolved_author_year_citations": [],
             "unresolved_numeric_citations": [],
             "unsupported_claims": []
           },

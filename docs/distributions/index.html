@@ -41,19 +41,19 @@
 <ul><li>Python wheel と source distribution</li><li>npm client package</li><li>MCP server package</li><li>Codex skill archive</li></ul>
 <h2>Python package</h2>
 <p>Python 版は CLI、FastAPI API、ruleset、PDF 検査と Python 3.10 以上向けの PDF 不可視テキスト・画像検査 extra を含みます。</p>
-<pre class="terminal"><code>pip install https://www.yasufumi.net/openri/packages/python/openri-0.3.2-py3-none-any.whl
+<pre class="terminal"><code>pip install https://www.yasufumi.net/openri/packages/python/openri-0.4.0-py3-none-any.whl
 openri --version</code></pre>
 <p>checksum と SPDX metadata は <code>SHA256SUMS</code> と <code>openri-release.spdx.json</code> で公開します。</p>
 <h2>npm client package</h2>
 <p><code>@openri/client</code> は OpenRI API を呼ぶ軽量 ESM client です。Web UI や外部 dashboard から <code>/api/health</code> と <code>/api/runs</code> を同じ型で扱うために使います。</p>
-<pre class="terminal"><code>npm install https://www.yasufumi.net/openri/packages/npm/openri-client-0.3.2.tgz</code></pre>
+<pre class="terminal"><code>npm install https://www.yasufumi.net/openri/packages/npm/openri-client-0.4.0.tgz</code></pre>
 <h2>MCP server package</h2>
 <p><code>@openri/mcp</code> はローカル OpenRI API を MCP tool として公開します。既定では <code>http://127.0.0.1:8008</code> だけを呼び、未公開原稿を外部 API に送る挙動は追加しません。</p>
-<pre class="terminal"><code>npm install https://www.yasufumi.net/openri/packages/mcp/openri-mcp-0.3.2.tgz
+<pre class="terminal"><code>npm install https://www.yasufumi.net/openri/packages/mcp/openri-mcp-0.4.0.tgz
 OPENRI_API_BASE=http://127.0.0.1:8008 npx openri-mcp</code></pre>
 <h2>Codex skill archive</h2>
 <p>Codex skill は、原稿検査、finding の証拠確認、AI reviewer protocol の読み取りを OpenRI の安全方針に沿って実行するための入口です。</p>
-<pre class="terminal"><code>curl -LO https://www.yasufumi.net/openri/packages/skill/openri-codex-skill-0.3.2.tar.gz</code></pre>
+<pre class="terminal"><code>curl -LO https://www.yasufumi.net/openri/packages/skill/openri-codex-skill-0.4.0.tar.gz</code></pre>
 <h2>Safety defaults</h2>
 <p>OpenRI は採否判定や研究不正認定を自動化しません。配布パッケージでも、finding は AI reviewer/AI editor が判断前に扱う証拠付き検査結果として扱います。ネットワーク照合は opt-in とし、未公開原稿を外部 LLM や外部 API に送る既定値は追加しません。</p>
         </article>

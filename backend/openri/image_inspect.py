@@ -6,9 +6,50 @@ from typing import Any
 
 SUPPORTED_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".webp"}
 
+# EXIF tag ids (TIFF/EXIF baseline).
+_EXIF_SOFTWARE = 305
+_EXIF_DATETIME = 306
+
+_EDITING_SOFTWARE_MARKERS = (
+    "photoshop",
+    "gimp",
+    "affinity",
+    "pixelmator",
+    "lightroom",
+    "paint.net",
+    "corel",
+    "acdsee",
+    "luminar",
+)
+
 
 def is_supported_image(path: Path) -> bool:
     return path.suffix.lower() in SUPPORTED_IMAGE_SUFFIXES
+
+
+def _software_findings(exif: Any) -> list[dict]:
+    if not exif:
+        return []
+    software = exif.get(_EXIF_SOFTWARE)
+    if not software:
+        return []
+    software_text = str(software)
+    lowered = software_text.lower()
+    matched = [marker for marker in _EDITING_SOFTWARE_MARKERS if marker in lowered]
+    if not matched:
+        return []
+    return [
+        {
+            "kind": "editing-software-metadata",
+            "severity": "medium",
+            "software": software_text[:120],
+            "matched_markers": matched,
+            "message": (
+                "EXIF Software tag names an image editor; ask for the original capture/export "
+                "history instead of treating this as manipulation."
+            ),
+        }
+    ]
 
 
 def _block_digest(image: Any, box: tuple[int, int, int, int]) -> str:
@@ -67,6 +108,7 @@ def inspect_image(path: Path) -> dict:
             rgb = image.convert("RGB")
             duplicates = _duplicate_blocks(rgb)
             findings = list(duplicates)
+            findings.extend(_software_findings(exif))
             if image.format in {"JPEG", "WEBP"}:
                 findings.append(
                     {
@@ -83,6 +125,8 @@ def inspect_image(path: Path) -> dict:
                 "height": image.height,
                 "mode": image.mode,
                 "exif_tag_count": len(exif or {}),
+                "exif_software": str(exif.get(_EXIF_SOFTWARE))[:120] if exif and exif.get(_EXIF_SOFTWARE) else None,
+                "exif_datetime": str(exif.get(_EXIF_DATETIME))[:40] if exif and exif.get(_EXIF_DATETIME) else None,
             }
     except (OSError, UnidentifiedImageError) as exc:
         return {

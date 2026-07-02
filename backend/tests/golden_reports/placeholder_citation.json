@@ -130,7 +130,7 @@
           "location": null,
           "quote": null
         },
-        "recommendation": "t(df), F(df1, df2), χ2(df), z(df) と p 値を標準形式で記載すると自動検査できます。",
+        "recommendation": "t(df), F(df1, df2), χ2(df), r(df), z = value と p 値を標準形式で記載すると自動検査できます。",
         "score": 70,
         "severity": "info",
         "status": "skipped"
@@ -263,6 +263,7 @@
                 "year": null
               }
             ],
+            "unresolved_author_year_citations": [],
             "unresolved_numeric_citations": [
               {
                 "missing_reference_numbers": [
@@ -281,7 +282,7 @@
           "location": null,
           "quote": null
         },
-        "recommendation": "本文中引用番号と参考文献番号を照合し、placeholder DOIや支えの弱いclaimは著者照会または外部DB照合へ回してください。",
+        "recommendation": "本文中引用番号・著者-年引用と参考文献リストを照合し、placeholder DOIや支えの弱いclaimは著者照会または外部DB照合へ回してください。",
         "score": 45,
         "severity": "high",
         "status": "warning"
@@ -444,7 +445,7 @@
         {
           "check_id": "citation_context",
           "evidence_count": 1,
-          "question": "本文中引用番号と参考文献番号を照合し、placeholder DOIや支えの弱いclaimは著者照会または外部DB照合へ回してください。"
+          "question": "本文中引用番号・著者-年引用と参考文献リストを照合し、placeholder DOIや支えの弱いclaimは著者照会または外部DB照合へ回してください。"
         },
         {
           "check_id": "claim_evidence_alignment",
@@ -531,7 +532,7 @@
           "severity": "high",
           "status": "warning",
           "title": "Structured reference and citation-context audit",
-          "why_it_matters": "本文中引用番号と参考文献番号を照合し、placeholder DOIや支えの弱いclaimは著者照会または外部DB照合へ回してください。"
+          "why_it_matters": "本文中引用番号・著者-年引用と参考文献リストを照合し、placeholder DOIや支えの弱いclaimは著者照会または外部DB照合へ回してください。"
         },
         {
           "check_id": "claim_evidence_alignment",
@@ -732,6 +733,7 @@
                   "year": null
                 }
               ],
+              "unresolved_author_year_citations": [],
               "unresolved_numeric_citations": [
                 {
                   "missing_reference_numbers": [
@@ -751,7 +753,7 @@
             "quote": null
           }
         ],
-        "instruction": "本文中引用番号と参考文献番号を照合し、placeholder DOIや支えの弱いclaimは著者照会または外部DB照合へ回してください。",
+        "instruction": "本文中引用番号・著者-年引用と参考文献リストを照合し、placeholder DOIや支えの弱いclaimは著者照会または外部DB照合へ回してください。",
         "severity": "high",
         "status": "warning"
       },
@@ -1105,6 +1107,7 @@
             "year": null
           }
         ],
+        "unresolved_author_year_citations": [],
         "unresolved_numeric_citations": [
           {
             "missing_reference_numbers": [
@@ -1458,7 +1461,7 @@
       "evidence": [],
       "id": "finding-01-statistical_consistency",
       "message": "検定統計量とp値の組を検出できませんでした。",
-      "recommendation": "t(df), F(df1, df2), χ2(df), z(df) と p 値を標準形式で記載すると自動検査できます。",
+      "recommendation": "t(df), F(df1, df2), χ2(df), r(df), z = value と p 値を標準形式で記載すると自動検査できます。",
       "score": 70,
       "severity": "info",
       "status": "skipped",
@@ -1627,6 +1630,7 @@
                 "year": null
               }
             ],
+            "unresolved_author_year_citations": [],
             "unresolved_numeric_citations": [
               {
                 "missing_reference_numbers": [
@@ -1647,8 +1651,8 @@
         }
       ],
       "id": "finding-06-citation_context",
-      "message": "参考文献リスト、本文中引用、placeholder DOIの対応に確認が必要な箇所があります。",
-      "recommendation": "本文中引用番号と参考文献番号を照合し、placeholder DOIや支えの弱いclaimは著者照会または外部DB照合へ回してください。",
+      "message": "参考文献リスト、本文中引用(番号/著者-年)、placeholder DOIの対応に確認が必要な箇所があります。",
+      "recommendation": "本文中引用番号・著者-年引用と参考文献リストを照合し、placeholder DOIや支えの弱いclaimは著者照会または外部DB照合へ回してください。",
       "score": 45,
       "severity": "high",
       "status": "warning",
@@ -1854,7 +1858,7 @@
     ],
     "human_actions": [
       {
-        "action": "本文中引用番号と参考文献番号を照合し、placeholder DOIや支えの弱いclaimは著者照会または外部DB照合へ回してください。",
+        "action": "本文中引用番号・著者-年引用と参考文献リストを照合し、placeholder DOIや支えの弱いclaimは著者照会または外部DB照合へ回してください。",
         "check_id": "citation_context",
         "evidence_count": 1,
         "severity": "high",
@@ -1866,7 +1870,7 @@
     "recommended_route": "technical_check_then_peer_review",
     "review_actions": [
       {
-        "action": "本文中引用番号と参考文献番号を照合し、placeholder DOIや支えの弱いclaimは著者照会または外部DB照合へ回してください。",
+        "action": "本文中引用番号・著者-年引用と参考文献リストを照合し、placeholder DOIや支えの弱いclaimは著者照会または外部DB照合へ回してください。",
         "check_id": "citation_context",
         "evidence_count": 1,
         "severity": "high",

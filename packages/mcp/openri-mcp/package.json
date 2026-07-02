@@ -1,6 +1,6 @@
 {
   "name": "@openri/mcp",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "MCP server for running OpenRI checks through a local OpenRI API.",
   "type": "module",
   "license": "MIT",

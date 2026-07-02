@@ -2,8 +2,13 @@
 
 All notable changes to OpenRI are documented here.
 
-## Unreleased
+## 0.4.0 - 2026-07-02
 
+- Expanded APA statistical-consistency coverage: superscript `χ²(df)`, correlation `r(df)` p-value recomputation, and standalone `z = value` reports without degrees of freedom (with de-duplication against df-style matches).
+- Hardened the test-statistic regex so word suffixes (e.g. `effect(12)`) are no longer misread as `t`/`r` statistics.
+- Added author-year inline citation ↔ reference-list matching (`unresolved_author_year_citations`) to the structured citation-context audit and the `citation_context` check.
+- Added EXIF editing-software provenance detection (Photoshop, GIMP, etc.) plus `exif_software` / `exif_datetime` metadata to image inspection, reported as reviewer tasks rather than misconduct verdicts.
+- Updated frontend build tooling (vite) and MCP server dependency (hono) to versions without known vulnerabilities.
 - Fixed Windows uploads: temporary PDF/image files are now closed before pdfplumber/Pillow read them and are always removed afterwards, and the package artifact builder resolves `npm.cmd`/`node.exe` through PATH lookup (salvaged from PR #60).
 - Fixed `pdf_hidden_text` severity aggregation that compared severity labels alphabetically, which could downgrade mixed critical/high PDF risks to a lower severity and bypass the failed status.
 - Fixed `pdf_hidden_text` treating unavailable PDF inspections (missing pdfplumber or inspection errors) as passed; they are now skipped coverage blockers.
