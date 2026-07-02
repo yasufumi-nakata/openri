@@ -97,7 +97,7 @@ pip install "openri[pdf,image,server]"
 pip install -e ".[pdf,image,network,server,dev]"
 ```
 
-`image` extra と PDF不可視テキスト検査は Pillow 12.2 以上を使うため Python 3.10 以上で有効です。Python 3.9 ではコア検査と `pypdf` ベースの PDF テキスト抽出を維持し、画像ファイル単体の画素検査は coverage blocker として返します。
+`server` extra と Web API、`image` extra、PDF不可視テキスト検査は、patched Starlette / python-multipart / Pillow を使うため Python 3.10 以上で有効です。Python 3.9 ではコア検査と `pypdf` ベースの PDF テキスト抽出を維持し、画像ファイル単体の画素検査や API server は coverage blocker / unsupported surface として扱います。
 
 ## CLI
 
