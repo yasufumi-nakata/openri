@@ -15,7 +15,7 @@
     "test:fuzz": "node --test test/client.fuzz.test.js"
   },
   "devDependencies": {
-    "fast-check": "4.8.0"
+    "fast-check": "4.9.0"
   },
   "engines": {
     "node": ">=20"
