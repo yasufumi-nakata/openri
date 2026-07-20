@@ -9,6 +9,10 @@ updates:
       timezone: "Asia/Tokyo"
     labels:
       - "area:ops"
+    groups:
+      codeql-actions:
+        patterns:
+          - "github/codeql-action/*"
 
   - package-ecosystem: "pip"
     directory: "/"
