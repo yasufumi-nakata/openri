@@ -37,8 +37,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-image = ["Pillow>=12.2.0; python_version >= '3.10'"]
-pdf = ["pypdf>=6.14.2", "pdfplumber>=0.10; python_version >= '3.10'"]
+image = ["Pillow>=12.3.0; python_version >= '3.10'"]
+pdf = ["pypdf>=6.15.0", "pdfplumber>=0.10; python_version >= '3.10'"]
 network = ["requests>=2.34.2; python_version >= '3.10'"]
 server = [
     "uvicorn[standard]>=0.47; python_version >= '3.10'",
