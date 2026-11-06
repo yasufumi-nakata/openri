@@ -13,9 +13,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-      - name: Build the retained pinned Python 3.14 image with updated hash locks
+      - name: Build retained Python 3.14 image with updated hash-locked dependencies
         run: docker build --progress=plain -f Dockerfile.api -t openri-retained-container-probe .
-      - name: Import API and run CLI without network or write privileges
+      - name: Import API and run CLI with only ephemeral application storage writable
         run: |
-          docker run --rm --network none --read-only --cap-drop ALL --security-opt no-new-privileges --entrypoint python openri-retained-container-probe -c 'from openri.api import app; print(type(app).__name__)'
-          docker run --rm --network none --read-only --cap-drop ALL --security-opt no-new-privileges --entrypoint python openri-retained-container-probe -m openri.cli list
+          docker run --rm --network none --read-only --tmpfs /root/.openri:rw,noexec,nosuid,size=16m --cap-drop ALL --security-opt no-new-privileges --entrypoint python openri-retained-container-probe -c 'from openri.api import app; print(type(app).__name__)'
+          docker run --rm --network none --read-only --tmpfs /root/.openri:rw,noexec,nosuid,size=16m --cap-drop ALL --security-opt no-new-privileges --entrypoint python openri-retained-container-probe -m openri.cli list
