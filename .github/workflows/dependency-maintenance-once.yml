@@ -1,0 +1,133 @@
+name: Dependency maintenance once
+on:
+  push:
+    branches: [automation/dependency-reconciliation-20261106]
+    paths: [.github/workflows/dependency-maintenance-once.yml]
+permissions:
+  contents: read
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2
+        with:
+          version: '0.11.15'
+      - name: Update frontend with paired React versions
+        working-directory: frontend
+        run: |
+          npm install --package-lock-only --ignore-scripts --save-exact lucide-react@1.44.0 react@19.3.0 react-dom@19.3.0
+          npm install --package-lock-only --ignore-scripts --save-dev --save-exact vite@8.3.5 @vitejs/plugin-react@6.1.1 @playwright/test@1.64.1 @axe-core/playwright@4.14.0
+          npm update source-map-js --package-lock-only --ignore-scripts
+          npm ci --ignore-scripts
+          npm ls --depth=0
+          npm run build
+          npm audit --audit-level=high
+      - name: Update MCP SDK and security-related transitive dependencies
+        working-directory: packages/mcp/openri-mcp
+        run: |
+          npm install --package-lock-only --ignore-scripts --save-exact @modelcontextprotocol/sdk@1.32.2 zod@4.6.7
+          npm update fast-uri qs --package-lock-only --ignore-scripts
+          npm ci --ignore-scripts
+          node --check bin/openri-mcp.js
+          node --input-type=module -e "await import('@modelcontextprotocol/sdk/server/mcp.js'); await import('zod'); console.log('MCP imports passed')"
+          npm audit --audit-level=high
+      - name: Update and test client fuzz dependency
+        working-directory: packages/npm/openri-client
+        run: |
+          npm install --package-lock-only --ignore-scripts --save-dev --save-exact fast-check@4.10.2
+          npm ci --ignore-scripts
+          npm run test:fuzz
+          npm audit --audit-level=high
+      - name: Update pypdf minimum and hashed deployment requirements
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import tomllib
+          import json
+          before = tomllib.loads(Path('uv.lock').read_text())
+          Path('/tmp/openri-lock-before.json').write_text(json.dumps(sorted((p['name'], p['version']) for p in before['package'] if p['name'] != 'pypdf')))
+          path = Path('pyproject.toml')
+          text = path.read_text()
+          assert text.count('pypdf>=6.15.0') == 1
+          path.write_text(text.replace('pypdf>=6.15.0', 'pypdf>=6.16.1'))
+          replacements = {'pypdf==6.15.0': 'pypdf==6.16.1', '14e001d6504822cb1ca9c7ed9a69bccb320f59b320730f55af804361abe4d5ee': '63fec31c4092ae50b6729beedcb469055b60d20c834bde1c402df241f371f644', 'd39c4d955a76409284a905e2d65b40076d77ab76129e0faaeeb6612403ecfc79': 'c4d1b43ddae921387321cf63936cd16a7743b91d2da92f165c149a195c972ba9'}
+          for name in ('requirements/action.txt', 'requirements/docker.txt'):
+              path = Path(name)
+              text = path.read_text()
+              for old, new in replacements.items():
+                  assert text.count(old) == 1, (name, old)
+                  text = text.replace(old, new)
+              text = text.replace('pypdf>=6.15.0', 'pypdf>=6.16.1')
+              path.write_text(text)
+          PY
+          uv lock --upgrade-package 'pypdf==6.16.1'
+          uv lock --check
+          python3 - <<'PY'
+          import json
+          import tomllib
+          from pathlib import Path
+          after = tomllib.loads(Path('uv.lock').read_text())
+          versions = sorted([p['name'], p['version']] for p in after['package'] if p['name'] != 'pypdf')
+          assert versions == json.loads(Path('/tmp/openri-lock-before.json').read_text()), 'Unexpected unrelated package version change'
+          assert all(p['version'] == '6.16.1' for p in after['package'] if p['name'] == 'pypdf')
+          PY
+          uv run --locked --python 3.12 --extra pdf --extra image --extra network --extra server --extra dev python -m pytest backend/tests -q
+      - name: Apply reviewed pinned GitHub Action updates only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          changes = {'c771a70e6277c0a99b617c7a806ffedaca235ff9': '68559e99cc807c1eb7e9238fd43a15bba460eec2', '043fb46d1a93c77aae656e7c1c64a875d1fc6a0a': 'cf430e030ddbb5b0abf93d22962f4752f3646cd9', '820762786026740c76f36085b0efc47a31fe5020': '949feb2413d6458794dcd2491c4babbbce0c15c1', 'cd2ce8fcbc39b97be8ca5fce6e763baed58fa128': '368f82528645a54fb793d4d04e342629a3f51346', 'e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81': 'ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd'}
+          counts = {key: 0 for key in changes}
+          for path in Path('.github/workflows').glob('*.yml'):
+              if path.name == 'dependency-maintenance-once.yml':
+                  continue
+              text = path.read_text()
+              for old, new in changes.items():
+                  counts[old] += text.count(old)
+                  text = text.replace(old, new)
+              text = text.replace('68559e99cc807c1eb7e9238fd43a15bba460eec2 # v9.0.0', '68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3')
+              text = text.replace('949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.0.0', '949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0')
+              path.write_text(text)
+          assert all(counts.values()), counts
+          print('Updated pinned action occurrences:', counts)
+          PY
+      - name: Validate installed versions and tracked diff
+        run: |
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const expected = {'frontend': {react:'19.3.0','react-dom':'19.3.0',vite:'8.3.5','lucide-react':'1.44.0','@vitejs/plugin-react':'6.1.1','@playwright/test':'1.64.1','@axe-core/playwright':'4.14.0'}, 'packages/mcp/openri-mcp': {'@modelcontextprotocol/sdk':'1.32.2',zod:'4.6.7'}, 'packages/npm/openri-client': {'fast-check':'4.10.2'}};
+          for (const [directory, packages] of Object.entries(expected)) {
+            const lock = JSON.parse(fs.readFileSync(`${directory}/package-lock.json`, 'utf8'));
+            for (const [name, version] of Object.entries(packages)) assert.equal(lock.packages[`node_modules/${name}`].version, version, name);
+            for (const [path, item] of Object.entries(lock.packages)) {
+              if (path.endsWith('/source-map-js')) assert.equal(item.version, '1.2.2', path);
+              if (path.endsWith('/fast-uri')) assert.equal(item.version, '3.1.7', path);
+              if (path.endsWith('/qs')) assert.equal(item.version, '6.16.0', path);
+            }
+          }
+          JS
+          git diff --check
+          git diff --stat
+      - name: Commit verified updates to the maintenance branch
+        env:
+          PUSH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add frontend/package.json frontend/package-lock.json packages/mcp/openri-mcp/package.json packages/mcp/openri-mcp/package-lock.json packages/npm/openri-client/package.json packages/npm/openri-client/package-lock.json pyproject.toml uv.lock requirements/action.txt requirements/docker.txt .github/workflows
+          git commit -m 'deps: reconcile reviewed security fixes, frontend, MCP, and CI action pins'
+          auth="$(printf 'x-access-token:%s' "$PUSH_TOKEN" | base64 -w0)"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push origin HEAD:automation/dependency-reconciliation-20261106
