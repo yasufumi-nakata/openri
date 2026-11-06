@@ -60,7 +60,10 @@ jobs:
 
   backend:
     name: Backend tests and package
-    runs-on: ubuntu-latest
+    # Python 3.9 is unavailable on the Ubuntu 26.04 hosted runner image.
+    # Keep 3.9 compatibility smoke on a supported image while testing newer
+    # Python versions against the current default runner.
+    runs-on: ${{ matrix.python-version == '3.9' && 'ubuntu-24.04' || 'ubuntu-latest' }}
     strategy:
       matrix:
         python-version: ["3.9", "3.11", "3.12"]
