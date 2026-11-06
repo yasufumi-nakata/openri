@@ -85,25 +85,6 @@ jobs:
           assert all(p['version'] == '6.16.1' for p in after['package'] if p['name'] == 'pypdf')
           PY
           uv run --locked --python 3.12 --extra pdf --extra image --extra network --extra server --extra dev python -m pytest backend/tests -q
-      - name: Apply reviewed pinned GitHub Action updates only
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          changes = {'c771a70e6277c0a99b617c7a806ffedaca235ff9': '68559e99cc807c1eb7e9238fd43a15bba460eec2', '043fb46d1a93c77aae656e7c1c64a875d1fc6a0a': 'cf430e030ddbb5b0abf93d22962f4752f3646cd9', '820762786026740c76f36085b0efc47a31fe5020': '949feb2413d6458794dcd2491c4babbbce0c15c1', 'cd2ce8fcbc39b97be8ca5fce6e763baed58fa128': '368f82528645a54fb793d4d04e342629a3f51346', 'e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81': 'ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd'}
-          counts = {key: 0 for key in changes}
-          for path in Path('.github/workflows').glob('*.yml'):
-              if path.name == 'dependency-maintenance-once.yml':
-                  continue
-              text = path.read_text()
-              for old, new in changes.items():
-                  counts[old] += text.count(old)
-                  text = text.replace(old, new)
-              text = text.replace('68559e99cc807c1eb7e9238fd43a15bba460eec2 # v9.0.0', '68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3')
-              text = text.replace('949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.0.0', '949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0')
-              path.write_text(text)
-          assert all(counts.values()), counts
-          print('Updated pinned action occurrences:', counts)
-          PY
       - name: Validate installed versions and tracked diff
         run: |
           node --input-type=module - <<'JS'
@@ -122,13 +103,14 @@ jobs:
           JS
           git diff --check
           git diff --stat
-      - name: Commit verified updates to the maintenance branch
+      - name: Commit only dependency files, never workflow changes
         env:
           PUSH_TOKEN: ${{ github.token }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add frontend/package.json frontend/package-lock.json packages/mcp/openri-mcp/package.json packages/mcp/openri-mcp/package-lock.json packages/npm/openri-client/package.json packages/npm/openri-client/package-lock.json pyproject.toml uv.lock requirements/action.txt requirements/docker.txt .github/workflows
-          git commit -m 'deps: reconcile reviewed security fixes, frontend, MCP, and CI action pins'
+          git add frontend/package.json frontend/package-lock.json packages/mcp/openri-mcp/package.json packages/mcp/openri-mcp/package-lock.json packages/npm/openri-client/package.json packages/npm/openri-client/package-lock.json pyproject.toml uv.lock requirements/action.txt requirements/docker.txt
+          git diff --cached --name-only | grep -qv '^.github/workflows/'
+          git commit -m 'deps: reconcile tested frontend, MCP, client and PDF security fixes'
           auth="$(printf 'x-access-token:%s' "$PUSH_TOKEN" | base64 -w0)"
           git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push origin HEAD:automation/dependency-reconciliation-20261106
