@@ -33,23 +33,24 @@ jobs:
           npm ci --ignore-scripts
           npm ls --depth=0
           npm run build
-          npm audit --audit-level=high
-      - name: Update MCP SDK and security-related transitive dependencies
+          npm audit --audit-level=moderate
+      - name: Update MCP SDK and audited transitive dependencies
         working-directory: packages/mcp/openri-mcp
         run: |
           npm install --package-lock-only --ignore-scripts --save-exact @modelcontextprotocol/sdk@1.32.2 zod@4.6.7
-          npm update fast-uri qs --package-lock-only --ignore-scripts
+          npm update fast-uri qs body-parser proxy-addr @hono/node-server hono ip-address --package-lock-only --ignore-scripts
           npm ci --ignore-scripts
           node --check bin/openri-mcp.js
           node --input-type=module -e "await import('@modelcontextprotocol/sdk/server/mcp.js'); await import('zod'); console.log('MCP imports passed')"
-          npm audit --audit-level=high
+          npm ls body-parser proxy-addr @hono/node-server hono ip-address fast-uri qs
+          npm audit --audit-level=moderate
       - name: Update and test client fuzz dependency
         working-directory: packages/npm/openri-client
         run: |
           npm install --package-lock-only --ignore-scripts --save-dev --save-exact fast-check@4.10.2
           npm ci --ignore-scripts
           npm run test:fuzz
-          npm audit --audit-level=high
+          npm audit --audit-level=moderate
       - name: Update pypdf minimum and hashed deployment requirements
         run: |
           python3 - <<'PY'
