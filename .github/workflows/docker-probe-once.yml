@@ -1,0 +1,32 @@
+name: Python 3.15 container compatibility probe
+on:
+  push:
+    branches: [automation/dependency-reconciliation-20261106]
+    paths: [.github/workflows/docker-probe-once.yml]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Prepare the exact base-image change from PR 169
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          source = Path('Dockerfile.api').read_text()
+          old = 'python:3.14-slim@sha256:a7fb1e634c4a578f9e0bd6327f11a3cde11b7a9395f48e24360c0988bcc5c2bc'
+          new = 'python:3.15-slim@sha256:94d3426f1def7db4a106a232ac121bfd975393e5dfd40a619b955fae45fe7913'
+          assert source.count(old) == 1
+          Path(os.environ['RUNNER_TEMP'], 'Dockerfile.api').write_text(source.replace(old, new))
+          PY
+      - name: Build the real image with existing hash-locked requirements
+        run: docker build --progress=plain -f "$RUNNER_TEMP/Dockerfile.api" -t openri-python315-probe .
+      - name: Import API and run CLI without network or write privileges
+        run: |
+          docker run --rm --network none --read-only --cap-drop ALL --security-opt no-new-privileges --entrypoint python openri-python315-probe -c 'from openri.api import app; print(type(app).__name__)'
+          docker run --rm --network none --read-only --cap-drop ALL --security-opt no-new-privileges --entrypoint python openri-python315-probe -m openri.cli list
