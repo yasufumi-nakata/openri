@@ -115,8 +115,8 @@ jobs:
             for (const [name, version] of Object.entries(packages)) assert.equal(lock.packages[`node_modules/${name}`].version, version, name);
             for (const [path, item] of Object.entries(lock.packages)) {
               if (path.endsWith('/source-map-js')) assert.equal(item.version, '1.2.2', path);
-              if (path.endsWith('/fast-uri')) assert.equal(item.version, '3.1.7', path);
-              if (path.endsWith('/qs')) assert.equal(item.version, '6.16.0', path);
+              if (path.endsWith('/fast-uri')) assert.equal(item.version, '3.1.9', path);
+              if (path.endsWith('/qs')) assert.equal(item.version, '6.17.1', path);
             }
           }
           JS
